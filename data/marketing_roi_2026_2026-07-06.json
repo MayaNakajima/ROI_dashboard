@@ -1,0 +1,4243 @@
+{
+  "version": "4.0",
+  "targets": {
+    "UN": {
+      "2024": {
+        "monthly_mql": [
+          0,
+          0,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          6
+        ],
+        "monthly_session": [
+          0,
+          0,
+          269,
+          349,
+          404,
+          454,
+          504,
+          564,
+          614,
+          664,
+          724,
+          874
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2
+        ]
+      },
+      "2025": {
+        "monthly_mql": [
+          7,
+          7,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          924,
+          924,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "2026": {
+        "monthly_mql": [
+          0,
+          0,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25,
+          25
+        ],
+        "monthly_session": [
+          0,
+          0,
+          3302,
+          3302,
+          3302,
+          3302,
+          3302,
+          3302,
+          3302,
+          3302,
+          3302,
+          3302
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5,
+          5
+        ]
+      },
+      "2027": {
+        "monthly_mql": [
+          25,
+          25,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          3302,
+          3302,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          5,
+          5,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "SCH": {
+      "2024": {
+        "monthly_mql": [
+          0,
+          0,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          6
+        ],
+        "monthly_session": [
+          0,
+          0,
+          269,
+          349,
+          404,
+          454,
+          504,
+          564,
+          614,
+          664,
+          724,
+          874
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2
+        ]
+      },
+      "2025": {
+        "monthly_mql": [
+          7,
+          7,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          924,
+          924,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "2026": {
+        "monthly_mql": [
+          0,
+          0,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "monthly_session": [
+          0,
+          0,
+          3574,
+          3574,
+          3574,
+          3574,
+          3574,
+          3574,
+          3574,
+          3574,
+          3574,
+          3574
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "2027": {
+        "monthly_mql": [
+          6,
+          6,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          3574,
+          3574,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "MED": {
+      "2024": {
+        "monthly_mql": [
+          0,
+          0,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          6
+        ],
+        "monthly_session": [
+          0,
+          0,
+          269,
+          349,
+          404,
+          454,
+          504,
+          564,
+          614,
+          664,
+          724,
+          874
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2
+        ]
+      },
+      "2025": {
+        "monthly_mql": [
+          7,
+          7,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          924,
+          924,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "2026": {
+        "monthly_mql": [
+          0,
+          0,
+          38,
+          38,
+          38,
+          38,
+          38,
+          38,
+          38,
+          38,
+          38,
+          38
+        ],
+        "monthly_session": [
+          0,
+          0,
+          3903,
+          3903,
+          3903,
+          3903,
+          3903,
+          3903,
+          3903,
+          3903,
+          3903,
+          3903
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "2027": {
+        "monthly_mql": [
+          38,
+          38,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          3903,
+          3903,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          3,
+          3,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "IS": {
+      "2024": {
+        "monthly_mql": [
+          0,
+          0,
+          3,
+          4,
+          4,
+          4,
+          4,
+          4,
+          5,
+          5,
+          5,
+          6
+        ],
+        "monthly_session": [
+          0,
+          0,
+          269,
+          349,
+          404,
+          454,
+          504,
+          564,
+          614,
+          664,
+          724,
+          874
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2
+        ]
+      },
+      "2025": {
+        "monthly_mql": [
+          7,
+          7,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          924,
+          924,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          2,
+          2,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "2026": {
+        "monthly_mql": [
+          0,
+          0,
+          23,
+          23,
+          23,
+          23,
+          23,
+          23,
+          23,
+          23,
+          23,
+          23
+        ],
+        "monthly_session": [
+          0,
+          0,
+          2097,
+          2097,
+          2097,
+          2097,
+          2097,
+          2097,
+          2097,
+          2097,
+          2097,
+          2097
+        ],
+        "monthly_sql": [
+          0,
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "2027": {
+        "monthly_mql": [
+          23,
+          23,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_session": [
+          2097,
+          2097,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "monthly_sql": [
+          1,
+          1,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  },
+  "actuals": {
+    "UN": {
+      "2024-09": {
+        "sessions": 129,
+        "cv": 3,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Referral": 2,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 2,
+          "inquiry": 1
+        }
+      },
+      "2024-10": {
+        "sessions": 911,
+        "cv": 7,
+        "sal": 2,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 1,
+          "Organic": 2,
+          "Referral": 4
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "wp_dl": 3
+        }
+      },
+      "2024-11": {
+        "sessions": 2080,
+        "cv": 25,
+        "sal": 4,
+        "sql": 5,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Paid": 8,
+          "Direct": 6,
+          "Organic": 5,
+          "Referral": 4,
+          "Email": 2
+        },
+        "cv_by_type": {
+          "service_dl": 9,
+          "wp_dl": 10,
+          "inquiry": 6
+        }
+      },
+      "2024-12": {
+        "sessions": 1487,
+        "cv": 10,
+        "sal": 2,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 4,
+          "Direct": 2,
+          "Referral": 3,
+          "Paid": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "wp_dl": 5,
+          "service_dl": 1
+        }
+      },
+      "2025-01": {
+        "sessions": 3187,
+        "cv": 16,
+        "sal": 3,
+        "sql": 2,
+        "jucyu": 1,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Referral": 3,
+          "Email": 2,
+          "Paid": 5,
+          "Direct": 2,
+          "Organic": 3,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "inquiry": 8,
+          "wp_dl": 4,
+          "service_dl": 4
+        }
+      },
+      "2025-02": {
+        "sessions": 1772,
+        "cv": 18,
+        "sal": 6,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 3,
+          "Email": 2,
+          "Referral": 6,
+          "Paid": 3,
+          "Organic": 4
+        },
+        "cv_by_type": {
+          "inquiry": 8,
+          "wp_dl": 6,
+          "service_dl": 4
+        }
+      },
+      "2025-03": {
+        "sessions": 2488,
+        "cv": 19,
+        "sal": 5,
+        "sql": 5,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          90000,
+          0,
+          0,
+          153114,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 90000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Organic": 5,
+          "Referral": 5,
+          "Paid": 4,
+          "Direct": 2,
+          "Other": 2,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "service_dl": 5,
+          "inquiry": 9,
+          "wp_dl": 5
+        }
+      },
+      "2025-04": {
+        "sessions": 1959,
+        "cv": 20,
+        "sal": 4,
+        "sql": 6,
+        "jucyu": 0,
+        "cost_items": [
+          220000,
+          30000,
+          0,
+          10000,
+          157036,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 260000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Direct": 5,
+          "Paid": 8,
+          "Referral": 3,
+          "Organic": 3,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "inquiry": 9,
+          "wp_dl": 6,
+          "service_dl": 5
+        }
+      },
+      "2025-05": {
+        "sessions": 2159,
+        "cv": 14,
+        "sal": 4,
+        "sql": 3,
+        "jucyu": 1,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          20000,
+          150477,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 50000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Other": 2,
+          "Paid": 4,
+          "Referral": 5,
+          "Organic": 2,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "wp_dl": 3,
+          "service_dl": 7
+        }
+      },
+      "2025-06": {
+        "sessions": 2553,
+        "cv": 17,
+        "sal": 4,
+        "sql": 4,
+        "jucyu": 0,
+        "cost_items": [
+          220000,
+          30000,
+          0,
+          10000,
+          154410,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 260000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Paid": 7,
+          "Referral": 4,
+          "Organic": 2,
+          "Direct": 4
+        },
+        "cv_by_type": {
+          "service_dl": 8,
+          "wp_dl": 6,
+          "inquiry": 3
+        }
+      },
+      "2025-07": {
+        "sessions": 5181,
+        "cv": 45,
+        "sal": 9,
+        "sql": 3,
+        "jucyu": 0,
+        "cost_items": [
+          55000,
+          60000,
+          0,
+          10000,
+          154768,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 125000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Other": 11,
+          "Organic": 14,
+          "Direct": 15,
+          "Paid": 4,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "service_dl": 17,
+          "inquiry": 20,
+          "wp_dl": 8
+        }
+      },
+      "2025-08": {
+        "sessions": 2621,
+        "cv": 33,
+        "sal": 4,
+        "sql": 7,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          134796,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Paid": 8,
+          "Direct": 8,
+          "Organic": 11,
+          "Email": 1,
+          "Offline": 4,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "service_dl": 15,
+          "wp_dl": 11,
+          "inquiry": 7
+        }
+      },
+      "2025-09": {
+        "sessions": 2797,
+        "cv": 30,
+        "sal": 6,
+        "sql": 8,
+        "jucyu": 2,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          229185,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 11,
+          "Other": 14,
+          "Direct": 5
+        },
+        "cv_by_type": {
+          "service_dl": 18,
+          "wp_dl": 3,
+          "inquiry": 9
+        }
+      },
+      "2025-10": {
+        "sessions": 3226,
+        "cv": 19,
+        "sal": 3,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          110000,
+          0,
+          0,
+          0,
+          230988,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 110000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Other": 12,
+          "Organic": 5
+        },
+        "cv_by_type": {
+          "inquiry": 10,
+          "service_dl": 9
+        }
+      },
+      "2025-11": {
+        "sessions": 2881,
+        "cv": 23,
+        "sal": 4,
+        "sql": 4,
+        "jucyu": 1,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          236641,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Organic": 6,
+          "Other": 10,
+          "Direct": 7
+        },
+        "cv_by_type": {
+          "service_dl": 10,
+          "inquiry": 12,
+          "wp_dl": 1
+        }
+      },
+      "2025-12": {
+        "sessions": 2908,
+        "cv": 14,
+        "sal": 5,
+        "sql": 3,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          355000,
+          199267,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 355000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Organic": 4,
+          "Other": 5,
+          "Direct": 5
+        },
+        "cv_by_type": {
+          "inquiry": 7,
+          "service_dl": 5,
+          "wp_dl": 2
+        }
+      },
+      "2026-01": {
+        "sessions": 3355,
+        "cv": 13,
+        "sal": 3,
+        "sql": 3,
+        "jucyu": 2,
+        "cost_items": [
+          330000,
+          45000,
+          0,
+          355000,
+          217467,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 730000,
+        "content_count": 5,
+        "mql_by_channel": {
+          "Organic": 3,
+          "Other": 9,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 5,
+          "service_dl": 3,
+          "inquiry": 5
+        }
+      },
+      "2026-02": {
+        "sessions": 3007,
+        "cv": 13,
+        "sal": 3,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          110000,
+          105000,
+          0,
+          0,
+          204932,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 215000,
+        "content_count": 6,
+        "mql_by_channel": {
+          "Offline": 4,
+          "Organic": 2,
+          "Direct": 3,
+          "Other": 4
+        },
+        "cv_by_type": {
+          "service_dl": 2,
+          "wp_dl": 4,
+          "inquiry": 7
+        }
+      },
+      "2026-03": {
+        "sessions": 3021,
+        "cv": 8,
+        "sal": 1,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          356000,
+          75000,
+          0,
+          355000,
+          137479,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 786000,
+        "content_count": 7,
+        "mql_by_channel": {
+          "Organic": 3,
+          "Direct": 2,
+          "Other": 3
+        },
+        "cv_by_type": {
+          "inquiry": 7,
+          "wp_dl": 1
+        }
+      },
+      "2026-04": {
+        "sessions": 3178,
+        "cv": 11,
+        "sal": 3,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          78000,
+          43000,
+          0,
+          0,
+          97826,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 121000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Other": 2,
+          "Email": 5,
+          "Organic": 2
+        },
+        "cv_by_type": {
+          "inquiry": 3,
+          "wp_dl": 7,
+          "service_dl": 1
+        }
+      },
+      "2026-05": {
+        "sessions": 2639,
+        "cv": 44,
+        "sal": 3,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          73000,
+          500000,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 573000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Other": 15,
+          "Direct": 6,
+          "Organic": 9,
+          "Email": 14
+        },
+        "cv_by_type": {
+          "inquiry": 25,
+          "service_dl": 8,
+          "wp_dl": 11
+        }
+      },
+      "2026-06": {
+        "sessions": 4301,
+        "cv": 22,
+        "sal": 6,
+        "sql": 5,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          558446,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 6,
+          "Email": 3,
+          "Other": 6,
+          "Organic": 5,
+          "Offline": 2
+        },
+        "cv_by_type": {
+          "wp_dl": 8,
+          "inquiry": 12,
+          "service_dl": 2
+        }
+      },
+      "2026-07": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-08": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-09": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-10": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-11": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-12": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-01": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-02": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      }
+    },
+    "SCH": {
+      "2024-10": {
+        "sessions": 1167,
+        "cv": 3,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Paid": 2,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "inquiry": 2,
+          "wp_dl": 1
+        }
+      },
+      "2024-11": {
+        "sessions": 1136,
+        "cv": 6,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Paid": 3,
+          "Organic": 2,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "wp_dl": 1,
+          "service_dl": 1
+        }
+      },
+      "2024-12": {
+        "sessions": 1191,
+        "cv": 4,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Referral": 2,
+          "Organic": 2
+        },
+        "cv_by_type": {
+          "inquiry": 2,
+          "service_dl": 1,
+          "wp_dl": 1
+        }
+      },
+      "2025-01": {
+        "sessions": 1553,
+        "cv": 3,
+        "sal": 2,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 2,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 2,
+          "inquiry": 1
+        }
+      },
+      "2025-02": {
+        "sessions": 1856,
+        "cv": 3,
+        "sal": 0,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Referral": 1,
+          "Paid": 1,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "inquiry": 1,
+          "service_dl": 1,
+          "wp_dl": 1
+        }
+      },
+      "2025-03": {
+        "sessions": 1948,
+        "cv": 8,
+        "sal": 1,
+        "sql": 1,
+        "jucyu": 1,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          155543,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Organic": 3,
+          "Referral": 1,
+          "Paid": 1,
+          "Other": 3
+        },
+        "cv_by_type": {
+          "wp_dl": 1,
+          "inquiry": 5,
+          "service_dl": 2
+        }
+      },
+      "2025-04": {
+        "sessions": 1793,
+        "cv": 4,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          127626,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Other": 1,
+          "Organic": 2,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "inquiry": 3,
+          "wp_dl": 1
+        }
+      },
+      "2025-05": {
+        "sessions": 1571,
+        "cv": 5,
+        "sal": 3,
+        "sql": 3,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          90145,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Organic": 3,
+          "Email": 1,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "service_dl": 1
+        }
+      },
+      "2025-06": {
+        "sessions": 1823,
+        "cv": 7,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          151696,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Other": 2,
+          "Email": 1,
+          "Organic": 3,
+          "Paid": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "wp_dl": 1,
+          "service_dl": 2
+        }
+      },
+      "2025-08": {
+        "sessions": 1415,
+        "cv": 2,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          125449,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Organic": 1,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "service_dl": 1,
+          "inquiry": 1
+        }
+      },
+      "2025-09": {
+        "sessions": 1474,
+        "cv": 3,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 1,
+        "cost_items": [
+          0,
+          60000,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 60000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Referral": 1,
+          "Offline": 1,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "inquiry": 3
+        }
+      },
+      "2025-10": {
+        "sessions": 1499,
+        "cv": 1,
+        "sal": 2,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "service_dl": 1
+        }
+      },
+      "2025-11": {
+        "sessions": 1791,
+        "cv": 2,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          15000,
+          0,
+          0,
+          176103,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 15000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Organic": 1,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "inquiry": 2
+        }
+      },
+      "2025-12": {
+        "sessions": 2637,
+        "cv": 2,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          45000,
+          0,
+          0,
+          160373,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 45000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Direct": 1,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "inquiry": 2
+        }
+      },
+      "2026-01": {
+        "sessions": 2227,
+        "cv": 2,
+        "sal": 0,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          275000,
+          60000,
+          0,
+          0,
+          151103,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 335000,
+        "content_count": 5,
+        "mql_by_channel": {
+          "Organic": 1,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "service_dl": 2
+        }
+      },
+      "2026-02": {
+        "sessions": 3811,
+        "cv": 3,
+        "sal": 0,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          143000,
+          0,
+          0,
+          0,
+          151302,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 143000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Organic": 2,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "inquiry": 3
+        }
+      },
+      "2026-03": {
+        "sessions": 2465,
+        "cv": 7,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          246000,
+          45000,
+          0,
+          0,
+          201773,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 291000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Direct": 1,
+          "Other": 4,
+          "Organic": 2
+        },
+        "cv_by_type": {
+          "inquiry": 5,
+          "wp_dl": 2
+        }
+      },
+      "2026-04": {
+        "sessions": 2750,
+        "cv": 3,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          201830,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 2,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 1,
+          "inquiry": 2
+        }
+      },
+      "2026-05": {
+        "sessions": 2887,
+        "cv": 4,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          176000,
+          90000,
+          0,
+          0,
+          201837,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 266000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Other": 2,
+          "Offline": 1,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "service_dl": 1,
+          "wp_dl": 1,
+          "inquiry": 2
+        }
+      },
+      "2026-06": {
+        "sessions": 2821,
+        "cv": 3,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          201929,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "service_dl": 1,
+          "inquiry": 2
+        }
+      },
+      "2024-08": {
+        "sessions": 59,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2024-09": {
+        "sessions": 597,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2025-07": {
+        "sessions": 1907,
+        "cv": 0,
+        "sal": 0,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          220000,
+          0,
+          0,
+          0,
+          140117,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 220000,
+        "content_count": 2,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-07": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-08": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-09": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-10": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-11": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-12": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-01": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-02": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      }
+    },
+    "MED": {
+      "2024-02": {
+        "sessions": 0,
+        "cv": 1,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 1
+        },
+        "cv_by_type": {
+          "inquiry": 1
+        }
+      },
+      "2024-05": {
+        "sessions": 0,
+        "cv": 1,
+        "sal": 1,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 1
+        },
+        "cv_by_type": {
+          "service_dl": 1
+        }
+      },
+      "2024-06": {
+        "sessions": 0,
+        "cv": 2,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 1,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 1,
+          "service_dl": 1
+        }
+      },
+      "2024-07": {
+        "sessions": 0,
+        "cv": 1,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 1
+        }
+      },
+      "2024-08": {
+        "sessions": 1175,
+        "cv": 3,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 1,
+          "Direct": 1,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 1,
+          "inquiry": 2
+        }
+      },
+      "2024-09": {
+        "sessions": 1635,
+        "cv": 17,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 13,
+          "Direct": 1,
+          "Organic": 1,
+          "Referral": 1,
+          "Paid": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 13,
+          "inquiry": 1,
+          "service_dl": 3
+        }
+      },
+      "2024-10": {
+        "sessions": 2788,
+        "cv": 14,
+        "sal": 0,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Referral": 3,
+          "Paid": 8,
+          "Email": 2,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "service_dl": 12,
+          "wp_dl": 2
+        }
+      },
+      "2024-11": {
+        "sessions": 2811,
+        "cv": 16,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 2,
+          "Paid": 7,
+          "Email": 3,
+          "Referral": 3,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "service_dl": 13,
+          "wp_dl": 2,
+          "inquiry": 1
+        }
+      },
+      "2024-12": {
+        "sessions": 2712,
+        "cv": 20,
+        "sal": 2,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Paid": 6,
+          "Email": 10,
+          "Organic": 3,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "service_dl": 9,
+          "wp_dl": 10,
+          "inquiry": 1
+        }
+      },
+      "2025-01": {
+        "sessions": 2292,
+        "cv": 17,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 9,
+          "Paid": 3,
+          "Organic": 2,
+          "Referral": 2,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 9,
+          "service_dl": 8
+        }
+      },
+      "2025-02": {
+        "sessions": 2167,
+        "cv": 6,
+        "sal": 2,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Paid": 3,
+          "Organic": 1,
+          "Referral": 1,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "service_dl": 5,
+          "wp_dl": 1
+        }
+      },
+      "2025-03": {
+        "sessions": 2279,
+        "cv": 20,
+        "sal": 0,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          220000,
+          30000,
+          0,
+          0,
+          141184,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 250000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Direct": 3,
+          "Paid": 4,
+          "Referral": 3,
+          "Email": 4,
+          "Organic": 4,
+          "Other": 2
+        },
+        "cv_by_type": {
+          "service_dl": 19,
+          "inquiry": 1
+        }
+      },
+      "2025-04": {
+        "sessions": 2674,
+        "cv": 26,
+        "sal": 6,
+        "sql": 4,
+        "jucyu": 0,
+        "cost_items": [
+          220000,
+          60000,
+          0,
+          0,
+          120357,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 280000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Email": 3,
+          "Paid": 7,
+          "Organic": 11,
+          "Other": 2,
+          "Referral": 3
+        },
+        "cv_by_type": {
+          "service_dl": 20,
+          "wp_dl": 1,
+          "inquiry": 5
+        }
+      },
+      "2025-05": {
+        "sessions": 3250,
+        "cv": 33,
+        "sal": 5,
+        "sql": 4,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          60000,
+          0,
+          0,
+          141813,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 60000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Organic": 6,
+          "Email": 17,
+          "Direct": 1,
+          "Paid": 7,
+          "Other": 1,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "service_dl": 29,
+          "inquiry": 3,
+          "wp_dl": 1
+        }
+      },
+      "2025-06": {
+        "sessions": 3298,
+        "cv": 18,
+        "sal": 4,
+        "sql": 3,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          157550,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 6,
+          "Paid": 7,
+          "Referral": 3,
+          "Other": 2
+        },
+        "cv_by_type": {
+          "service_dl": 16,
+          "wp_dl": 1,
+          "inquiry": 1
+        }
+      },
+      "2025-07": {
+        "sessions": 3258,
+        "cv": 50,
+        "sal": 9,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          60000,
+          0,
+          0,
+          148628,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 60000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Other": 6,
+          "Offline": 1,
+          "Paid": 9,
+          "Email": 25,
+          "Direct": 7,
+          "Organic": 2
+        },
+        "cv_by_type": {
+          "service_dl": 45,
+          "inquiry": 3,
+          "wp_dl": 2
+        }
+      },
+      "2025-08": {
+        "sessions": 2471,
+        "cv": 22,
+        "sal": 3,
+        "sql": 2,
+        "jucyu": 1,
+        "cost_items": [
+          55000,
+          0,
+          0,
+          0,
+          137854,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 55000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Email": 3,
+          "Paid": 3,
+          "Organic": 8,
+          "Direct": 3,
+          "Other": 3,
+          "Offline": 2
+        },
+        "cv_by_type": {
+          "service_dl": 21,
+          "inquiry": 1
+        }
+      },
+      "2025-09": {
+        "sessions": 2992,
+        "cv": 30,
+        "sal": 7,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          55000,
+          30000,
+          0,
+          0,
+          229185,
+          55000,
+          200000,
+          750000
+        ],
+        "cost_content": 85000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Organic": 8,
+          "Other": 12,
+          "Email": 8,
+          "Direct": 2
+        },
+        "cv_by_type": {
+          "service_dl": 26,
+          "wp_dl": 1,
+          "inquiry": 3
+        }
+      },
+      "2025-10": {
+        "sessions": 3183,
+        "cv": 32,
+        "sal": 3,
+        "sql": 0,
+        "jucyu": 1,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          219760,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Other": 17,
+          "Offline": 2,
+          "Organic": 3,
+          "Direct": 2,
+          "Email": 8
+        },
+        "cv_by_type": {
+          "service_dl": 29,
+          "inquiry": 3
+        }
+      },
+      "2025-11": {
+        "sessions": 2833,
+        "cv": 8,
+        "sal": 2,
+        "sql": 0,
+        "jucyu": 1,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          220838,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Other": 7,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "service_dl": 7,
+          "inquiry": 1
+        }
+      },
+      "2025-12": {
+        "sessions": 3119,
+        "cv": 18,
+        "sal": 3,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          220000,
+          45000,
+          0,
+          0,
+          201733,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 265000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Offline": 1,
+          "Direct": 4,
+          "Organic": 6,
+          "Other": 6,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "service_dl": 18
+        }
+      },
+      "2026-01": {
+        "sessions": 2764,
+        "cv": 44,
+        "sal": 7,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          110000,
+          75000,
+          0,
+          0,
+          205539,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 185000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Email": 20,
+          "Organic": 6,
+          "Other": 13,
+          "Offline": 3
+        },
+        "cv_by_type": {
+          "service_dl": 30,
+          "wp_dl": 6,
+          "inquiry": 8
+        }
+      },
+      "2026-02": {
+        "sessions": 3472,
+        "cv": 52,
+        "sal": 20,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          90000,
+          0,
+          10000,
+          218303,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 100000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Other": 12,
+          "Email": 28,
+          "Organic": 3,
+          "Direct": 9
+        },
+        "cv_by_type": {
+          "service_dl": 27,
+          "wp_dl": 21,
+          "inquiry": 4
+        }
+      },
+      "2026-03": {
+        "sessions": 2188,
+        "cv": 13,
+        "sal": 4,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          246000,
+          0,
+          0,
+          0,
+          134990,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 246000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Other": 9,
+          "Organic": 2,
+          "Direct": 1,
+          "Email": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "service_dl": 9
+        }
+      },
+      "2026-04": {
+        "sessions": 2398,
+        "cv": 31,
+        "sal": 3,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          78000,
+          88000,
+          0,
+          0,
+          130077,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 166000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Direct": 3,
+          "Other": 10,
+          "Offline": 4,
+          "Email": 9,
+          "Organic": 5
+        },
+        "cv_by_type": {
+          "service_dl": 25,
+          "inquiry": 4,
+          "wp_dl": 2
+        }
+      },
+      "2026-05": {
+        "sessions": 2455,
+        "cv": 34,
+        "sal": 3,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          78000,
+          86000,
+          0,
+          0,
+          133213,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 164000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Organic": 2,
+          "Other": 8,
+          "Email": 20,
+          "Direct": 3,
+          "Offline": 1
+        },
+        "cv_by_type": {
+          "service_dl": 14,
+          "wp_dl": 20
+        }
+      },
+      "2026-06": {
+        "sessions": 2648,
+        "cv": 27,
+        "sal": 1,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          148195,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Organic": 2,
+          "Other": 5,
+          "Email": 15,
+          "Direct": 3,
+          "Offline": 2
+        },
+        "cv_by_type": {
+          "service_dl": 26,
+          "inquiry": 1
+        }
+      },
+      "2026-07": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-08": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-09": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-10": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-11": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-12": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-01": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-02": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      }
+    },
+    "IS": {
+      "2024-07": {
+        "sessions": 371,
+        "cv": 3,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Referral": 1,
+          "Direct": 2
+        },
+        "cv_by_type": {
+          "wp_dl": 1,
+          "inquiry": 2
+        }
+      },
+      "2024-08": {
+        "sessions": 923,
+        "cv": 5,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Referral": 2,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "inquiry": 3,
+          "service_dl": 2
+        }
+      },
+      "2024-09": {
+        "sessions": 712,
+        "cv": 6,
+        "sal": 1,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 2,
+          "Organic": 2,
+          "Referral": 2
+        },
+        "cv_by_type": {
+          "wp_dl": 4,
+          "service_dl": 1,
+          "inquiry": 1
+        }
+      },
+      "2024-10": {
+        "sessions": 755,
+        "cv": 3,
+        "sal": 1,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 1,
+          "Direct": 1,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 1,
+          "inquiry": 2
+        }
+      },
+      "2024-11": {
+        "sessions": 4615,
+        "cv": 9,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Email": 5,
+          "Paid": 2
+        },
+        "cv_by_type": {
+          "wp_dl": 5,
+          "inquiry": 2,
+          "service_dl": 2
+        }
+      },
+      "2024-12": {
+        "sessions": 1022,
+        "cv": 17,
+        "sal": 4,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 1,
+          "Paid": 2,
+          "Email": 12,
+          "Organic": 1,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "service_dl": 2,
+          "wp_dl": 11
+        }
+      },
+      "2025-01": {
+        "sessions": 759,
+        "cv": 8,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Email": 3,
+          "Paid": 3,
+          "Referral": 2
+        },
+        "cv_by_type": {
+          "service_dl": 7,
+          "wp_dl": 1
+        }
+      },
+      "2025-02": {
+        "sessions": 1100,
+        "cv": 67,
+        "sal": 5,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Paid": 6,
+          "Referral": 2,
+          "Email": 59
+        },
+        "cv_by_type": {
+          "service_dl": 62,
+          "inquiry": 4,
+          "wp_dl": 1
+        }
+      },
+      "2025-03": {
+        "sessions": 764,
+        "cv": 4,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          155570,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Paid": 2,
+          "Direct": 1,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "service_dl": 2,
+          "inquiry": 2
+        }
+      },
+      "2025-04": {
+        "sessions": 1778,
+        "cv": 6,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          154913,
+          0,
+          487500,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Email": 1,
+          "Paid": 4,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "service_dl": 5,
+          "inquiry": 1
+        }
+      },
+      "2025-05": {
+        "sessions": 972,
+        "cv": 5,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          0,
+          155138,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 30000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Email": 3,
+          "Paid": 1,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "service_dl": 4,
+          "inquiry": 1
+        }
+      },
+      "2025-06": {
+        "sessions": 1028,
+        "cv": 12,
+        "sal": 2,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          60000,
+          0,
+          0,
+          114931,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 60000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Other": 2,
+          "Email": 7,
+          "Organic": 2,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "service_dl": 8
+        }
+      },
+      "2025-07": {
+        "sessions": 3160,
+        "cv": 16,
+        "sal": 6,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          35000,
+          0,
+          0,
+          133762,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 35000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Other": 3,
+          "Organic": 1,
+          "Paid": 1,
+          "Email": 11
+        },
+        "cv_by_type": {
+          "inquiry": 4,
+          "service_dl": 12
+        }
+      },
+      "2025-08": {
+        "sessions": 1281,
+        "cv": 25,
+        "sal": 2,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          35000,
+          0,
+          0,
+          72401,
+          0,
+          375000,
+          0
+        ],
+        "cost_content": 35000,
+        "content_count": 1,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Email": 22,
+          "Referral": 1
+        },
+        "cv_by_type": {
+          "service_dl": 10,
+          "wp_dl": 14,
+          "inquiry": 1
+        }
+      },
+      "2025-09": {
+        "sessions": 1652,
+        "cv": 5,
+        "sal": 1,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          70000,
+          0,
+          0,
+          60000,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 130000,
+        "content_count": 8,
+        "mql_by_channel": {
+          "Direct": 2,
+          "Referral": 1,
+          "Email": 1,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "inquiry": 3,
+          "service_dl": 1,
+          "wp_dl": 1
+        }
+      },
+      "2025-10": {
+        "sessions": 1120,
+        "cv": 16,
+        "sal": 4,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          30000,
+          0,
+          10000,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 40000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Other": 1,
+          "Direct": 2,
+          "Email": 13
+        },
+        "cv_by_type": {
+          "inquiry": 1,
+          "service_dl": 15
+        }
+      },
+      "2025-11": {
+        "sessions": 1551,
+        "cv": 9,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          110000,
+          30000,
+          0,
+          10000,
+          187046,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 150000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Email": 9
+        },
+        "cv_by_type": {
+          "service_dl": 9
+        }
+      },
+      "2025-12": {
+        "sessions": 1613,
+        "cv": 24,
+        "sal": 3,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          15000,
+          0,
+          10000,
+          169972,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 25000,
+        "content_count": 2,
+        "mql_by_channel": {
+          "Email": 23,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "service_dl": 23,
+          "inquiry": 1
+        }
+      },
+      "2026-01": {
+        "sessions": 1364,
+        "cv": 32,
+        "sal": 2,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          220000,
+          60000,
+          0,
+          0,
+          151179,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 280000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Email": 26,
+          "Other": 3,
+          "Direct": 1,
+          "Offline": 1,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "service_dl": 27,
+          "inquiry": 5
+        }
+      },
+      "2024-06": {
+        "sessions": 537,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-02": {
+        "sessions": 1222,
+        "cv": 39,
+        "sal": 10,
+        "sql": 3,
+        "jucyu": 0,
+        "cost_items": [
+          55000,
+          90000,
+          0,
+          355000,
+          151333,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 500000,
+        "content_count": 4,
+        "mql_by_channel": {
+          "Email": 37,
+          "Other": 1,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "service_dl": 18,
+          "wp_dl": 20,
+          "inquiry": 1
+        }
+      },
+      "2026-03": {
+        "sessions": 1317,
+        "cv": 13,
+        "sal": 0,
+        "sql": 1,
+        "jucyu": 1,
+        "cost_items": [
+          378000,
+          45000,
+          250000,
+          1065000,
+          201481,
+          55000,
+          200000,
+          2978000
+        ],
+        "cost_content": 1738000,
+        "content_count": 9,
+        "mql_by_channel": {
+          "Other": 1,
+          "Email": 10,
+          "Offline": 1,
+          "Organic": 1
+        },
+        "cv_by_type": {
+          "inquiry": 1,
+          "service_dl": 12
+        }
+      },
+      "2026-04": {
+        "sessions": 1450,
+        "cv": 5,
+        "sal": 2,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          143000,
+          45000,
+          500000,
+          0,
+          200883,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 688000,
+        "content_count": 5,
+        "mql_by_channel": {
+          "Email": 3,
+          "Other": 1,
+          "Direct": 1
+        },
+        "cv_by_type": {
+          "service_dl": 4,
+          "inquiry": 1
+        }
+      },
+      "2026-05": {
+        "sessions": 1172,
+        "cv": 14,
+        "sal": 3,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          198000,
+          45000,
+          0,
+          0,
+          193258,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 243000,
+        "content_count": 3,
+        "mql_by_channel": {
+          "Email": 11,
+          "Direct": 1,
+          "Offline": 1,
+          "Other": 1
+        },
+        "cv_by_type": {
+          "wp_dl": 4,
+          "service_dl": 8,
+          "inquiry": 2
+        }
+      },
+      "2026-06": {
+        "sessions": 1452,
+        "cv": 16,
+        "sal": 0,
+        "sql": 2,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          194972,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {
+          "Direct": 1,
+          "Email": 13,
+          "Other": 2
+        },
+        "cv_by_type": {
+          "inquiry": 3,
+          "service_dl": 13
+        }
+      },
+      "2026-07": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-08": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-09": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-10": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-11": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2026-12": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-01": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2027-02": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          55000,
+          200000,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2024-02": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 0,
+        "sql": 1,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2024-04": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      },
+      "2024-05": {
+        "sessions": 0,
+        "cv": 0,
+        "sal": 1,
+        "sql": 0,
+        "jucyu": 0,
+        "cost_items": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "cost_content": 0,
+        "content_count": 0,
+        "mql_by_channel": {},
+        "cv_by_type": {}
+      }
+    }
+  },
+  "costLabels": [
+    "コラム",
+    "メルマガ",
+    "WP",
+    "事例",
+    "広告",
+    "Web運用",
+    "コンサル",
+    "その他"
+  ]
+}

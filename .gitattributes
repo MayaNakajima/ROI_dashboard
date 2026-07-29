@@ -1,0 +1,17 @@
+# 改行コードの扱いを統一し、「LF→CRLFに変換されます」警告を防止する
+# テキストファイルはリポジトリ内でLFに正規化（チェックアウトもLF）
+* text=auto eol=lf
+
+# Windows用バッチはCRLF
+*.bat text eol=crlf
+
+# バイナリ（改行変換しない）
+*.xlsx binary
+*.xlsm binary
+*.docx binary
+*.pptx binary
+*.pdf  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
