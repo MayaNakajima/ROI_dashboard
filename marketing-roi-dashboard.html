@@ -1,0 +1,2401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マーケティング ROI ダッシュボード</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1e3a5f;--navy2:#25486e;
+  --blue:#2563eb;--sky:#38bdf8;
+  --green:#10b981;--green2:#059669;
+  --red:#ef4444;--amber:#f59e0b;
+  --bg:#eef2f7;--card:#fff;
+  --text:#1e293b;--muted:#64748b;--border:#e2e8f0;
+  --radius:10px;--shadow:0 1px 4px rgba(0,0,0,.08);
+}
+body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+
+/* ─── Header ─── */
+.hdr{background:var(--navy);color:#fff;padding:0 20px;display:flex;align-items:center;gap:16px;height:54px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-logo{font-size:15px;font-weight:700;white-space:nowrap;letter-spacing:-.3px}
+.hdr-logo span{opacity:.6;font-weight:400;font-size:13px;margin-left:6px}
+.hdr-sp{flex:1}
+.hdr-btn{padding:6px 13px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}
+.hdr-btn-ghost{background:rgba(255,255,255,.15);color:#fff}.hdr-btn-ghost:hover{background:rgba(255,255,255,.25)}
+.hdr-btn-primary{background:var(--blue);color:#fff}.hdr-btn-primary:hover{background:#1d4ed8}
+.hdr-badge{font-size:11px;background:rgba(255,255,255,.2);border-radius:4px;padding:2px 8px;margin-left:4px;color:rgba(255,255,255,.85)}
+
+/* ─── Org Bar ─── */
+.org-bar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:6px;height:46px;position:sticky;top:54px;z-index:199;overflow-x:auto}
+.org-tab{padding:5px 15px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap;transition:.15s;flex-shrink:0}
+.org-tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.org-tab:hover:not(.active){border-color:var(--blue);color:var(--blue)}
+.org-bar-sp{flex:1;min-width:20px}
+.filter-grp{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.filter-lbl{font-size:11px;color:var(--muted);white-space:nowrap}
+select,input[type=month]{padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text);cursor:pointer;background:#fff}
+input[type=month]{min-width:130px}
+.range-sep{font-size:13px;color:var(--muted);font-weight:700}
+select:focus{outline:2px solid var(--blue);outline-offset:1px}
+
+/* ─── Layout ─── */
+.main{padding:18px 20px;max-width:1440px;margin:0 auto}
+
+/* ─── View Tabs ─── */
+.view-tabs{display:flex;gap:2px;margin-bottom:18px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:3px;width:fit-content;box-shadow:var(--shadow)}
+.view-tab{padding:6px 20px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);transition:.15s;white-space:nowrap}
+.view-tab.active{background:var(--navy);color:#fff}
+.view-tab:hover:not(.active){color:var(--blue)}
+
+/* ─── Cards ─── */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow)}
+.card-pad{padding:18px}
+.sec-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.sec-title-icon{font-size:15px}
+
+/* ─── KPI Grid ─── */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px}
+.kpi-card{background:var(--card);border-radius:var(--radius);padding:15px 16px;border:1px solid var(--border);border-left:4px solid var(--blue);box-shadow:var(--shadow)}
+.kpi-card.roi{border-left-color:#8b5cf6}
+.kpi-card.cpa{border-left-color:#8b5cf6}
+.kpi-card.session{border-left-color:var(--sky)}
+.kpi-card.cv{border-left-color:var(--green)}
+.kpi-card.revenue{border-left-color:var(--blue)}
+.kpi-card.cost{border-left-color:var(--amber)}
+.kpi-lbl{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kpi-val{font-size:24px;font-weight:800;color:var(--text);margin-bottom:7px;line-height:1}
+.kpi-sub{font-size:11px;color:var(--muted);margin-bottom:4px}
+.kpi-trends{display:flex;gap:10px}
+.kpi-trend{display:flex;align-items:center;gap:3px;font-size:10px}
+.trend-lbl{color:var(--muted)}
+.trend-up{color:var(--green);font-weight:700}
+.trend-down{color:var(--red);font-weight:700}
+.trend-neg-up{color:var(--red);font-weight:700}
+.trend-neg-down{color:var(--green);font-weight:700}
+.trend-none{color:var(--muted)}
+
+/* ─── CV Progress ─── */
+.cv-wrap{margin-bottom:14px}
+.cv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.cv-item{}
+.cv-item-title{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:7px}
+.cv-nums{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.cv-pct{font-size:22px;font-weight:800}
+.cv-detail{font-size:11px;color:var(--muted)}
+.prog-bar{height:9px;background:var(--border);border-radius:5px;overflow:hidden}
+.prog-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.prog-good{background:linear-gradient(90deg,var(--green2),var(--green))}
+.prog-warn{background:linear-gradient(90deg,#d97706,var(--amber))}
+.prog-bad{background:linear-gradient(90deg,#dc2626,var(--red))}
+
+/* ─── Charts ─── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.chart-full{grid-column:span 2}
+.chart-box{height:240px;position:relative}
+
+/* ─── Comparison Table ─── */
+.tbl-wrap{overflow-x:auto;margin-bottom:14px}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{font-size:11px;font-weight:700;color:var(--muted);text-align:right;padding:9px 12px;border-bottom:2px solid var(--border);white-space:nowrap;background:#f8fafc}
+.data-table th:first-child{text-align:left}
+.data-table td{font-size:12px;padding:9px 12px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+.data-table td:first-child{text-align:left;font-weight:600;color:var(--text)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table .up-cell{color:var(--green);font-weight:700}
+.data-table .down-cell{color:var(--red);font-weight:700}
+.data-table .neg-up{color:var(--red);font-weight:700}
+.data-table .neg-down{color:var(--green);font-weight:700}
+.data-table tr:hover td{background:#f8fafc}
+
+/* ─── Data Entry ─── */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.btn{padding:6px 13px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:.15s;display:inline-flex;align-items:center;gap:4px}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#1d4ed8}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{background:var(--green2)}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-ghost{background:var(--border);color:var(--text)}.btn-ghost:hover{background:#d1d5db}
+.btn-amber{background:var(--amber);color:#fff}.btn-amber:hover{background:#d97706}
+.btn-sm{padding:4px 10px;font-size:11px}
+.input-tbl-wrap{overflow-x:auto}
+.input-tbl{width:100%;border-collapse:collapse;min-width:700px}
+.input-tbl th{font-size:11px;font-weight:700;color:var(--muted);padding:8px 10px;border-bottom:2px solid var(--border);text-align:center;background:#f8fafc;white-space:nowrap}
+.input-tbl th:first-child{text-align:left}
+.input-tbl td{padding:5px 6px;border-bottom:1px solid var(--border);text-align:center;vertical-align:middle}
+.input-tbl td:first-child{text-align:left;font-weight:600;white-space:nowrap;font-size:12px;padding-left:10px}
+.input-tbl input[type=number]{width:100%;padding:5px 6px;border:1px solid var(--border);border-radius:5px;text-align:right;font-size:12px;min-width:80px;transition:.15s}
+.input-tbl input[type=number]:focus{outline:2px solid var(--blue);outline-offset:1px;border-color:transparent}
+.calc-cell{font-size:12px;color:var(--muted);background:#f8fafc;font-family:monospace}
+.input-tbl tr:hover td{background:#f0f7ff}
+.input-tbl tr:hover td:first-child{background:#f0f7ff}
+.del-btn{width:26px;height:26px;border-radius:5px;border:none;cursor:pointer;background:#fee2e2;color:#dc2626;font-size:13px;font-weight:700;transition:.15s}
+.del-btn:hover{background:#dc2626;color:#fff}
+
+/* ─── Target Setting ─── */
+.target-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.target-org{border:1px solid var(--border);border-radius:var(--radius);padding:16px;background:#fff}
+.target-org-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.target-year-block{margin-bottom:12px;padding:10px;background:#f8fafc;border-radius:6px}
+.target-year-lbl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px}
+.target-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.target-row label{font-size:12px;color:var(--muted);width:90px;flex-shrink:0}
+.target-row input{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:12px;text-align:right}
+.target-row input:focus{outline:2px solid var(--blue);outline-offset:1px}
+.monthly-lbl-row{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:2px}
+.monthly-lbl-cell{font-size:10px;color:var(--muted);text-align:center}
+.monthly-input-row{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-bottom:3px}
+.monthly-tgt-input{padding:3px 2px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:center;width:100%}
+.monthly-tgt-input:focus{outline:2px solid var(--blue);outline-offset:1px}
+
+/* ─── Modals ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;width:90%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-sm{max-width:480px}
+.modal-md{max-width:600px}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:6px;color:var(--navy)}
+.modal-desc{font-size:12px;color:var(--muted);margin-bottom:14px}
+.modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.modal-sep{height:1px;background:var(--border);margin:14px 0}
+textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace;resize:vertical}
+textarea:focus{outline:2px solid var(--blue);outline-offset:1px}
+input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);border-radius:6px;width:100%;background:#f8fafc;cursor:pointer}
+.map-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.map-row label{font-size:12px;width:160px;flex-shrink:0;color:var(--muted)}
+.map-row select{flex:1;padding:5px 8px;font-size:12px}
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 12px;font-size:12px;color:#1d4ed8;line-height:1.6}
+.warn-box{background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:10px 12px;font-size:12px;color:#92400e;line-height:1.6}
+
+/* ─── Toast ─── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--navy);color:#fff;padding:11px 18px;border-radius:8px;font-size:13px;z-index:3000;box-shadow:0 6px 20px rgba(0,0,0,.2);animation:toastIn .25s ease}
+@keyframes toastIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+
+/* ─── Empty State ─── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .big{font-size:36px;margin-bottom:8px}
+.empty-state p{font-size:13px}
+
+/* ─── Responsive ─── */
+@media(max-width:1300px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:800px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}.chart-full{grid-column:span 1}.cv-grid{grid-template-columns:1fr}}
+
+.data-table .section-hdr td{background:#f1f5f9!important;font-weight:700;color:var(--navy);font-size:12px}
+.chart-box-lg{height:300px;position:relative}
+.content-roi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:14px}
+.content-roi-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px}
+.content-roi-org{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<header class="hdr">
+  <div class="hdr-logo">📊 マーケティング ROI ダッシュボード <span>ONWARD Marketing</span></div>
+  <div class="hdr-sp"></div>
+  <button class="hdr-btn hdr-btn-primary" onclick="openModal('autoImportModal')">🚀 BOXファイル取込</button>
+  <button class="hdr-btn hdr-btn-ghost" onclick="openModal('exportModal')">⬆ エクスポート</button>
+  <button class="hdr-btn hdr-btn-ghost" onclick="openModal('importModal')">⬇ インポート</button>
+</header>
+
+<!-- ─── Org Bar ─── -->
+<nav class="org-bar">
+  <button class="org-tab active" data-org="ALL" onclick="setOrg('ALL',this)">📊 マーケティング本部</button>
+  <button class="org-tab" data-org="UN"  onclick="setOrg('UN',this)">UN</button>
+  <button class="org-tab" data-org="SCH" onclick="setOrg('SCH',this)">SCH</button>
+  <button class="org-tab" data-org="MED" onclick="setOrg('MED',this)">MED</button>
+  <button class="org-tab" data-org="IS"  onclick="setOrg('IS',this)">IS</button>
+  <div class="org-bar-sp"></div>
+  <div class="filter-grp">
+    <span class="filter-lbl">表示期間</span>
+    <input type="month" id="startYMPicker" onchange="setDateRange()">
+    <span class="range-sep">〜</span>
+    <input type="month" id="endYMPicker" onchange="setDateRange()">
+  </div>
+</nav>
+
+<!-- ─── Main ─── -->
+<div class="main">
+
+  <!-- View Tabs -->
+  <div class="view-tabs">
+    <div class="view-tab active" onclick="switchView('dashboard',this)">📈 ダッシュボード</div>
+    <div class="view-tab" onclick="switchView('trend',this)">📊 月次推移</div>
+    <div class="view-tab" onclick="switchView('data',this)">📝 データ入力</div>
+    <div class="view-tab" onclick="switchView('targets',this)">🎯 目標設定</div>
+  </div>
+
+  <!-- ═══ Dashboard View ═══ -->
+  <div id="vw-dashboard">
+    <div id="kpiGrid" class="kpi-grid"></div>
+    <div class="card card-pad cv-wrap" id="card-cvprog">
+      <div class="sec-title" id="cvprogTitle"><span class="sec-title-icon">🎯</span> MQL・SQL 目標進捗 <span id="cvOrgLabel" style="font-size:11px;color:var(--muted);font-weight:400"></span></div>
+      <div class="cv-grid" id="cvGrid"></div>
+    </div>
+    <!-- Funnel + CPA -->
+    <div class="card card-pad" style="margin-bottom:14px" id="card-funnel">
+      <div class="sec-title"><span class="sec-title-icon">🔽</span>コンバージョンファネル <span id="funnelOrgLabel" style="font-size:11px;color:var(--muted);font-weight:400"></span></div>
+      <div id="funnelGrid"></div>
+    </div>
+
+    <div class="charts-grid" id="card-charts">
+      <div class="card card-pad">
+        <div class="sec-title"><span class="sec-title-icon">💰</span>月次 CPA 推移（費用÷MQL / 費用÷SQL）</div>
+        <div class="chart-box"><canvas id="chartROI"></canvas></div>
+      </div>
+      <div class="card card-pad">
+        <div class="sec-title"><span class="sec-title-icon">📊</span>セッション・CV 推移</div>
+        <div class="chart-box"><canvas id="chartSessCv"></canvas></div>
+      </div>
+      <div class="card card-pad chart-full">
+        <div class="sec-title"><span class="sec-title-icon">💰</span>月次費用推移（マーケ＋コンテンツ）</div>
+        <div class="chart-box"><canvas id="chartCostRev"></canvas></div>
+      </div>
+    </div>
+    <div class="card card-pad tbl-wrap" id="card-cmp">
+      <div class="sec-title"><span class="sec-title-icon">🔄</span>前月比・前年比</div>
+      <div id="cmpTable"></div>
+    </div>
+    <!-- 本部(ALL)独自KPI ダッシュボード -->
+    <div id="hqDash" style="display:none"></div>
+  </div>
+
+
+  <!-- ═══ Monthly Trend View ═══ -->
+  <div id="vw-trend" style="display:none">
+    <div class="card card-pad" style="margin-bottom:14px">
+      <div class="sec-title" style="justify-content:space-between">
+        <span><span class="sec-title-icon">📊</span>月別 KPI 推移テーブル <span id="trendOrgLabel" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px"></span></span>
+        <button class="btn btn-primary btn-sm" onclick="downloadTrendCsv()">⬇ CSV（UTF-8）ダウンロード</button>
+      </div>
+      <div id="trendTableWrap" style="overflow-x:auto"></div>
+    </div>
+    <div class="charts-grid" style="margin-bottom:14px">
+      <div class="card card-pad">
+        <div class="sec-title"><span class="sec-title-icon">🔄</span>ファネル転換率推移</div>
+        <div class="chart-box-lg"><canvas id="chartConvRate"></canvas></div>
+      </div>
+      <div class="card card-pad">
+        <div class="sec-title"><span class="sec-title-icon">📈</span>セッション・MQL・目標</div>
+        <div class="chart-box-lg"><canvas id="chartSessTarget"></canvas></div>
+      </div>
+    </div>
+    <div class="card card-pad" style="margin-bottom:14px">
+      <div class="sec-title"><span class="sec-title-icon">📦</span>コンテンツ ROI（総費用 ÷ 制作本数）</div>
+      <div id="contentRoiSection"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Data Entry View ═══ -->
+  <div id="vw-data" style="display:none">
+    <div class="card card-pad" id="dataStdCard">
+      <div class="toolbar">
+        <span class="sec-title" style="margin-bottom:0">月次データ入力・編集</span>
+        <div style="flex:1"></div>
+        <span class="filter-lbl">組織</span>
+        <select id="dataOrgSel" onchange="renderDataTable()">
+          <option value="ALL">本部(ALL)</option>
+          <option value="UN">UN</option>
+          <option value="SCH">SCH</option>
+          <option value="MED">MED</option>
+          <option value="IS">IS</option>
+        </select>
+        <span class="filter-lbl">年度</span>
+        <select id="dataYearSel" onchange="renderDataTable()"></select>
+        <button class="btn btn-success" onclick="saveDataTable()">💾 保存</button>
+      </div>
+      <div class="info-box" style="margin-bottom:12px">
+        💡 セッション・CV・SAL・SQL・受注、および CV実績（問合せ／資料DL／WPDL）は直接編集できます。<br>
+        CV実績はExcel取込値が初期値として入り、ここで自由に修正できます（再取込しない限り保持されます）。<br>
+        費用（マーケ費・コンテンツ費）は本数管理／予実管理の取込値から自動計算のため編集不可、CPA（費用÷MQL）・SQL CPA（費用÷SQL）も自動計算です。<br>
+        保存ボタンを押すまでデータは確定されません。行の「×」で月データを削除できます。
+      </div>
+      <div class="input-tbl-wrap" id="stdDataTblWrap">
+        <table class="input-tbl" id="dataTable">
+          <thead>
+            <tr>
+              <th style="text-align:left;min-width:60px">月</th>
+              <th>セッション数</th>
+              <th>CV数</th>
+              <th>SAL数</th>
+              <th>SQL数</th>
+              <th>受注数</th>
+              <th>マーケ費用（円）</th>
+              <th>コンテンツ費用（円）</th>
+              <th>CPA（自動）</th>
+              <th>SQL CPA<br>（自動）</th>
+              <th>CV<br>問合せ</th>
+              <th>CV<br>資料DL</th>
+              <th>CV<br>WPDL</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="dataTbody"></tbody>
+        </table>
+      </div>
+      <div id="hqDataWrap" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- ═══ Target Setting View ═══ -->
+  <div id="vw-targets" style="display:none">
+    <div class="card card-pad">
+      <div class="sec-title"><span class="sec-title-icon">🎯</span>CV 年間・月次目標設定</div>
+      <div class="info-box" style="margin-bottom:14px">
+        組織ごとに年間CV目標と月次CV目標を設定してください。「年間から均等配分」ボタンで年間目標を12等分できます。
+      </div>
+      <div id="hqTargetWrap"></div>
+      <div id="targetGrid" class="target-grid"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;justify-content:flex-end">
+      <button class="btn btn-success" onclick="saveTargets()">💾 目標を保存</button>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ═══ Export Modal ═══ -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal modal-md">
+    <h3>⬆ データエクスポート（JSON）</h3>
+    <p class="modal-desc">このJSONファイルをBOXに保存することでチームメンバーとデータを共有できます。<br>共有ワークフロー：エクスポート → BOXに保存 → 他ユーザーがインポート</p>
+    <textarea id="exportTxt" rows="10" readonly></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="downloadJson()">💾 JSONファイルをダウンロード</button>
+      <button class="btn btn-ghost" onclick="closeModal('exportModal')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Import Modal ═══ -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal modal-md">
+    <h3>⬇ データインポート（JSON）</h3>
+    <p class="modal-desc">BOXに保存したJSONファイルを選択してください。既存データとの統合も可能です。</p>
+    <input type="file" id="jsonFilePick" accept=".json" onchange="readJsonFile(this)">
+    <div class="modal-sep"></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:6px">またはJSONを貼り付け：</p>
+    <textarea id="importTxt" rows="6" placeholder='{"version":"2.0","targets":{...},"actuals":{...}}'></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="doImportJson()">インポート実行</button>
+      <button class="btn btn-ghost" onclick="closeModal('importModal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Auto Import Modal ═══ -->
+<div class="modal-overlay" id="autoImportModal">
+  <div class="modal modal-md" style="max-width:660px">
+    <h3>🚀 BOXファイル一括取込</h3>
+    <p class="modal-desc">各Excelファイルをアップロードすると、対象シート・列を自動認識してデータを取込みます。<br>ファイルは1つだけ選択してもOK。既存データはマージされます（上書きする場合は選択肢が出ます）。</p>
+
+    <!-- ① 実績ファイル -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;background:#f8fafc">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px">① 実績ファイル（.xlsm）</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">顧客一覧シートから <b>MQL(CVフラグ)・SAL・SQL・受注</b> を各日付列の月で自動集計（このダッシュボードのMQL/SAL/SQL/受注の正データ）。組織ごとにアップロードしてください。</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--navy)">UN（企業ユニフォーム）</label>
+          <input type="file" id="jissekiFile_UN" accept=".xlsm,.xlsx" style="margin-top:4px">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--navy)">SCH（スクール）</label>
+          <input type="file" id="jissekiFile_SCH" accept=".xlsm,.xlsx" style="margin-top:4px">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--navy)">MED（メディカル）</label>
+          <input type="file" id="jissekiFile_MED" accept=".xlsm,.xlsx" style="margin-top:4px">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--navy)">IS（インサイトセールス）</label>
+          <input type="file" id="jissekiFile_IS" accept=".xlsm,.xlsx" style="margin-top:4px">
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 予実管理 -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;background:#f8fafc">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px">② 予実管理ファイル（マーケティング本部｜予実管理.xlsx）</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">4シート（オリジナルユニフォーム/スクール/メディカル/インサイトセールス）から<br>セッション数(MAL)・マーケ費用・目標を自動抽出。<br>※MQL/SAL/SQL/受注は実績ファイル①を使用（予実管理の実績行は取込みません）。</div>
+      <input type="file" id="yojitsuFile" accept=".xlsx">
+      <div style="margin-top:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+          <input type="checkbox" id="importTargetsCb" checked> MAL目標・MQL目標・SQL目標を取込む（推奨）
+        </label>
+      </div>
+    </div>
+
+    <!-- ③ コンテンツ制作 -->
+    <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;background:#f8fafc">
+      <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px">③ コンテンツ制作管理ファイル（マーケティング本部｜コンテンツ制作｜本数管理.xlsx）</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">3シート目（コンテンツ管理2026）から事業部別コンテンツ費用を自動抽出。</div>
+      <input type="file" id="contentFile" accept=".xlsx">
+    </div>
+
+    <div id="autoImportLog" style="display:none;padding:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#065f46;margin-bottom:10px"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="doAutoImport()">🚀 取込実行</button>
+      <button class="btn btn-ghost" onclick="closeModal('autoImportModal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Excel Import Modal ═══ -->
+<div class="modal-overlay" id="xlModal">
+  <div class="modal modal-md">
+    <h3>📥 Excel ファイル取込</h3>
+    <p class="modal-desc">実績.xlsmまたは予実管理.xlsxをアップロードしてください。シートを選択し、列マッピングを設定後に取り込みます。</p>
+
+    <div class="toolbar" style="margin-bottom:10px;flex-wrap:wrap">
+      <span class="filter-lbl">取込先組織</span>
+      <select id="xlOrg"><option value="UN">UN</option><option value="SCH">SCH</option><option value="MED">MED</option><option value="IS">IS</option></select>
+      <span class="filter-lbl">取込先年度</span>
+      <select id="xlYear"></select>
+    </div>
+    <input type="file" id="xlFilePick" accept=".xlsx,.xlsm,.xls" onchange="previewXl(this)">
+
+    <div id="xlPreviewArea" style="display:none;margin-top:12px">
+      <div class="modal-sep" style="margin-top:6px;margin-bottom:10px"></div>
+      <div style="margin-bottom:8px">
+        <span class="filter-lbl" style="margin-right:6px">シート選択</span>
+        <select id="xlSheetSel" onchange="loadXlSheet()"></select>
+        <span id="xlInfo" style="font-size:11px;color:var(--muted);margin-left:10px"></span>
+      </div>
+      <p style="font-size:12px;font-weight:700;margin-bottom:8px">列マッピング（対応する列を選択してください）</p>
+      <div id="xlMapArea"></div>
+      <div class="warn-box" style="margin-top:10px">
+        ⚠️ 日付列とCV数列は必須です。取込は月次集計で行われます（同月内の行を合算）。
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="xlImportBtn" onclick="doImportXl()" style="display:none">取込実行</button>
+      <button class="btn btn-ghost" onclick="closeModal('xlModal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Confirm Modal ═══ -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal modal-sm">
+    <h3 id="confirmTitle">確認</h3>
+    <p id="confirmMsg" style="font-size:13px;color:var(--muted);margin:10px 0 0"></p>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="confirmOkBtn">削除する</button>
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+//  CONSTANTS
+// ─────────────────────────────────────────
+const STORAGE_KEY = 'mktg_roi_v4';
+const ORGS = ['UN','SCH','MED','IS'];
+const ORG_LABEL = {UN:'企業ユニフォーム (UN)',SCH:'スクール (SCH)',MED:'メディカル (MED)',IS:'インサイトセールス (IS)'};
+const MONTHS = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+const MLABELS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+const YEARS_RANGE = ['2024','2025','2026','2027'];
+// 費用ラベル（予実管理Row30-37の8項目）
+const COST_ROW_LABELS = ['コラム','メルマガ','WP','事例','広告','Web運用','コンサル','その他'];
+// 流入チャネルキー（Unknown=H列が空白の場合の「不明」）
+const CHANNEL_KEYS = ['Organic','Paid','Display','Email','Direct','Referral','OrganicSocial','Offline','Other','Unknown'];
+const CHANNEL_LABELS = {
+  Organic:'Organic',Paid:'Paid',Display:'Display',Email:'Email',
+  Direct:'Direct',Referral:'Referral',OrganicSocial:'OrganicSocial',
+  Offline:'Offline',Other:'Other',Unknown:'不明'
+};
+// CV種別キー
+const CV_TYPE_KEYS = ['inquiry','service_dl','wp_dl'];
+const CV_TYPE_LABELS = {inquiry:'CV（問い合わせ）',service_dl:'CV（サービス資料DL）',wp_dl:'CV（WPDL）'};
+// コンテンツ種別→cost_itemsインデックス
+const CONTENT_TYPE_TO_IDX = {
+  'コラム':0,'コラム記事':0,'コラム（広告含む）':0,
+  'メルマガ':1,'メールマガジン':1,
+  'WP':2,'ホワイトペーパー':2,'お役立ち資料':2,
+  '事例':3,'事例記事':3,'お客様事例':3,'導入事例':3,'ケーススタディ':3,
+  'その他':7
+};
+
+// ─────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────
+let appData, currentOrg='ALL';
+let rangeStart='2025-03', rangeEnd='2026-06';
+let charts = {};
+let xlWb = null, xlHeaders = [], xlRows = [];
+
+// ─────────────────────────────────────────
+//  DATE RANGE UTILITIES
+// ─────────────────────────────────────────
+function getMonthsInRange(s,e){
+  const months=[];
+  let [y,m]=s.split('-').map(Number);
+  const [ey,em]=e.split('-').map(Number);
+  while(y<ey||(y===ey&&m<=em)){months.push(`${y}-${String(m).padStart(2,'0')}`);m++;if(m>12){m=1;y++;}}
+  return months;
+}
+function getCurrentFY(date){const d=date||new Date();const y=d.getFullYear(),m=d.getMonth()+1;return m>=3?y:y-1;}
+function prevYM(ym,n){let[y,m]=ym.split('-').map(Number);m-=n;while(m<=0){m+=12;y--;}return `${y}-${String(m).padStart(2,'0')}`;}
+function ymLabel(ym){const[y,m]=ym.split('-');return `${parseInt(y)}年${parseInt(m)}月`;}
+function shortYmLabel(ym){const[y,m]=ym.split('-');return `${y.slice(2)}/${parseInt(m)}`;}
+// 会計年度（3月〜翌2月）ユーティリティ
+function fyOfYm(ym){const[y,m]=ym.split('-').map(Number);return m>=3?y:y-1;}
+function fyMonthsFull(fy){const ms=[];for(let m=3;m<=12;m++)ms.push(`${fy}-${String(m).padStart(2,'0')}`);ms.push(`${fy+1}-01`,`${fy+1}-02`);return ms;}
+function fysInRange(months){return [...new Set(months.map(fyOfYm))].sort((a,b)=>a-b);}
+
+
+// ─────────────────────────────────────────
+//  DATA
+// ─────────────────────────────────────────
+function defaultData(){
+  const targets={},actuals={};
+  ORGS.forEach(o=>{targets[o]={};actuals[o]={};});
+  return {version:'4.2',targets,actuals,costLabels:COST_ROW_LABELS.slice()};
+}
+
+function ensureOrg(org){
+  if(!appData.actuals[org]) appData.actuals[org]={};
+  if(!appData.targets[org]) appData.targets[org]={};
+}
+function ensureYM(org,ym){
+  ensureOrg(org);
+  if(!appData.actuals[org][ym]) appData.actuals[org][ym]={
+    sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+    cost_items:Array(8).fill(0),
+    cost_content:0,content_count:0,
+    mql_by_channel:{},cv_by_type:{}
+  };
+  const d=appData.actuals[org][ym];
+  // migrate cost_items to 8 slots
+  if(!d.cost_items) d.cost_items=Array(8).fill(0);
+  else { const ext=Array(8).fill(0); for(let i=0;i<8&&i<d.cost_items.length;i++) ext[i]=d.cost_items[i]||0; d.cost_items=ext; }
+  if(d.content_count===undefined) d.content_count=0;
+  if(!d.mql_by_channel) d.mql_by_channel={};
+  if(!d.cv_by_type) d.cv_by_type={};
+  return d;
+}
+function ensureYearTarget(org,y){
+  if(!appData.targets[org]) appData.targets[org]={};
+  if(!appData.targets[org][y]) appData.targets[org][y]={monthly_mql:Array(12).fill(0),monthly_session:Array(12).fill(0),monthly_sql:Array(12).fill(0)};
+  const t=appData.targets[org][y];
+  if(!t.monthly_mql&&t.monthly) t.monthly_mql=t.monthly.slice();
+  if(!t.monthly_mql) t.monthly_mql=Array(12).fill(0);
+  if(!t.monthly_session) t.monthly_session=Array(12).fill(0);
+  if(!t.monthly_sql) t.monthly_sql=Array(12).fill(0);
+  return t;
+}
+
+const EMBEDDED_DATA={"version":"4.2","targets":{"UN":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,25,25,25,25,25,25,25,25,25,25],"monthly_session":[0,0,3302,3302,3302,3302,3302,3302,3302,3302,3302,3302],"monthly_sql":[0,0,5,5,5,5,5,5,5,5,5,5]},"2027":{"monthly_mql":[25,25,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3302,3302,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[5,5,0,0,0,0,0,0,0,0,0,0]}},"SCH":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,6,6,6,6,6,6,6,6,6,6],"monthly_session":[0,0,3574,3574,3574,3574,3574,3574,3574,3574,3574,3574],"monthly_sql":[0,0,1,1,1,1,1,1,1,1,1,1]},"2027":{"monthly_mql":[6,6,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3574,3574,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[1,1,0,0,0,0,0,0,0,0,0,0]}},"MED":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,38,38,38,38,38,38,38,38,38,38],"monthly_session":[0,0,3903,3903,3903,3903,3903,3903,3903,3903,3903,3903],"monthly_sql":[0,0,2,2,2,2,2,2,2,2,2,2]},"2027":{"monthly_mql":[38,38,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3903,3903,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]}},"IS":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,23,23,23,23,23,23,23,23,23,23],"monthly_session":[0,0,2097,2097,2097,2097,2097,2097,2097,2097,2097,2097],"monthly_sql":[0,0,1,1,1,1,1,1,1,1,1,1]},"2027":{"monthly_mql":[23,23,0,0,0,0,0,0,0,0,0,0],"monthly_session":[2097,2097,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[1,1,0,0,0,0,0,0,0,0,0,0]}}},"actuals":{"UN":{"2024-09":{"sessions":129,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":2,"Direct":1},"cv_by_type":{"wp_dl":2,"inquiry":1}},"2024-10":{"sessions":911,"cv":7,"sal":2,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":1,"Organic":2,"Referral":4},"cv_by_type":{"inquiry":4,"wp_dl":3}},"2024-11":{"sessions":2080,"cv":25,"sal":4,"sql":5,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":8,"Direct":6,"Organic":5,"Referral":4,"Email":2},"cv_by_type":{"service_dl":9,"wp_dl":10,"inquiry":6}},"2025-01":{"sessions":3187,"cv":16,"sal":3,"sql":2,"jucyu":1,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":3,"Email":2,"Paid":5,"Direct":2,"Organic":3,"Other":1},"cv_by_type":{"inquiry":8,"wp_dl":4,"service_dl":4}},"2025-07":{"sessions":5181,"cv":45,"sal":9,"sql":3,"jucyu":0,"cost_items":[55000,60000,0,10000,154768,0,375000,0],"cost_content":125000,"content_count":4,"mql_by_channel":{"Other":41,"Paid":4},"cv_by_type":{"service_dl":17,"inquiry":20,"wp_dl":8}},"2025-08":{"sessions":2621,"cv":33,"sal":4,"sql":7,"jucyu":0,"cost_items":[0,30000,0,0,134796,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Paid":8,"Other":24,"Email":1},"cv_by_type":{"service_dl":15,"wp_dl":11,"inquiry":7}},"2024-12":{"sessions":1487,"cv":10,"sal":2,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":4,"Direct":2,"Referral":3,"Paid":1},"cv_by_type":{"inquiry":4,"wp_dl":5,"service_dl":1}},"2025-09":{"sessions":2797,"cv":30,"sal":6,"sql":8,"jucyu":2,"cost_items":[0,0,0,0,229185,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":30},"cv_by_type":{"service_dl":18,"wp_dl":3,"inquiry":9}},"2025-02":{"sessions":1772,"cv":18,"sal":6,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":3,"Email":2,"Referral":6,"Paid":3,"Organic":4},"cv_by_type":{"inquiry":8,"wp_dl":6,"service_dl":4}},"2025-03":{"sessions":2488,"cv":19,"sal":5,"sql":5,"jucyu":0,"cost_items":[0,90000,0,0,153114,0,487500,0],"cost_content":90000,"content_count":3,"mql_by_channel":{"Organic":5,"Referral":5,"Paid":4,"Direct":2,"Other":2,"Email":1},"cv_by_type":{"service_dl":5,"inquiry":9,"wp_dl":5}},"2026-04":{"sessions":3178,"cv":11,"sal":3,"sql":2,"jucyu":0,"cost_items":[78000,43000,0,0,97826,55000,200000,0],"cost_content":121000,"content_count":2,"mql_by_channel":{"Other":7,"Email":4},"cv_by_type":{"inquiry":3,"wp_dl":7,"service_dl":1}},"2025-04":{"sessions":1959,"cv":20,"sal":4,"sql":6,"jucyu":0,"cost_items":[220000,30000,0,10000,157036,0,487500,0],"cost_content":260000,"content_count":4,"mql_by_channel":{"Direct":5,"Paid":8,"Referral":3,"Organic":3,"Email":1},"cv_by_type":{"inquiry":9,"wp_dl":6,"service_dl":5}},"2025-05":{"sessions":2159,"cv":14,"sal":4,"sql":3,"jucyu":1,"cost_items":[0,30000,0,20000,150477,0,375000,0],"cost_content":50000,"content_count":3,"mql_by_channel":{"Other":2,"Paid":4,"Referral":5,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":4,"wp_dl":3,"service_dl":7}},"2026-03":{"sessions":3021,"cv":8,"sal":1,"sql":2,"jucyu":0,"cost_items":[356000,75000,0,355000,137479,55000,200000,0],"cost_content":786000,"content_count":7,"mql_by_channel":{"Other":8},"cv_by_type":{"inquiry":7,"wp_dl":1}},"2026-01":{"sessions":3355,"cv":13,"sal":3,"sql":3,"jucyu":2,"cost_items":[330000,45000,0,355000,217467,55000,200000,0],"cost_content":730000,"content_count":5,"mql_by_channel":{"Other":13},"cv_by_type":{"wp_dl":5,"service_dl":3,"inquiry":5}},"2025-11":{"sessions":2881,"cv":23,"sal":4,"sql":4,"jucyu":1,"cost_items":[0,30000,0,0,236641,55000,200000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":23},"cv_by_type":{"service_dl":10,"inquiry":12,"wp_dl":1}},"2025-06":{"sessions":2553,"cv":17,"sal":4,"sql":4,"jucyu":0,"cost_items":[220000,30000,0,10000,154410,0,375000,0],"cost_content":260000,"content_count":4,"mql_by_channel":{"Paid":7,"Referral":4,"Organic":2,"Direct":4},"cv_by_type":{"service_dl":8,"wp_dl":6,"inquiry":3}},"2025-10":{"sessions":3226,"cv":19,"sal":3,"sql":2,"jucyu":0,"cost_items":[110000,0,0,0,230988,55000,200000,0],"cost_content":110000,"content_count":1,"mql_by_channel":{"Other":19},"cv_by_type":{"inquiry":10,"service_dl":9}},"2025-12":{"sessions":2908,"cv":14,"sal":5,"sql":3,"jucyu":0,"cost_items":[0,0,0,355000,199267,55000,200000,0],"cost_content":355000,"content_count":1,"mql_by_channel":{"Other":14},"cv_by_type":{"inquiry":7,"service_dl":5,"wp_dl":2}},"2026-02":{"sessions":3007,"cv":13,"sal":3,"sql":2,"jucyu":0,"cost_items":[110000,105000,0,0,204932,55000,200000,0],"cost_content":215000,"content_count":6,"mql_by_channel":{"Other":13},"cv_by_type":{"service_dl":2,"wp_dl":4,"inquiry":7}},"2026-05":{"sessions":2639,"cv":44,"sal":3,"sql":2,"jucyu":0,"cost_items":[0,73000,500000,0,0,55000,200000,0],"cost_content":573000,"content_count":3,"mql_by_channel":{"Other":30,"Email":14},"cv_by_type":{"inquiry":25,"service_dl":8,"wp_dl":11}},"2026-06":{"sessions":4301,"cv":22,"sal":6,"sql":5,"jucyu":0,"cost_items":[0,0,0,0,558446,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":19,"Email":3},"cv_by_type":{"wp_dl":8,"inquiry":12,"service_dl":2}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"SCH":{"2024-10":{"sessions":1167,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":2,"Organic":1},"cv_by_type":{"inquiry":2,"wp_dl":1}},"2024-11":{"sessions":1136,"cv":6,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":3,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":4,"wp_dl":1,"service_dl":1}},"2025-03":{"sessions":1948,"cv":8,"sal":1,"sql":1,"jucyu":1,"cost_items":[0,30000,0,0,155543,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":3,"Referral":1,"Paid":1,"Other":3},"cv_by_type":{"wp_dl":1,"inquiry":5,"service_dl":2}},"2024-12":{"sessions":1191,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":2,"Organic":2},"cv_by_type":{"inquiry":2,"service_dl":1,"wp_dl":1}},"2025-01":{"sessions":1553,"cv":3,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Email":1},"cv_by_type":{"wp_dl":2,"inquiry":1}},"2025-02":{"sessions":1856,"cv":3,"sal":0,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":1,"Paid":1,"Organic":1},"cv_by_type":{"inquiry":1,"service_dl":1,"wp_dl":1}},"2025-04":{"sessions":1793,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,127626,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":1,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":3,"wp_dl":1}},"2025-05":{"sessions":1571,"cv":5,"sal":3,"sql":3,"jucyu":0,"cost_items":[0,30000,0,0,90145,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":3,"Email":1,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":1}},"2025-09":{"sessions":1474,"cv":3,"sal":0,"sql":0,"jucyu":1,"cost_items":[0,60000,0,0,0,55000,200000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":3},"cv_by_type":{"inquiry":3}},"2025-06":{"sessions":1823,"cv":7,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,151696,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":2,"Email":1,"Organic":3,"Paid":1},"cv_by_type":{"inquiry":4,"wp_dl":1,"service_dl":2}},"2025-07":{"sessions":1907,"cv":0,"sal":0,"sql":1,"jucyu":0,"cost_items":[220000,0,0,0,140117,0,375000,0],"cost_content":220000,"content_count":2,"mql_by_channel":{},"cv_by_type":{}},"2025-08":{"sessions":1415,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,125449,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":1,"Direct":1},"cv_by_type":{"service_dl":1,"inquiry":1}},"2025-10":{"sessions":1499,"cv":1,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":1},"cv_by_type":{"service_dl":1}},"2026-01":{"sessions":2227,"cv":2,"sal":0,"sql":2,"jucyu":0,"cost_items":[275000,60000,0,0,151103,55000,200000,0],"cost_content":335000,"content_count":5,"mql_by_channel":{"Other":2},"cv_by_type":{"service_dl":2}},"2025-11":{"sessions":1791,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,15000,0,0,176103,55000,200000,0],"cost_content":15000,"content_count":1,"mql_by_channel":{"Other":2},"cv_by_type":{"inquiry":2}},"2025-12":{"sessions":2637,"cv":2,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,45000,0,0,160373,55000,200000,0],"cost_content":45000,"content_count":1,"mql_by_channel":{"Other":2},"cv_by_type":{"inquiry":2}},"2026-02":{"sessions":3811,"cv":3,"sal":0,"sql":1,"jucyu":0,"cost_items":[143000,0,0,0,151302,55000,200000,0],"cost_content":143000,"content_count":2,"mql_by_channel":{"Other":3},"cv_by_type":{"inquiry":3}},"2026-03":{"sessions":2465,"cv":7,"sal":0,"sql":0,"jucyu":0,"cost_items":[246000,45000,0,0,201773,55000,200000,0],"cost_content":291000,"content_count":4,"mql_by_channel":{"Other":7},"cv_by_type":{"inquiry":5,"wp_dl":2}},"2026-04":{"sessions":2750,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,201830,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":3},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2026-05":{"sessions":2887,"cv":4,"sal":1,"sql":0,"jucyu":0,"cost_items":[176000,90000,0,0,201837,55000,200000,0],"cost_content":266000,"content_count":4,"mql_by_channel":{"Other":4},"cv_by_type":{"service_dl":1,"wp_dl":1,"inquiry":2}},"2026-06":{"sessions":2821,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,201929,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":3},"cv_by_type":{"service_dl":1,"inquiry":2}},"2024-08":{"sessions":59,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2024-09":{"sessions":597,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"MED":{"2024-02":{"sessions":0,"cv":1,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"inquiry":1}},"2025-02":{"sessions":2167,"cv":6,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":3,"Organic":1,"Referral":1,"Email":1},"cv_by_type":{"service_dl":5,"wp_dl":1}},"2025-05":{"sessions":3250,"cv":33,"sal":5,"sql":4,"jucyu":0,"cost_items":[0,60000,0,0,141813,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Organic":6,"Email":17,"Direct":1,"Paid":7,"Other":1,"Referral":1},"cv_by_type":{"service_dl":29,"inquiry":3,"wp_dl":1}},"2024-05":{"sessions":0,"cv":1,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"service_dl":1}},"2024-06":{"sessions":0,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":1,"Email":1},"cv_by_type":{"wp_dl":1,"service_dl":1}},"2024-07":{"sessions":0,"cv":1,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"wp_dl":1}},"2024-08":{"sessions":1175,"cv":3,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1,"Direct":1,"Organic":1},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-09":{"sessions":1635,"cv":17,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":13,"Direct":1,"Organic":1,"Referral":1,"Paid":1},"cv_by_type":{"wp_dl":13,"inquiry":1,"service_dl":3}},"2024-12":{"sessions":2712,"cv":20,"sal":2,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":6,"Email":10,"Organic":3,"Referral":1},"cv_by_type":{"service_dl":9,"wp_dl":10,"inquiry":1}},"2025-11":{"sessions":2833,"cv":8,"sal":2,"sql":0,"jucyu":1,"cost_items":[0,0,0,0,220838,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":8},"cv_by_type":{"service_dl":7,"inquiry":1}},"2024-10":{"sessions":2788,"cv":14,"sal":0,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":3,"Paid":8,"Email":2,"Direct":1},"cv_by_type":{"service_dl":12,"wp_dl":2}},"2024-11":{"sessions":2811,"cv":16,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Paid":7,"Email":3,"Referral":3,"Direct":1},"cv_by_type":{"service_dl":13,"wp_dl":2,"inquiry":1}},"2025-01":{"sessions":2292,"cv":17,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":9,"Paid":3,"Organic":2,"Referral":2,"Direct":1},"cv_by_type":{"wp_dl":9,"service_dl":8}},"2025-03":{"sessions":2279,"cv":20,"sal":0,"sql":2,"jucyu":0,"cost_items":[220000,30000,0,0,141184,0,487500,0],"cost_content":250000,"content_count":3,"mql_by_channel":{"Direct":3,"Paid":4,"Referral":3,"Email":4,"Organic":4,"Other":2},"cv_by_type":{"service_dl":19,"inquiry":1}},"2025-04":{"sessions":2674,"cv":26,"sal":6,"sql":4,"jucyu":0,"cost_items":[220000,60000,0,0,120357,0,487500,0],"cost_content":280000,"content_count":4,"mql_by_channel":{"Email":3,"Paid":7,"Organic":11,"Other":2,"Referral":3},"cv_by_type":{"service_dl":20,"wp_dl":1,"inquiry":5}},"2025-10":{"sessions":3183,"cv":32,"sal":3,"sql":0,"jucyu":1,"cost_items":[0,30000,0,0,219760,55000,200000,0],"cost_content":30000,"content_count":2,"mql_by_channel":{"Other":24,"Email":8},"cv_by_type":{"service_dl":29,"inquiry":3}},"2025-06":{"sessions":3298,"cv":18,"sal":4,"sql":3,"jucyu":0,"cost_items":[0,0,0,0,157550,0,375000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":6,"Paid":7,"Referral":3,"Other":2},"cv_by_type":{"service_dl":16,"wp_dl":1,"inquiry":1}},"2025-07":{"sessions":3258,"cv":50,"sal":9,"sql":1,"jucyu":0,"cost_items":[0,60000,0,0,148628,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":16,"Paid":9,"Email":25},"cv_by_type":{"service_dl":45,"inquiry":3,"wp_dl":2}},"2025-08":{"sessions":2471,"cv":22,"sal":3,"sql":2,"jucyu":1,"cost_items":[55000,0,0,0,137854,0,375000,0],"cost_content":55000,"content_count":1,"mql_by_channel":{"Email":3,"Paid":3,"Other":16},"cv_by_type":{"service_dl":21,"inquiry":1}},"2025-09":{"sessions":2992,"cv":30,"sal":7,"sql":0,"jucyu":0,"cost_items":[55000,30000,0,0,229185,55000,200000,750000],"cost_content":85000,"content_count":2,"mql_by_channel":{"Other":22,"Email":8},"cv_by_type":{"service_dl":26,"wp_dl":1,"inquiry":3}},"2025-12":{"sessions":3119,"cv":18,"sal":3,"sql":0,"jucyu":0,"cost_items":[220000,45000,0,0,201733,55000,200000,0],"cost_content":265000,"content_count":4,"mql_by_channel":{"Other":17,"Email":1},"cv_by_type":{"service_dl":18}},"2026-02":{"sessions":3472,"cv":52,"sal":20,"sql":2,"jucyu":0,"cost_items":[0,90000,0,10000,218303,55000,200000,0],"cost_content":100000,"content_count":3,"mql_by_channel":{"Other":24,"Email":28},"cv_by_type":{"service_dl":27,"wp_dl":21,"inquiry":4}},"2026-01":{"sessions":2764,"cv":44,"sal":7,"sql":0,"jucyu":0,"cost_items":[110000,75000,0,0,205539,55000,200000,0],"cost_content":185000,"content_count":3,"mql_by_channel":{"Other":24,"Email":20},"cv_by_type":{"service_dl":30,"wp_dl":6,"inquiry":8}},"2026-03":{"sessions":2188,"cv":13,"sal":4,"sql":1,"jucyu":0,"cost_items":[246000,0,0,0,134990,55000,200000,0],"cost_content":246000,"content_count":3,"mql_by_channel":{"Other":12,"Email":1},"cv_by_type":{"inquiry":4,"service_dl":9}},"2026-06":{"sessions":2648,"cv":27,"sal":1,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,148195,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":12,"Email":15},"cv_by_type":{"service_dl":26,"inquiry":1}},"2026-04":{"sessions":2398,"cv":31,"sal":3,"sql":2,"jucyu":0,"cost_items":[78000,88000,0,0,130077,55000,200000,0],"cost_content":166000,"content_count":3,"mql_by_channel":{"Other":22,"Email":9},"cv_by_type":{"service_dl":25,"inquiry":4,"wp_dl":2}},"2026-05":{"sessions":2455,"cv":34,"sal":3,"sql":0,"jucyu":0,"cost_items":[78000,86000,0,0,133213,55000,200000,0],"cost_content":164000,"content_count":3,"mql_by_channel":{"Other":14,"Email":20},"cv_by_type":{"service_dl":14,"wp_dl":20}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"IS":{"2024-07":{"sessions":371,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":1,"Direct":2},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-08":{"sessions":923,"cv":5,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Referral":2,"Organic":1},"cv_by_type":{"inquiry":3,"service_dl":2}},"2024-09":{"sessions":712,"cv":6,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":2,"Organic":2,"Referral":2},"cv_by_type":{"wp_dl":4,"service_dl":1,"inquiry":1}},"2024-10":{"sessions":755,"cv":3,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1,"Direct":1,"Referral":1},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-11":{"sessions":4615,"cv":9,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Email":5,"Paid":2},"cv_by_type":{"wp_dl":5,"inquiry":2,"service_dl":2}},"2024-12":{"sessions":1022,"cv":17,"sal":4,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":1,"Paid":2,"Email":12,"Organic":1,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":2,"wp_dl":11}},"2025-06":{"sessions":1028,"cv":12,"sal":2,"sql":2,"jucyu":0,"cost_items":[0,60000,0,0,114931,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":2,"Email":7,"Organic":2,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":8}},"2026-03":{"sessions":1317,"cv":13,"sal":0,"sql":1,"jucyu":1,"cost_items":[378000,45000,250000,1065000,201481,55000,200000,2978000],"cost_content":1738000,"content_count":9,"mql_by_channel":{"Other":3,"Email":10},"cv_by_type":{"inquiry":1,"service_dl":12}},"2025-01":{"sessions":759,"cv":8,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":3,"Paid":3,"Referral":2},"cv_by_type":{"service_dl":7,"wp_dl":1}},"2025-02":{"sessions":1100,"cv":67,"sal":5,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":6,"Referral":2,"Email":59},"cv_by_type":{"service_dl":62,"inquiry":4,"wp_dl":1}},"2024-02":{"sessions":0,"cv":0,"sal":0,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-03":{"sessions":764,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,155570,0,487500,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":2,"Direct":1,"Other":1},"cv_by_type":{"service_dl":2,"inquiry":2}},"2025-04":{"sessions":1778,"cv":6,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,154913,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Email":1,"Paid":4,"Referral":1},"cv_by_type":{"service_dl":5,"inquiry":1}},"2024-04":{"sessions":0,"cv":0,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-05":{"sessions":972,"cv":5,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,155138,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Email":3,"Paid":1,"Referral":1},"cv_by_type":{"service_dl":4,"inquiry":1}},"2024-05":{"sessions":0,"cv":0,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-07":{"sessions":3160,"cv":16,"sal":6,"sql":0,"jucyu":0,"cost_items":[0,35000,0,0,133762,0,375000,0],"cost_content":35000,"content_count":1,"mql_by_channel":{"Other":4,"Paid":1,"Email":11},"cv_by_type":{"inquiry":4,"service_dl":12}},"2025-09":{"sessions":1652,"cv":5,"sal":1,"sql":1,"jucyu":0,"cost_items":[70000,0,0,60000,0,55000,200000,0],"cost_content":130000,"content_count":8,"mql_by_channel":{"Direct":2,"Other":2,"Email":1},"cv_by_type":{"inquiry":3,"service_dl":1,"wp_dl":1}},"2025-08":{"sessions":1281,"cv":25,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,35000,0,0,72401,0,375000,0],"cost_content":35000,"content_count":1,"mql_by_channel":{"Other":3,"Email":22},"cv_by_type":{"service_dl":10,"wp_dl":14,"inquiry":1}},"2025-10":{"sessions":1120,"cv":16,"sal":4,"sql":1,"jucyu":0,"cost_items":[0,30000,0,10000,0,55000,200000,0],"cost_content":40000,"content_count":2,"mql_by_channel":{"Other":3,"Email":13},"cv_by_type":{"inquiry":1,"service_dl":15}},"2025-11":{"sessions":1551,"cv":9,"sal":1,"sql":0,"jucyu":0,"cost_items":[110000,30000,0,10000,187046,55000,200000,0],"cost_content":150000,"content_count":3,"mql_by_channel":{"Email":9},"cv_by_type":{"service_dl":9}},"2025-12":{"sessions":1613,"cv":24,"sal":3,"sql":0,"jucyu":0,"cost_items":[0,15000,0,10000,169972,55000,200000,0],"cost_content":25000,"content_count":2,"mql_by_channel":{"Email":23,"Other":1},"cv_by_type":{"service_dl":23,"inquiry":1}},"2026-01":{"sessions":1364,"cv":32,"sal":2,"sql":1,"jucyu":0,"cost_items":[220000,60000,0,0,151179,55000,200000,0],"cost_content":280000,"content_count":4,"mql_by_channel":{"Email":26,"Other":6},"cv_by_type":{"service_dl":27,"inquiry":5}},"2026-02":{"sessions":1222,"cv":39,"sal":10,"sql":3,"jucyu":0,"cost_items":[55000,90000,0,355000,151333,55000,200000,0],"cost_content":500000,"content_count":4,"mql_by_channel":{"Email":37,"Other":2},"cv_by_type":{"service_dl":18,"wp_dl":20,"inquiry":1}},"2026-04":{"sessions":1450,"cv":5,"sal":2,"sql":1,"jucyu":0,"cost_items":[143000,45000,500000,0,200883,55000,200000,0],"cost_content":688000,"content_count":5,"mql_by_channel":{"Email":3,"Other":2},"cv_by_type":{"service_dl":4,"inquiry":1}},"2026-05":{"sessions":1172,"cv":14,"sal":3,"sql":0,"jucyu":0,"cost_items":[198000,45000,0,0,193258,55000,200000,0],"cost_content":243000,"content_count":3,"mql_by_channel":{"Email":11,"Other":3},"cv_by_type":{"wp_dl":4,"service_dl":8,"inquiry":2}},"2026-06":{"sessions":1452,"cv":16,"sal":0,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,194972,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":3,"Email":13},"cv_by_type":{"inquiry":3,"service_dl":13}},"2024-06":{"sessions":537,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}}},"costLabels":["コラム","メルマガ","WP","事例","広告","Web運用","コンサル","その他"]};
+// 費用ラベルが未設定/プレースホルダ(①〜⑧・費用N)の場合は実項目名に補正
+function migrateData(d){
+  if(!Array.isArray(d.costLabels)||d.costLabels.length<8||d.costLabels.some(l=>!l||/^[①-⑧]$/.test(String(l))||/^費用\d?$/.test(String(l)))){
+    d.costLabels=COST_ROW_LABELS.slice();
+  }
+}
+function loadData(){
+  try{
+    const s=localStorage.getItem(STORAGE_KEY);
+    if(s){const d=JSON.parse(s);if(d&&d.version){migrateData(d);return d;}}
+  }catch(e){}
+  // localStorageが空なら埋め込み済みの最新データを使用
+  if(typeof EMBEDDED_DATA!=='undefined'&&EMBEDDED_DATA){try{const d=JSON.parse(JSON.stringify(EMBEDDED_DATA));migrateData(d);return d;}catch(e){}}
+  return defaultData();
+}
+
+function saveData(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(appData));
+}
+
+// ─────────────────────────────────────────
+//  ACCESSORS
+// ─────────────────────────────────────────
+function getRawData(org,ym){
+  const d=appData.actuals[org]?.[ym];
+  if(!d) return {sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+    cost_items:Array(8).fill(0),cost_content:0,content_count:0,
+    mql_by_channel:{},cv_by_type:{}};
+  const ci=(d.cost_items||[]);
+  const cost8=Array(8).fill(0).map((_,i)=>ci[i]||0);
+  return {
+    sessions:d.sessions||0,cv:d.cv||0,sal:d.sal||0,sql:d.sql||0,jucyu:d.jucyu||0,
+    cost_items:cost8,cost_content:d.cost_content||0,content_count:d.content_count||0,
+    mql_by_channel:d.mql_by_channel||{},cv_by_type:d.cv_by_type||{}
+  };
+}
+function getMktgCost(d){return (d.cost_items||[]).reduce((s,v)=>s+(v||0),0);}
+// ①〜④(コラム/メルマガ/WP/事例)=本数管理の単価×本数、⑤〜⑧(広告/Web運用/コンサル/その他)=予実管理
+function getContentCost(d){const ci=d.cost_items||[];return (ci[0]||0)+(ci[1]||0)+(ci[2]||0)+(ci[3]||0);}
+function getOtherCost(d){const ci=d.cost_items||[];return (ci[4]||0)+(ci[5]||0)+(ci[6]||0)+(ci[7]||0);}
+// 費用はcost_itemsに集約済み（①〜④=本数管理／⑤〜⑧=予実管理）。コンテンツ費の二重計上を避けるため合計はcost_itemsのみ
+function getTotalCost(d){return getMktgCost(d);}
+function getData(org,ym){
+  if(org==='ALL'){
+    const res={sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+      cost_items:Array(8).fill(0),cost_content:0,content_count:0,
+      mql_by_channel:{},cv_by_type:{}};
+    ORGS.forEach(o=>{
+      const d=getRawData(o,ym);
+      res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.jucyu+=d.jucyu;
+      res.cost_content+=d.cost_content;res.content_count+=d.content_count;
+      d.cost_items.forEach((v,i)=>res.cost_items[i]+=(v||0));
+      CHANNEL_KEYS.forEach(k=>res.mql_by_channel[k]=(res.mql_by_channel[k]||0)+(d.mql_by_channel[k]||0));
+      CV_TYPE_KEYS.forEach(k=>res.cv_by_type[k]=(res.cv_by_type[k]||0)+(d.cv_by_type[k]||0));
+    });
+    return res;
+  }
+  return getRawData(org,ym);
+}
+function getAgg(org,months){
+  const res={sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+    cost_items:Array(8).fill(0),cost_content:0,content_count:0,
+    mql_by_channel:{},cv_by_type:{}};
+  months.forEach(ym=>{
+    const d=getData(org,ym);
+    res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.jucyu+=d.jucyu;
+    res.cost_content+=d.cost_content;res.content_count+=d.content_count;
+    d.cost_items.forEach((v,i)=>res.cost_items[i]+=(v||0));
+    CHANNEL_KEYS.forEach(k=>res.mql_by_channel[k]=(res.mql_by_channel[k]||0)+(d.mql_by_channel[k]||0));
+    CV_TYPE_KEYS.forEach(k=>res.cv_by_type[k]=(res.cv_by_type[k]||0)+(d.cv_by_type[k]||0));
+  });
+  return res;
+}
+// 流入チャネル分類
+function classifyChannel(val){
+  if(!val||String(val).trim()==='') return 'Unknown'; // H列が空白 → 不明としてカウント
+  const v=String(val).toLowerCase().trim();
+  // Exact matches for actual Excel file values
+  if(v==='organic') return 'Organic';
+  if(v==='listing') return 'Paid';
+  if(v==='display') return 'Display';
+  if(v==='mail') return 'Email';
+  if(v==='direct') return 'Direct';
+  if(v==='link') return 'Referral';
+  if(v==='case'||v==='column') return 'Organic'; // content-driven organic traffic
+  if(v==='others'||v==='other') return 'Other';
+  // Japanese fallbacks
+  if(v.includes('オーガニック')||v.includes('自然検索')||v.includes('seo')) return 'Organic';
+  if(v.includes('paid')||v.includes('リスティング')||v.includes('検索広告')||v.includes('cpc')) return 'Paid';
+  if(v.includes('display')||v.includes('ディスプレイ')) return 'Display';
+  if(v.includes('email')||v.includes('メール')||v.includes('メルマガ')) return 'Email';
+  if(v.includes('ダイレクト')||v.includes('直接')) return 'Direct';
+  if(v.includes('referral')||v.includes('参照')||v.includes('リファラル')) return 'Referral';
+  if(v.includes('organicsocial')||v.includes('ソーシャル')||v.includes('sns')) return 'OrganicSocial';
+  if(v.includes('offline')||v.includes('オフライン')||v.includes('イベント')||v.includes('展示会')) return 'Offline';
+  return 'Other';
+}
+// CV種別分類
+function classifyCVType(val){
+  if(!val||String(val).trim()==='') return null;
+  const v=String(val).trim();
+  // ③ WP系: WP / ホワイトペーパー / お役立ち資料 / WP1・WP2 等
+  if(v.includes('WPダウンロード')||v.includes('お役立ち資料')||v.includes('ホワイトペーパー')) return 'wp_dl';
+  const wpMatch=v.match(/[｜|]WP\d*[｜|$]/)||v.match(/\|WP\d/);
+  if(wpMatch) return 'wp_dl';
+  if(/\bWP\d+\b/.test(v)||/[｜|]WP\d/.test(v)||/(^|[^A-Za-z])WP([^A-Za-z]|$)/i.test(v)) return 'wp_dl';
+  // ② 資料ダウンロード系: 資料DL / サービス資料 / 会社案内 / カタログ 等
+  if(v.includes('サービス資料')||v.includes('カタログDL')||v.includes('総合カタログ')||
+     v.includes('カタログ')||v.includes('会社案内')||v.includes('資料ダウンロードフォーム')) return 'service_dl';
+  if(v.includes('資料DL')&&!v.includes('お役立ち')) return 'service_dl';
+  // ① 問い合わせ系: お問合せ・ご相談 / 問い合わせ 等（上記以外すべて）
+  return 'inquiry';
+}
+// コンテンツ種別→インデックス変換
+function getContentTypeIdx(typeStr){
+  if(!typeStr) return 7;
+  const t=typeStr.trim();
+  for(const [key,idx] of Object.entries(CONTENT_TYPE_TO_IDX)){
+    if(t.includes(key)) return idx;
+  }
+  return 7;
+}
+function getTarget(org,ym,type){
+  const[y,m]=ym.split('-');const mIdx=parseInt(m)-1;
+  if(org==='ALL') return ORGS.reduce((s,o)=>s+(getTarget(o,ym,type)||0),0);
+  const t=appData.targets[org]?.[y];if(!t) return 0;
+  if(type==='mql') return (t.monthly_mql||t.monthly||[])[mIdx]||0;
+  if(type==='session') return (t.monthly_session||[])[mIdx]||0;
+  if(type==='sql') return (t.monthly_sql||[])[mIdx]||0;
+  return 0;
+}
+function getTargetSum(org,months,type){return months.reduce((s,ym)=>s+getTarget(org,ym,type),0);}
+function calcCPA(d){const cost=getTotalCost(d);if(!d.cv||!cost) return null;return cost/d.cv;}
+function calcCPASQL(d){const cost=getTotalCost(d);if(!d.sql||!cost) return null;return cost/d.sql;}
+// Legacy compat
+function totalCost(d){return getTotalCost(d);}
+function getMonthKey(y,m){return y+'-'+m;}
+
+// ─────────────────────────────────────────
+//  FORMATTING
+// ─────────────────────────────────────────
+function N(v,d=0){
+  if(v===null||v===undefined||isNaN(v)) return '—';
+  return new Intl.NumberFormat('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d}).format(v);
+}
+function Y(v){
+  if(v===null||v===undefined) return '¥—';
+  if(!v) return '¥0';
+  const abs=Math.abs(v);
+  if(abs>=100000000) return '¥'+N(v/100000000,1)+'億';
+  if(abs>=10000) return '¥'+N(v/10000,0)+'万';
+  return '¥'+N(v);
+}
+function ROI(v){
+  if(v===null||v===undefined) return '—';
+  return N(v,2)+'x';
+}
+// 金額を1円単位・桁区切りで表示（予算実績用）
+function YFull(v){
+  if(v===null||v===undefined) return '—';
+  if(!v) return '¥0';
+  return '¥'+new Intl.NumberFormat('ja-JP').format(Math.round(v));
+}
+function PCT(v,d=1){
+  if(v===null||v===undefined||isNaN(v)) return '—';
+  return (v>=0?'+':'')+N(v,d)+'%';
+}
+
+function trendDiff(cur,prev){
+  if(prev===null||prev===undefined||prev===0||cur===null) return {pct:null};
+  return {pct:(cur-prev)/Math.abs(prev)*100};
+}
+
+function trendHtml(t,negative=false){
+  if(t.pct===null) return '<span class="trend-none">—</span>';
+  const isUp=t.pct>0;
+  let cls;
+  if(negative){ cls=isUp?'trend-neg-up':'trend-neg-down'; }
+  else { cls=isUp?'trend-up':'trend-down'; }
+  const arrow=isUp?'▲':'▼';
+  return `<span class="${cls}">${arrow}${N(Math.abs(t.pct),1)}%</span>`;
+}
+
+function trendTableClass(pct, negative=false){
+  if(pct===null||isNaN(pct)) return '';
+  const isUp=pct>0;
+  if(negative) return isUp?'neg-up':'neg-down';
+  return isUp?'up-cell':'down-cell';
+}
+
+function trendTableStr(pct){
+  if(pct===null||isNaN(pct)) return '—';
+  const arrow=pct>0?'▲':'▼';
+  return `${arrow}${N(Math.abs(pct),1)}%`;
+}
+
+// ─────────────────────────────────────────
+//  KPI CARDS
+// ─────────────────────────────────────────
+function renderKPI(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  const cur=getAgg(currentOrg,months);
+  const prevMonths=months.map(m=>prevYM(m,12));
+  const prev=getAgg(currentOrg,prevMonths);
+  const curCPA=calcCPA(cur),prevCPA=calcCPA(prev);
+  const curCPASQL=calcCPASQL(cur),prevCPASQL=calcCPASQL(prev);
+  const curCost=getTotalCost(cur),prevCost=getTotalCost(prev);
+  const mqlTgt=getTargetSum(currentOrg,months,'mql');
+  const sessTgt=getTargetSum(currentOrg,months,'session');
+
+  function trendHtml2(cur,prev,negative=false){
+    if(!prev||prev===0||cur===null) return '<span class="trend-none">—</span>';
+    const pct=(cur-prev)/Math.abs(prev)*100,isUp=pct>0;
+    let cls=negative?(isUp?'trend-neg-up':'trend-neg-down'):(isUp?'trend-up':'trend-down');
+    return `<span class="${cls}">${isUp?'▲':'▼'}${N(Math.abs(pct),1)}%</span>`;
+  }
+  function card(cls,icon,label,val,sub,curV,prevV,negative=false){
+    return `<div class="kpi-card ${cls}">
+      <div class="kpi-lbl">${icon} ${label}</div>
+      <div class="kpi-val">${val}</div>
+      <div class="kpi-sub">${sub}</div>
+      <div class="kpi-trends"><div class="kpi-trend">${trendHtml2(curV,prevV,negative)} <span class="trend-lbl">前年比</span></div></div>
+    </div>`;
+  }
+  const mqlPct=mqlTgt>0?N(cur.cv/mqlTgt*100,1)+'%':'目標未設定';
+  const sessPct=sessTgt>0?N(cur.sessions/sessTgt*100,1)+'%':'—';
+  document.getElementById('kpiGrid').innerHTML=
+    card('session','🌐','セッション数',N(cur.sessions),`目標達成率: ${sessPct}`,cur.sessions,prev.sessions)+
+    card('cv','✅','MQL(CV)数',N(cur.cv),`目標達成率: ${mqlPct}`,cur.cv,prev.cv)+
+    card('roi','🔽','SAL→SQL→受注',`${N(cur.sal)}→${N(cur.sql)}→${N(cur.jucyu)}`,`MQL→SAL: ${cur.cv>0?N(cur.sal/cur.cv*100,1)+'%':'—'}`,cur.sal,prev.sal)+
+    card('cpa','💰','CPA（期間合計費÷MQL）',curCPA!==null?Y(Math.round(curCPA)):'—',`総費用: ${Y(curCost)}`,curCPA,prevCPA,true)+
+    card('cpa','🎯','SQL CPA（期間合計費÷SQL）',curCPASQL!==null?Y(Math.round(curCPASQL)):'—',`SQL: ${N(cur.sql)}`,curCPASQL,prevCPASQL,true)+
+    card('cost','💸','マーケ費用計',Y(getMktgCost(cur)),`コンテンツ①〜④: ${Y(getContentCost(cur))} / 広告他⑤〜⑧: ${Y(getOtherCost(cur))}`,getMktgCost(cur),getMktgCost(prev),true);
+}
+
+// ─────────────────────────────────────────
+//  MQL PROGRESS
+// ─────────────────────────────────────────
+function renderCVProgress(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  // 年度（3月〜翌2月）単位で集計。前年度からの通算ではなく年度ごとの合計にする。
+  const fyOf=ym=>{const[y,m]=ym.split('-').map(Number);return m>=3?y:y-1;};
+  const now=new Date();
+  const curYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const fys=[...new Set(months.map(fyOf))].sort();
+
+  function progCls(pct){return pct>=90?'prog-good':pct>=70?'prog-warn':'prog-bad';}
+  function pctColor(pct){return pct>=90?'var(--green)':pct>=70?'var(--amber)':'var(--red)';}
+  // period=年度期間累計 / td=当月まで（現在月以下）
+  function item(title,actual,target,actualTD,targetTD){
+    const pct=target>0?actual/target*100:0;
+    const pctTD=targetTD>0?actualTD/targetTD*100:0;
+    return `<div class="cv-item">
+      <div class="cv-item-title">${title}</div>
+      <div class="cv-nums">
+        <span class="cv-pct" style="color:${pctColor(pct)}">${target>0?N(pct,1)+'%':'目標未設定'}</span>
+        <span class="cv-detail">${N(actual)} / ${N(target,1)}</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill ${progCls(pct)}" style="width:${Math.min(pct,100)}%"></div></div>
+      <div class="cv-detail" style="margin-top:6px">当月まで達成率：<b style="color:${pctColor(pctTD)}">${targetTD>0?N(pctTD,1)+'%':'—'}</b> <span style="color:var(--muted)">(${N(actualTD)} / ${N(targetTD,1)})</span></div>
+    </div>`;
+  }
+  const orgLabel=currentOrg==='ALL'?'全組織合計':ORG_LABEL[currentOrg];
+  document.getElementById('cvOrgLabel').textContent=`（${orgLabel}）`;
+
+  let html='';
+  fys.forEach(fy=>{
+    const fyMonths=months.filter(m=>fyOf(m)===fy);
+    if(!fyMonths.length) return;
+    const fyMonthsTD=fyMonths.filter(m=>m<=curYM);
+    const aggFY=getAgg(currentOrg,fyMonths);
+    const aggTD=getAgg(currentOrg,fyMonthsTD);
+    const span=`${fyMonths[0]}〜${fyMonths[fyMonths.length-1]}`;
+    html+=item(`${fy}年度 MQL（${span}）`,
+      aggFY.cv,getTargetSum(currentOrg,fyMonths,'mql'),
+      aggTD.cv,getTargetSum(currentOrg,fyMonthsTD,'mql'));
+    html+=item(`${fy}年度 SQL（${span}）`,
+      aggFY.sql,getTargetSum(currentOrg,fyMonths,'sql'),
+      aggTD.sql,getTargetSum(currentOrg,fyMonthsTD,'sql'));
+  });
+  document.getElementById('cvGrid').innerHTML=html||'<div class="cv-item"><div class="cv-detail">表示期間を選択してください</div></div>';
+}
+
+// ─────────────────────────────────────────
+//  CONVERSION FUNNEL
+// ─────────────────────────────────────────
+function renderFunnel(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  const agg=getAgg(currentOrg,months);
+  const orgLabel=currentOrg==='ALL'?'全組織合計':ORG_LABEL[currentOrg];
+  document.getElementById('funnelOrgLabel').textContent=`（${orgLabel}）`;
+  const cpa=calcCPA(agg);
+  const cpaSql=calcCPASQL(agg);
+  function rate(n,d){return d>0?N(n/d*100,1)+'%':'—';}
+  function step(lbl,count,rateStr,color){
+    return `<div style="display:flex;flex-direction:column;align-items:center;min-width:110px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px">${lbl}</div>
+      <div style="font-size:22px;font-weight:800;color:${color}">${N(count)}</div>
+      <div style="font-size:11px;color:${color};font-weight:600;margin-top:2px">${rateStr}</div>
+    </div>`;
+  }
+  const arr=`<div style="display:flex;align-items:center;color:#cbd5e1;font-size:24px;padding:0 4px;margin-top:8px">›</div>`;
+  document.getElementById('funnelGrid').innerHTML=`
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
+      <div style="flex:1;min-width:280px;border:1px solid var(--border);border-radius:8px;padding:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:12px">期間累計（${rangeStart}〜${rangeEnd}）</div>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">
+          ${step('MQL(CV)',agg.cv,'100%','var(--sky)')}${arr}
+          ${step('SAL（商談）',agg.sal,rate(agg.sal,agg.cv),'var(--blue)')}${arr}
+          ${step('SQL（案件化）',agg.sql,rate(agg.sql,agg.sal),'#8b5cf6')}${arr}
+          ${step('受注',agg.jucyu,rate(agg.jucyu,agg.sql),'var(--green)')}
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap">
+          <div style="font-size:11px;color:var(--muted)">総費用: <strong>${Y(getTotalCost(agg))}</strong></div>
+          <div style="font-size:11px;color:var(--muted)">CPA(÷MQL): <strong style="color:var(--blue)">${cpa!==null?Y(Math.round(cpa)):'—'}</strong></div>
+          <div style="font-size:11px;color:var(--muted)">SQL CPA(÷SQL): <strong style="color:#8b5cf6">${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</strong></div>
+        </div>
+      </div>
+      ${currentOrg==='ALL'?renderFunnelOrgTable(months):''}
+    </div>`;
+}
+function renderFunnelOrgTable(months){
+  const rows=ORGS.map(org=>{
+    const d=getAgg(org,months);const cpa=calcCPA(d);const cpaSql=calcCPASQL(d);
+    return `<tr>
+      <td style="font-weight:700;color:var(--navy)">${org}</td>
+      <td>${N(d.cv)}</td>
+      <td>${N(d.sal)}<span style="color:var(--muted);font-size:10px"> ${d.cv>0?N(d.sal/d.cv*100,1)+'%':''}</span></td>
+      <td>${N(d.sql)}<span style="color:var(--muted);font-size:10px"> ${d.sal>0?N(d.sql/d.sal*100,1)+'%':''}</span></td>
+      <td>${N(d.jucyu)}<span style="color:var(--muted);font-size:10px"> ${d.sql>0?N(d.jucyu/d.sql*100,1)+'%':''}</span></td>
+      <td>${cpa!==null?Y(Math.round(cpa)):'—'}</td>
+      <td>${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
+    </tr>`;
+  }).join('');
+  return `<div style="flex:1;min-width:280px;overflow-x:auto">
+    <table class="data-table" style="font-size:12px">
+      <thead><tr><th style="text-align:left">組織</th><th>MQL</th><th>SAL(率)</th><th>SQL(率)</th><th>受注(率)</th><th>CPA</th><th>SQL CPA</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+// ─────────────────────────────────────────
+//  CHARTS (Dashboard)
+// ─────────────────────────────────────────
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function renderCharts(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  const labels=months.map(shortYmLabel);
+  const series=months.map(ym=>getData(currentOrg,ym));
+  const BLUE='rgba(37,99,235,0.85)',BLUE_L='rgba(37,99,235,0.15)';
+  const GREEN='rgba(16,185,129,0.85)',GREEN_L='rgba(16,185,129,0.1)';
+  const RED='rgba(239,68,68,0.75)',AMBER='rgba(245,158,11,0.75)';
+  const GRAY='rgba(148,163,184,0.6)',PURPLE='rgba(139,92,246,0.75)';
+
+  // CPA chart with datalabels
+  destroyChart('roi');
+  charts['roi']=new Chart(document.getElementById('chartROI').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'CPA（÷MQL）',data:series.map(d=>calcCPA(d)),backgroundColor:PURPLE,borderRadius:4},
+      {label:'SQL CPA（÷SQL）',data:series.map(d=>calcCPASQL(d)),backgroundColor:BLUE,borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:24,right:8}},
+      plugins:{
+        legend:{display:true,position:'top',labels:{font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>ctx.raw!==null?Y(Math.round(ctx.raw)):'—'}},
+        datalabels:{display:true,anchor:'end',align:'top',clamp:true,font:{size:9},color:'#64748b',
+          formatter:(val)=>val>0?Y(Math.round(val)):''}
+      },
+      scales:{y:{beginAtZero:true,grace:'12%',ticks:{callback:v=>Y(v),font:{size:11}},grid:{color:'#f1f5f9'}},
+              x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+
+  // Sessions + MQL chart with datalabels
+  destroyChart('sesscv');
+  charts['sesscv']=new Chart(document.getElementById('chartSessCv').getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'セッション',data:series.map(d=>d.sessions||0),borderColor:BLUE,backgroundColor:BLUE_L,tension:.3,fill:true,yAxisID:'yS'},
+      {label:'MQL実績',data:series.map(d=>d.cv||0),borderColor:GREEN,backgroundColor:GREEN_L,tension:.3,fill:false,yAxisID:'yC'},
+      {label:'MQL目標',data:months.map(ym=>getTarget(currentOrg,ym,'mql')||null),borderColor:GRAY,borderDash:[5,4],tension:.3,fill:false,yAxisID:'yC',pointRadius:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:24}},
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11}}},
+        datalabels:{display:true,align:'top',anchor:'end',clamp:true,font:{size:9},color:'#64748b',
+          formatter:(val,ctx)=>{
+            if(ctx.dataset.label==='MQL目標') return '';
+            return val>0?N(val):'';
+          }}
+      },
+      scales:{yS:{position:'left',grace:'12%',ticks:{font:{size:11}},grid:{color:'#f1f5f9'}},
+              yC:{position:'right',grace:'15%',ticks:{font:{size:11}},grid:{drawOnChartArea:false}},
+              x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+
+  // Cost chart with datalabels
+  destroyChart('costrev');
+  charts['costrev']=new Chart(document.getElementById('chartCostRev').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'コンテンツ費(①〜④)',data:series.map(d=>getContentCost(d)||0),backgroundColor:AMBER,stack:'c'},
+      {label:'広告他(⑤〜⑧)',data:series.map(d=>getOtherCost(d)||0),backgroundColor:RED,stack:'c'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:14}},
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+Y(ctx.raw)}},
+        datalabels:{display:true,anchor:'center',align:'center',font:{size:9},color:'#fff',
+          formatter:(val)=>val>10000?Y(val):''}
+      },
+      scales:{y:{ticks:{callback:v=>Y(v),font:{size:11}},grid:{color:'#f1f5f9'}},
+              x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+}
+
+// ─────────────────────────────────────────
+//  ORG COMPARISON TABLE
+// ─────────────────────────────────────────
+function renderCompTable(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  const rows=ORGS.map(org=>{
+    const d=getAgg(org,months);
+    const tgtMql=getTargetSum(org,months,'mql');
+    const tgtSess=getTargetSum(org,months,'session');
+    const cpa=calcCPA(d);
+    const cpaSql=calcCPASQL(d);
+    const mqlRate=tgtMql>0?d.cv/tgtMql*100:null;
+    const sessRate=tgtSess>0?d.sessions/tgtSess*100:null;
+    function rateCls(v){if(!v) return '';return v>=90?'up-cell':v>=70?'':'down-cell';}
+    return `<tr>
+      <td>${org}</td>
+      <td>${N(d.sessions)}<span style="display:block;font-size:10px;color:var(--muted)">${tgtSess>0?'目標'+N(tgtSess,1):''}</span></td>
+      <td class="${rateCls(sessRate)}">${sessRate!==null?N(sessRate,1)+'%':'—'}</td>
+      <td>${N(d.cv)}<span style="display:block;font-size:10px;color:var(--muted)">${tgtMql>0?'目標'+N(tgtMql,1):''}</span></td>
+      <td class="${rateCls(mqlRate)}">${mqlRate!==null?N(mqlRate,1)+'%':'—'}</td>
+      <td>${N(d.sal)}</td><td>${N(d.sql)}</td><td>${N(d.jucyu)}</td>
+      <td>${Y(getTotalCost(d))}</td>
+      <td>${cpa!==null?Y(Math.round(cpa)):'—'}</td>
+      <td>${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('cmpTable').innerHTML=`
+    <table class="data-table" style="font-size:12px">
+      <thead><tr>
+        <th style="text-align:left">組織</th><th>セッション</th><th>達成率</th>
+        <th>MQL</th><th>達成率</th><th>SAL</th><th>SQL</th><th>受注</th>
+        <th>総費用</th><th>CPA</th><th>SQL CPA</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ─────────────────────────────────────────
+//  DATA TABLE
+// ─────────────────────────────────────────
+function buildYearList(){
+  const years=new Set(['2024','2025','2026','2027']);
+  getMonthsInRange(rangeStart,rangeEnd).forEach(ym=>years.add(ym.split('-')[0]));
+  ORGS.forEach(org=>Object.keys(appData.actuals[org]||{}).forEach(ym=>years.add(ym.split('-')[0])));
+  return [...years].sort();
+}
+
+function renderDataTable(){
+  ensureHQ();
+  const org=document.getElementById('dataOrgSel').value;
+  if(org==='ALL'){ renderHQDataTable(); return; }
+  const std=document.getElementById('stdDataTblWrap'); if(std) std.style.display='';
+  const ib=document.querySelector('#dataStdCard .info-box'); if(ib) ib.style.display='';
+  const hw=document.getElementById('hqDataWrap'); if(hw){hw.style.display='none';hw.innerHTML='';}
+  const y=document.getElementById('dataYearSel').value;
+  const tbody=document.getElementById('dataTbody');
+  // 年度表示（3月〜翌年2月）
+  const fyMonthsSeq=[3,4,5,6,7,8,9,10,11,12,1,2];
+  const allMonths=fyMonthsSeq.map(m=>{const cy=m>=3?parseInt(y):parseInt(y)+1;return `${cy}-${String(m).padStart(2,'0')}`;});
+  const rows=allMonths.map(ym=>{
+    const d=getRawData(org,ym);
+    const ct=d.cv_by_type||{};
+    const cpa=calcCPA(d);
+    const cpaSql=calcCPASQL(d);
+    const mm=parseInt(ym.split('-')[1]);
+    const mLabel=`${mm}月`+((mm<=2)?`(${ym.split('-')[0]})`:'');
+    return `<tr>
+      <td>${mLabel}</td>
+      <td><input type="number" data-field="sessions" data-ym="${ym}" value="${d.sessions}" min="0"></td>
+      <td><input type="number" data-field="cv" data-ym="${ym}" value="${d.cv}" min="0"></td>
+      <td><input type="number" data-field="sal" data-ym="${ym}" value="${d.sal}" min="0"></td>
+      <td><input type="number" data-field="sql" data-ym="${ym}" value="${d.sql}" min="0"></td>
+      <td><input type="number" data-field="jucyu" data-ym="${ym}" value="${d.jucyu}" min="0"></td>
+      <td class="calc-cell">${YFull(getMktgCost(d))}</td>
+      <td class="calc-cell">${YFull(getContentCost(d))}</td>
+      <td class="calc-cell" id="cpa_${ym}" data-cost="${getTotalCost(d)}">${cpa!==null?Y(Math.round(cpa)):'—'}</td>
+      <td class="calc-cell" id="cpasql_${ym}" data-cost="${getTotalCost(d)}">${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
+      <td><input type="number" data-field="cvt_inquiry" data-ym="${ym}" value="${ct.inquiry||0}" min="0"></td>
+      <td><input type="number" data-field="cvt_service_dl" data-ym="${ym}" value="${ct.service_dl||0}" min="0"></td>
+      <td><input type="number" data-field="cvt_wp_dl" data-ym="${ym}" value="${ct.wp_dl||0}" min="0"></td>
+      <td><button class="del-btn" onclick="confirmDelRow('${org}','${ym}')">×</button></td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML=rows;
+  tbody.querySelectorAll('input[type=number]').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const ym=inp.dataset.ym,el=document.getElementById('cpa_'+ym);
+      const elSql=document.getElementById('cpasql_'+ym);
+      if(!el&&!elSql) return;
+      const r=inp.closest('tr');
+      const cvInp=r.querySelector('input[data-field="cv"]');
+      const sqlInp=r.querySelector('input[data-field="sql"]');
+      const cv=parseFloat(cvInp?cvInp.value:0)||0;
+      const sql=parseFloat(sqlInp?sqlInp.value:0)||0;
+      if(el){const cost=parseFloat(el.dataset.cost)||0;el.textContent=(cv>0&&cost>0)?Y(Math.round(cost/cv)):'—';}
+      if(elSql){const cost=parseFloat(elSql.dataset.cost)||0;elSql.textContent=(sql>0&&cost>0)?Y(Math.round(cost/sql)):'—';}
+    });
+  });
+}
+
+function saveDataTable(){
+  const org=document.getElementById('dataOrgSel').value;
+  if(org==='ALL'){ saveHQDataTable(); return; }
+  document.querySelectorAll('#dataTbody input[type=number]').forEach(inp=>{
+    const ym=inp.dataset.ym,field=inp.dataset.field;
+    const d=ensureYM(org,ym);
+    if(field&&field.indexOf('cvt_')===0){const k=field.slice(4);if(!d.cv_by_type)d.cv_by_type={};d.cv_by_type[k]=parseFloat(inp.value)||0;}
+    else if(field==='cost_mktg_total'){d.cost_items[0]=parseFloat(inp.value)||0;}
+    else{d[field]=parseFloat(inp.value)||0;}
+  });
+  saveData();toast('✅ データを保存しました');
+}
+
+function confirmDelRow(org,ym){
+  showConfirm(`${ym} のデータを削除しますか？`,()=>{
+    if(appData.actuals[org]) delete appData.actuals[org][ym];
+    saveData();renderDataTable();toast('🗑 削除しました');
+  });
+}
+
+// ─────────────────────────────────────────
+//  TARGET SETTING
+// ─────────────────────────────────────────
+function renderTargets(){
+  ensureHQ();
+  if(currentOrg==='ALL'){ renderHQTargets(); return; }
+  document.getElementById('targetGrid').style.display='';
+  const hw=document.getElementById('hqTargetWrap'); if(hw){hw.style.display='none';hw.innerHTML='';}
+  const years=buildYearList();
+  const html=ORGS.map(org=>{
+    const blocks=years.map(y=>{
+      const fy=parseInt(y);
+      ensureYearTarget(org,String(fy));ensureYearTarget(org,String(fy+1));
+      const fyMonths=[3,4,5,6,7,8,9,10,11,12,1,2];
+      const fyLbls=fyMonths.map(m=>`<span class="monthly-lbl-cell">${m}月</span>`).join('');
+      // 年度の1月・2月は翌暦年の目標を参照（暦年キーで一貫管理）
+      function valOf(type,m){
+        const calY=m>=3?fy:fy+1;
+        const t=appData.targets[org][String(calY)];
+        const key=type==='mql'?'monthly_mql':type==='sess'?'monthly_session':'monthly_sql';
+        return (t&&t[key]?t[key][m-1]:0)||0;
+      }
+      function mkRow(type){
+        const annualId=`annual_${type}_${org}_${y}`;
+        const annual=fyMonths.reduce((s,m)=>s+valOf(type,m),0);
+        const inputsHtml=fyMonths.map(m=>{
+          const calY=m>=3?fy:fy+1;
+          return `<input class="monthly-tgt-input" type="number" step="0.1" id="t_${type}_${org}_${calY}_${m-1}" value="${valOf(type,m)}" min="0">`;
+        }).join('');
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+    <span style="font-size:11px;color:var(--muted);width:50px;flex-shrink:0">年間合計</span>
+    <input type="number" step="0.1" id="${annualId}" value="${Math.round(annual*10)/10}" min="0" style="width:90px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:right">
+    <button onclick="distAnnual('${type}','${org}',${fy},'${annualId}')" style="padding:3px 8px;font-size:11px;border:none;border-radius:4px;background:var(--blue);color:#fff;cursor:pointer">均等配分</button>
+  </div>
+  <div class="monthly-input-row">${inputsHtml}</div>`;
+      }
+      return `<div class="target-year-block">
+        <span class="target-year-lbl">${y}年度（3月〜翌2月）</span>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin:8px 0 3px">▸ MQL月次目標：</div>
+        <div class="monthly-lbl-row">${fyLbls}</div>
+        ${mkRow('mql')}
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin:6px 0 3px">▸ セッション月次目標(MAL)：</div>
+        <div class="monthly-lbl-row">${fyLbls}</div>
+        ${mkRow('sess')}
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin:6px 0 3px">▸ SQL月次目標：</div>
+        <div class="monthly-lbl-row">${fyLbls}</div>
+        ${mkRow('sql')}
+      </div>`;
+    }).join('');
+    return `<div class="target-org"><div class="target-org-name">${ORG_LABEL[org]}</div>${blocks}</div>`;
+  }).join('');
+  document.getElementById('targetGrid').innerHTML=html;
+}
+
+function saveTargets(){
+  if(currentOrg==='ALL'){ saveHQTargets(); return; }
+  document.querySelectorAll('.monthly-tgt-input:not(.hq-tgt-input)').forEach(inp=>{
+    const mm=inp.id.match(/^t_(mql|sess|sql)_([A-Z]+)_(\d{4})_(\d+)$/);
+    if(!mm) return;
+    const type=mm[1],org=mm[2],calY=mm[3],mIdx=parseInt(mm[4]);
+    const t=ensureYearTarget(org,calY);
+    const key=type==='mql'?'monthly_mql':type==='sess'?'monthly_session':'monthly_sql';
+    t[key][mIdx]=Math.round((parseFloat(inp.value)||0)*10)/10;
+  });
+  saveData();toast('✅ 目標を保存しました');renderAll();
+}
+
+function distAnnual(type,org,fy,annualInputId){
+  const annualVal=parseFloat(document.getElementById(annualInputId).value)||0;
+  const perMonth=Math.round(annualVal/12*10)/10;
+  [3,4,5,6,7,8,9,10,11,12,1,2].forEach(m=>{
+    const calY=m>=3?fy:fy+1;
+    const el=document.getElementById(`t_${type}_${org}_${calY}_${m-1}`);
+    if(el) el.value=perMonth;
+  });
+  toast(`✅ ${annualVal}を12ヶ月均等配分しました（月${perMonth}）`);
+}
+
+// ─────────────────────────────────────────
+//  JSON EXPORT / IMPORT
+// ─────────────────────────────────────────
+function openModal(id){
+  if(id==='exportModal'){
+    document.getElementById('exportTxt').value=JSON.stringify(appData,null,2);
+  }
+  if(id==='autoImportModal'){
+    // Reset file inputs and log
+    ['UN','SCH','MED','IS'].forEach(o=>{const el=document.getElementById(`jissekiFile_${o}`);if(el)el.value='';});
+    const yi=document.getElementById('yojitsuFile');if(yi)yi.value='';
+    const ci=document.getElementById('contentFile');if(ci)ci.value='';
+    document.getElementById('autoImportLog').style.display='none';
+  }
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('show'); });
+});
+
+function downloadJson(){
+  const blob=new Blob([JSON.stringify(appData,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`marketing_roi_${new Date().getFullYear()}_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  toast('✅ ダウンロードしました');
+}
+
+function readJsonFile(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{ document.getElementById('importTxt').value=e.target.result; };
+  r.readAsText(f);
+}
+
+function doImportJson(){
+  try{
+    const txt=document.getElementById('importTxt').value.trim();
+    const d=JSON.parse(txt);
+    if(!d.targets||!d.actuals) throw new Error('形式エラー：targets / actuals が見つかりません');
+    if(confirm('インポート方法を選択してください。\n\n[OK] → 既存データに上書き\n[キャンセル] → 既存データを保持してマージ')){
+      appData=d; // overwrite
+    } else {
+      ORGS.forEach(o=>{
+        if(d.actuals[o]) Object.assign(appData.actuals[o]||={},d.actuals[o]);
+        if(d.targets[o]) Object.assign(appData.targets[o]||={},d.targets[o]);
+      });
+    }
+    saveData(); closeModal('importModal'); renderAll();
+    toast('✅ インポート完了');
+  } catch(e){ alert('JSONの読み込みに失敗しました：'+e.message); }
+}
+
+// ─────────────────────────────────────────
+//  EXCEL IMPORT
+// ─────────────────────────────────────────
+function previewXl(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      xlWb=XLSX.read(e.target.result,{type:'array',cellDates:true});
+      const sheetSel=document.getElementById('xlSheetSel');
+      sheetSel.innerHTML=xlWb.SheetNames.map((n,i)=>`<option value="${i}">${n}</option>`).join('');
+      // Default: select sheet index 2 if it exists
+      if(xlWb.SheetNames.length>2) sheetSel.value='2';
+      loadXlSheet();
+      document.getElementById('xlPreviewArea').style.display='block';
+      document.getElementById('xlImportBtn').style.display='inline-flex';
+    }catch(err){ alert('Excelファイルの読み込みに失敗しました：'+err.message); }
+  };
+  r.readAsArrayBuffer(f);
+}
+
+function loadXlSheet(){
+  if(!xlWb) return;
+  const idx=parseInt(document.getElementById('xlSheetSel').value);
+  const ws=xlWb.Sheets[xlWb.SheetNames[idx]];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  if(!rows.length){alert('シートが空です');return;}
+  xlHeaders=rows[0].map(String);
+  xlRows=rows.slice(1).filter(r=>r.some(c=>c!==''));
+  document.getElementById('xlInfo').textContent=`${xlWb.SheetNames[idx]}：${xlRows.length}行 × ${xlHeaders.length}列`;
+  buildXlMapping();
+}
+
+function buildXlMapping(){
+  const opts='<option value="">（なし）</option>'+xlHeaders.map((h,i)=>`<option value="${i}">${h||'列'+(i+1)}</option>`).join('');
+  const fields=[
+    {id:'xl_date',label:'日付列（年月がわかる列）*',required:true},
+    {id:'xl_cv',label:'CV数列 *',required:true},
+    {id:'xl_sess',label:'セッション数列',required:false},
+    {id:'xl_rev',label:'売上列',required:false},
+    {id:'xl_cost_mktg',label:'マーケ費用列',required:false},
+    {id:'xl_cost_content',label:'コンテンツ費用列',required:false},
+  ];
+
+  // Auto-suggest mapping by header name
+  function guess(keywords){ return xlHeaders.findIndex(h=>keywords.some(k=>h.toLowerCase().includes(k.toLowerCase()))); }
+
+  document.getElementById('xlMapArea').innerHTML=fields.map(f=>{
+    let guessIdx=-1;
+    if(f.id==='xl_date') guessIdx=guess(['日付','date','年月','契約']);
+    if(f.id==='xl_cv') guessIdx=guess(['cv','コンバージョン','件数','成約']);
+    if(f.id==='xl_sess') guessIdx=guess(['session','セッション','訪問']);
+    if(f.id==='xl_rev') guessIdx=guess(['売上','revenue','金額','受注']);
+    const selected=guessIdx>=0?` selected`:'';
+    const fullOpts=opts.replace(`value="${guessIdx}"`,'value="'+guessIdx+'"'+selected);
+    return `<div class="map-row"><label>${f.label}</label><select id="${f.id}">${fullOpts}</select></div>`;
+  }).join('');
+}
+
+function parseXlDate(v){
+  if(v instanceof Date){ return {y:String(v.getFullYear()),m:String(v.getMonth()+1).padStart(2,'0')}; }
+  if(typeof v==='number'){
+    const d=XLSX.SSF.parse_date_code(v);
+    if(d) return {y:String(d.y),m:String(d.m).padStart(2,'0')};
+  }
+  if(typeof v==='string'){
+    const mx=v.match(/(\d{4})[\/\-年](\s*)(\d{1,2})/);
+    if(mx) return {y:mx[1],m:mx[3].padStart(2,'0')};
+    const mx2=v.match(/(\d{2,4})[\/\-](\d{1,2})/);
+    if(mx2) return {y:mx2[1].length===2?'20'+mx2[1]:mx2[1],m:mx2[2].padStart(2,'0')};
+  }
+  return null;
+}
+
+function doImportXl(){
+  const org=document.getElementById('xlOrg').value;
+  const y=document.getElementById('xlYear').value;
+  const dateIdx=document.getElementById('xl_date').value;
+  const cvIdx=document.getElementById('xl_cv').value;
+  if(dateIdx===''||cvIdx===''){alert('日付列とCV数列を選択してください');return;}
+  const sessIdx=document.getElementById('xl_sess').value;
+  const revIdx=document.getElementById('xl_rev').value;
+  const cmIdx=document.getElementById('xl_cost_mktg').value;
+  const ccIdx=document.getElementById('xl_cost_content').value;
+
+  const agg={};
+  let skipped=0;
+
+  xlRows.forEach(row=>{
+    const dateVal=row[parseInt(dateIdx)];
+    const parsed=parseXlDate(dateVal);
+    if(!parsed){skipped++;return;}
+    if(y && parsed.y!==y) return; // filter by selected year
+    const key=parsed.y+'-'+parsed.m;
+    if(!agg[key]) agg[key]={sessions:0,cv:0,revenue:0,cost_mktg:0,cost_content:0};
+    agg[key].cv+=parseFloat(row[parseInt(cvIdx)])||0;
+    if(sessIdx!=='') agg[key].sessions+=parseFloat(row[parseInt(sessIdx)])||0;
+    if(revIdx!=='') agg[key].revenue+=parseFloat(row[parseInt(revIdx)])||0;
+    if(cmIdx!=='') agg[key].cost_mktg+=parseFloat(row[parseInt(cmIdx)])||0;
+    if(ccIdx!=='') agg[key].cost_content+=parseFloat(row[parseInt(ccIdx)])||0;
+  });
+
+  const keys=Object.keys(agg);
+  if(!keys.length){alert('対象データが見つかりませんでした。\n列マッピングや年度設定を確認してください。');return;}
+
+  if(!appData.actuals[org]) appData.actuals[org]={};
+  const merge=confirm('既存データへのマージ方法\n\n[OK] → 既存を保持し不足分のみ追加\n[キャンセル] → 取込データで上書き');
+  keys.forEach(key=>{
+    if(merge && appData.actuals[org][key]){
+      // add CV/sessions only if not already set
+      const ex=appData.actuals[org][key];
+      if(!ex.cv) ex.cv=agg[key].cv;
+      if(!ex.sessions && agg[key].sessions) ex.sessions=agg[key].sessions;
+      if(!ex.revenue && agg[key].revenue) ex.revenue=agg[key].revenue;
+      if(!ex.cost_mktg && agg[key].cost_mktg) ex.cost_mktg=agg[key].cost_mktg;
+      if(!ex.cost_content && agg[key].cost_content) ex.cost_content=agg[key].cost_content;
+    } else {
+      appData.actuals[org][key]=agg[key];
+    }
+  });
+
+  saveData();
+  closeModal('xlModal');
+  renderAll();
+  if(document.getElementById('vw-data').style.display!=='none') renderDataTable();
+  toast(`✅ ${keys.length}ヶ月分を取り込みました（スキップ:${skipped}行）`);
+}
+
+// ─────────────────────────────────────────
+//  SPECIALIZED EXCEL PARSERS
+// ─────────────────────────────────────────
+
+function readFileAsArrayBuffer(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.onerror=rej;
+    r.readAsArrayBuffer(file);
+  });
+}
+
+function parseNumVal(v){
+  if(v===null||v===undefined||v===''||v==='-') return null;
+  if(typeof v==='number') return isNaN(v)?null:v;
+  const s=String(v).replace(/[,¥\s]/g,'');
+  if(s==='-'||s==='#REF!'||s==='#DIV/0!'||s==='') return null;
+  const n=parseFloat(s);
+  return isNaN(n)?null:n;
+}
+
+function xlDateToYM(v){
+  if(!v&&v!==0) return null;
+  if(v instanceof Date){
+    const y=v.getFullYear(), m=v.getMonth()+1;
+    if(y<2000||y>2100) return null;
+    return `${y}-${String(m).padStart(2,'0')}`;
+  }
+  if(typeof v==='number'&&v>40000){
+    // Excel serial → JS date (UTC)
+    const d=new Date(Math.round((v-25569)*86400*1000));
+    const y=d.getUTCFullYear(), m=d.getUTCMonth()+1;
+    if(y<2000||y>2100) return null;
+    return `${y}-${String(m).padStart(2,'0')}`;
+  }
+  const str=String(v);
+  if(/^\d{4}-\d{2}/.test(str)) return str.slice(0,7);
+  return null;
+}
+
+function parseJissekiWb(wb,org){
+  const sheetNames={
+    UN:'流入チャネル別顧客一覧_7月以降完全ユニークではない',
+    SCH:'流入チャネル別顧客一覧_ユニーク',
+    MED:'流入チャネル別顧客一覧_ユニーク',
+    IS:'流入チャネル別顧客一覧_ユニーク'
+  };
+  let ws=wb.Sheets[sheetNames[org]];
+  if(!ws){const fb=wb.SheetNames.find(n=>n.includes('顧客一覧'))||wb.SheetNames[2];ws=wb.Sheets[fb];}
+  if(!ws) return {};
+
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,cellDates:true});
+  if(rows.length<2) return {};
+
+  // Find key columns via header
+  const hdr=(rows[0]||[]).map(v=>v?String(v).trim():'');
+  function findCol(...names){for(let i=0;i<hdr.length;i++){const h=hdr[i];if(names.some(n=>h===n||h===' '+n)) return i;}return -1;}
+  const cvFlagCol=findCol('CVフラグ','CV種別')>=0?findCol('CVフラグ','CV種別'):1;              // B列: CVフラグ
+  const dateCol  =findCol('回答日時','回答日時orCVしたメルマガ配信日時','回答日時or CVしたメルマガ配信日時')>=0
+                   ?findCol('回答日時','回答日時orCVしたメルマガ配信日時','回答日時or CVしたメルマガ配信日時'):2; // C列: CV日時(回答日時)
+  const chCol    =findCol('流入チャネル','流入経路')>=0?findCol('流入チャネル','流入経路'):7;    // H列: 流入チャネル
+  // SAL: R列(col17) の日付。ヘッダー名優先→固定インデックス
+  let salCol=findCol('SAL'); if(salCol<0) salCol=17;
+  // SQL: S列(col18) の日付。ISはS列(col18) or T列(col19) いずれかに日付があれば1カウント
+  let sqlCol=findCol('SQL','SQL1')>=0?findCol('SQL','SQL1'):18;
+  const isSqlAltCol=19; // IS専用: SQL判定②(SQL2)
+  // 受注: IS=U列(col20), IS以外=T列(col19)。ヘッダー名優先→固定インデックス
+  const jucyuColFixed=(org==='IS')?20:19;
+  let jucyuCol=hdr.findIndex(h=>h==='受注');
+  if(jucyuCol<0) jucyuCol=jucyuColFixed;
+
+  function getDateYM(v){
+    if(!v) return null;
+    if(v instanceof Date){const y=v.getFullYear(),m=v.getMonth()+1;if(y<2000||y>2100)return null;return `${y}-${String(m).padStart(2,'0')}`;}
+    if(typeof v==='number'&&v>40000){const d=new Date(Math.round((v-25569)*86400*1000));const y=d.getUTCFullYear(),m=d.getUTCMonth()+1;if(y<2000||y>2100)return null;return `${y}-${String(m).padStart(2,'0')}`;}
+    const s=String(v);const m1=s.match(/(\d{4})[\/\-年](\d{1,2})/);
+    if(m1)return `${m1[1]}-${m1[2].padStart(2,'0')}`;
+    return null;
+  }
+
+  const monthly={};
+  function ens(ym){if(!monthly[ym])monthly[ym]={cv:0,sal:0,sql:0,jucyu:0,mql_by_channel:{},cv_by_type:{}};}
+
+  // ── 重複除外(ユニーク判定)用の列検出 ──
+  // ルール：企業名で重複除外。企業名欄が個人名/空欄の場合はメールアドレスまで突合して重複除外。
+  function findColBy(...subs){for(let i=0;i<hdr.length;i++){const h=hdr[i];if(h&&subs.some(s=>h.includes(s))) return i;}return -1;}
+  const compCol =findColBy('企業名','会社名','貴社名','御社名','社名','医療機関名','団体名','学校名','法人名','組織名','店舗名','園名');
+  const emailCol=findColBy('メールアドレス','Ｅメール','E-mail','e-mail','Email','email','メール');
+  const nameCol =findColBy('お名前','氏名','ご担当者','担当者','名前');
+  function norm(v){return v==null?'':String(v).trim().toLowerCase().replace(/[\s　]+/g,'');}
+  let _uid=0;
+  // 行の同一エンティティ識別キー
+  function entityKey(row){
+    const comp = compCol>=0 ? String(row[compCol]==null?'':row[compCol]).trim() : '';
+    const name = nameCol>=0 ? String(row[nameCol]==null?'':row[nameCol]).trim() : '';
+    const email= emailCol>=0 ? norm(row[emailCol]) : '';
+    const compN=norm(comp);
+    // 企業名があり氏名と異なる（＝法人名とみなせる）→ 企業名で突合
+    if(compN && compN!==norm(name)) return 'C:'+compN;
+    // 企業名欄が個人名/空欄 → メールアドレスで突合
+    if(email) return 'E:'+email;
+    if(compN) return 'C:'+compN;
+    if(norm(name)) return 'N:'+norm(name);
+    return 'U:'+(_uid++); // 識別できない行は常に別件扱い（誤集約を防止）
+  }
+  // ステージ×月ごとに、同一エンティティは1件のみ計上（初出の行のみカウント）
+  const seen={cv:{},sal:{},sql:{},jucyu:{}};
+  function firstTime(stage,ym,key){
+    const bucket=seen[stage][ym]||(seen[stage][ym]={});
+    if(bucket[key]) return false;
+    bucket[key]=1;return true;
+  }
+  // 会計年度(3月〜翌2月)判定
+  function fyOfYM(ym){if(!ym)return null;const p=ym.split('-');const y=parseInt(p[0]),m=parseInt(p[1]);return m>=3?y:y-1;}
+
+  rows.slice(1).forEach(row=>{
+    if(!row) return;
+    const ek=entityKey(row);
+
+    // ── このリードのMQL(CVフラグ有＆C列日付)。SAL/SQLの「今年度MQLからの引き上がり」判定に使用 ──
+    const cvFlag=row[cvFlagCol];
+    const hasMql=cvFlag&&String(cvFlag).trim()!=='';
+    const mqlYM=hasMql?getDateYM(row[dateCol]):null;
+    const mqlFY=fyOfYM(mqlYM);
+
+    // ── MQL(CVフラグ) : C列(CV日時)の月で集計。企業名/メールで月内重複除外 ──
+    if(mqlYM && firstTime('cv',mqlYM,ek)){
+      ens(mqlYM);
+      monthly[mqlYM].cv++;
+      // 流入チャネル分類（H列。空白は不明=Unknown）
+      const ch=classifyChannel(row[chCol]);
+      monthly[mqlYM].mql_by_channel[ch]=(monthly[mqlYM].mql_by_channel[ch]||0)+1;
+      // CV種別分類（3分類：問い合わせ/資料DL/WP）
+      const cvType=classifyCVType(String(cvFlag));
+      if(cvType) monthly[mqlYM].cv_by_type[cvType]=(monthly[mqlYM].cv_by_type[cvType]||0)+1;
+    }
+
+    // ── SAL : R列(col17)の日付の月で集計。ただし同一会計年度にMQL獲得したリードの引き上がりのみ ──
+    const salYM=getDateYM(row[salCol]);
+    if(salYM && mqlYM && fyOfYM(salYM)===mqlFY && firstTime('sal',salYM,ek)){ens(salYM);monthly[salYM].sal++;}
+
+    // ── SQL : S列(col18)の月で集計（ISはS/T列）。同一会計年度MQLからの引き上がりのみ ──
+    let sqlYM=getDateYM(row[sqlCol]);
+    if(!sqlYM&&org==='IS') sqlYM=getDateYM(row[isSqlAltCol]);
+    if(sqlYM && mqlYM && fyOfYM(sqlYM)===mqlFY && firstTime('sql',sqlYM,ek)){ens(sqlYM);monthly[sqlYM].sql++;}
+
+    // ── 受注 : 受注列(IS=col20 / 他=col19)の月で集計。受注は全期間のMQL/SALからの引き上がりを計上（年度制限なし） ──
+    const jucyuYM=getDateYM(row[jucyuCol]);
+    if(jucyuYM && firstTime('jucyu',jucyuYM,ek)){ens(jucyuYM);monthly[jucyuYM].jucyu++;}
+  });
+  return monthly;
+}
+
+// ── 予実管理パーサー ──
+function parseYojitsuWb(wb){
+  const sheetOrgMap={'オリジナルユニフォーム':'UN','スクール':'SCH','メディカル':'MED','インサイトセールス':'IS'};
+  const result={};
+  Object.entries(sheetOrgMap).forEach(([sname,org])=>{
+    if(!wb.Sheets[sname]) return;
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[sname],{header:1,defval:null,cellDates:true});
+    const yearRow=rows[1]||[],monthRow=rows[2]||[];
+    const sessRow  =rows[3]||[];   // Row4: MAL実績
+    const cvRow    =rows[4]||[];   // Row5: MQL(CV)実績
+    const salRow   =rows[6]||[];   // Row7: SAL実績
+    const sqlRow   =rows[8]||[];   // Row9: SQL実績
+    const jucyuRow =rows[10]||[];  // Row11: 受注実績
+    const sessTgtRow=rows[12]||[]; // Row13: MAL目標
+    const mqlTgtRow =rows[14]||[]; // Row15: MQL目標
+    const sqlTgtRow =rows[21]||[]; // Row22: SQL目標
+    // 予算実績: Row30-37 = rows[29]-rows[36] (8項目: コラム〜その他)
+    const costRows=[];
+    for(let i=29;i<=36;i++) costRows.push(rows[i]||[]);
+
+    const colMap=buildColYMMap(yearRow,monthRow);
+    if(!result[org]) result[org]={months:{},targets:{}};
+    // 費用項目の実ラベル（col[0]、'予算（実績）'プレフィックス除去）
+    if(!result.__costLabels) result.__costLabels=Array(8).fill('');
+    costRows.forEach((r,i)=>{
+      let lbl=(r&&r[0]!=null)?String(r[0]).trim():'';
+      lbl=lbl.replace(/^予算（実績）/,'').replace(/^予算\(実績\)/,'');
+      if(lbl&&!result.__costLabels[i]) result.__costLabels[i]=lbl;
+    });
+
+    Object.entries(colMap).forEach(([ci,ym])=>{
+      if(!ym) return;
+      const n=parseInt(ci);
+      const sess=parseNumVal(sessRow[n]);
+      const cv  =parseNumVal(cvRow[n]);
+      const sal =parseNumVal(salRow[n]);
+      const sql  =parseNumVal(sqlRow[n]);
+      const jucyu=parseNumVal(jucyuRow[n]);
+      const sessTgt=parseNumVal(sessTgtRow[n]);
+      const mqlTgt =parseNumVal(mqlTgtRow[n]);
+      const sqlTgt =parseNumVal(sqlTgtRow[n]);
+      const costVals=costRows.map(r=>parseNumVal(r[n]));
+
+      const hasData=sess!==null||cv!==null||sal!==null||sql!==null||jucyu!==null||costVals.some(v=>v!==null);
+      if(hasData){
+        if(!result[org].months[ym]) result[org].months[ym]={};
+        if(sess!==null)  result[org].months[ym].sessions=Math.round(sess);
+        if(cv!==null)    result[org].months[ym].cv  =Math.round(cv);
+        if(sal!==null)   result[org].months[ym].sal =Math.round(sal);
+        if(sql!==null)   result[org].months[ym].sql =Math.round(sql);
+        if(jucyu!==null) result[org].months[ym].jucyu=Math.round(jucyu);
+        const ci_arr=costVals.map(v=>v!==null?Math.round(v):0);
+        if(ci_arr.some(v=>v>0)) result[org].months[ym].cost_items=ci_arr;
+      }
+      if(mqlTgt!==null&&mqlTgt>0) result[org].targets[ym+'_mql']=Math.round(mqlTgt*10)/10;
+      if(sessTgt!==null&&sessTgt>0) result[org].targets[ym+'_sess']=Math.round(sessTgt*10)/10;
+      if(sqlTgt!==null&&sqlTgt>0) result[org].targets[ym+'_sql']=Math.round(sqlTgt*10)/10;
+    });
+  });
+  return result;
+}
+
+// 予実管理の列→YYYY-MM マッピング構築
+function buildColYMMap(yearRow,monthRow){
+  const map={};
+  // 年度ラベル（例：'2024年度'）の開始列を取得
+  const fyStarts=[];
+  yearRow.forEach((v,ci)=>{
+    if(v&&/(\d{4})年度/.test(String(v))){
+      fyStarts.push({fy:parseInt(String(v).match(/(\d{4})/)[1]),col:ci});
+    }
+  });
+
+  monthRow.forEach((v,ci)=>{
+    if(v===null||v===undefined) return;
+
+    // Dateオブジェクト
+    const ymDate=xlDateToYM(v);
+    if(ymDate){ map[ci]=ymDate; return; }
+
+    // 日本語月表記（'3月','12月'など）
+    const jm=String(v).match(/^(\d{1,2})月$/);
+    if(jm){
+      const mNum=parseInt(jm[1]);
+      let fy=null;
+      for(let i=fyStarts.length-1;i>=0;i--){
+        if(ci>=fyStarts[i].col){fy=fyStarts[i].fy;break;}
+      }
+      if(fy!==null){
+        // 3月始まり会計年度: 3月〜12月=当該年, 1月〜2月=翌年
+        const calYear=mNum>=3?fy:fy+1;
+        map[ci]=`${calYear}-${String(mNum).padStart(2,'0')}`;
+      }
+    }
+  });
+  return map;
+}
+
+// ── コンテンツ本数管理パーサー ──
+function parseContentWb(wb){
+  const orgMapB={
+    'メディカル':'MED','メディカル事業部':'MED',
+    'インサイトセールス':'IS','IS':'IS','IS事業部':'IS',
+    '企業U':'UN','企業ユニフォーム':'UN','ユニフォーム':'UN',
+    '学生服':'SCH','スクール':'SCH'
+  };
+  const result={};
+
+  // 2025シート: 65行目(row[64])がヘッダー、Z(25)〜AK(36)列 = FY2025(3〜翌2月)
+  // 2026シート: 1行目(row[0])がヘッダー、F(5)〜Q(16)列   = FY2026(3〜翌2月)
+  const namedConfigs=[
+    {name:'2025', year:2025, headerRowIdx:64, dataStartIdx:65, colStart:25, colEnd:36},
+    {name:'2026', year:2026, headerRowIdx:0,  dataStartIdx:1,  colStart:5,  colEnd:16}
+  ];
+
+  const configs=[];
+  namedConfigs.forEach(cfg=>{
+    if(wb.SheetNames.includes(cfg.name)) configs.push(cfg);
+  });
+
+  // フォールバック: 年付シート名 or 「コンテンツ管理」含むシート
+  if(!configs.length){
+    const idx=wb.SheetNames.findIndex(n=>/\d{4}/.test(n)||n.includes('コンテンツ管理'));
+    const si=idx>=0?idx:Math.min(2,wb.SheetNames.length-1);
+    const m=wb.SheetNames[si].match(/(\d{4})/);
+    const yr=m?parseInt(m[1]):2026;
+    configs.push({name:wb.SheetNames[si],year:yr,headerRowIdx:0,dataStartIdx:1,colStart:5,colEnd:16});
+  }
+
+  configs.forEach(cfg=>{
+    const ws=wb.Sheets[cfg.name];
+    if(!ws) return;
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+    if(!rows.length) return;
+
+    // 月→YYYY-MMマップ（3月始まり12ヶ月）
+    const colToYM={};
+    const monthsSeq=[3,4,5,6,7,8,9,10,11,12,1,2];
+    let mIdx=0;
+    for(let ci=cfg.colStart;ci<=cfg.colEnd&&mIdx<12;ci++){
+      const mNum=monthsSeq[mIdx];
+      const calYear=mNum>=3?cfg.year:cfg.year+1;
+      colToYM[ci]=`${calYear}-${String(mNum).padStart(2,'0')}`;
+      mIdx++;
+    }
+
+    let currentType=null;
+    let currentOrg=null;
+
+    for(let ri=cfg.dataStartIdx;ri<rows.length;ri++){
+      const row=rows[ri];
+      if(!row) continue;
+
+      const aVal=row[0]?String(row[0]).trim():null;
+      if(aVal&&aVal.length>0) currentType=aVal;
+
+      const bVal=row[1]?String(row[1]).trim():null;
+      if(bVal){
+        const mappedOrg=orgMapB[bVal];
+        if(mappedOrg) currentOrg=mappedOrg;
+        else if(bVal==='合計') continue;
+      }
+      if(!currentOrg) continue;
+
+      const cVal=row[2]?String(row[2]).trim():null;
+      if(cVal&&cVal.includes('合計')) continue;
+
+      const unitPrice=parseNumVal(row[3]);
+      if(unitPrice===null||unitPrice<=0) continue;
+
+      const typeIdx=getContentTypeIdx(currentType);
+      Object.entries(colToYM).forEach(([ci,ym])=>{
+        const count=parseNumVal(row[parseInt(ci)]);
+        if(!count||count<=0) return;
+        const cost=Math.round(unitPrice*count);
+        if(!result[currentOrg]) result[currentOrg]={};
+        if(!result[currentOrg][ym]) result[currentOrg][ym]={cost:0,count:0,cost_by_type:Array(8).fill(0)};
+        result[currentOrg][ym].cost+=cost;
+        result[currentOrg][ym].count+=count;
+        result[currentOrg][ym].cost_by_type[typeIdx]+=cost;
+      });
+    }
+  });
+  return result;
+}
+
+// ── 一括取込実行 ──
+async function doAutoImport(){
+  const logDiv=document.getElementById('autoImportLog');
+  logDiv.style.display='none';
+  const log=[];let importCount=0;
+  const jissekiData={};  // 実績ファイルからのデータ（比較用）
+  try{
+    // ① 実績ファイル（MQL/SAL/SQL/受注・流入チャネル・CVフラグ）※これらの実績値の権威データ
+    for(const org of ORGS){
+      const inp=document.getElementById(`jissekiFile_${org}`);
+      if(!inp||!inp.files[0]) continue;
+      const buf=await readFileAsArrayBuffer(inp.files[0]);
+      const wb=XLSX.read(buf,{type:'array',cellDates:true});
+      const data=parseJissekiWb(wb,org);
+      const keys=Object.keys(data);
+      if(!keys.length){log.push(`⚠ ${org}：取込対象データなし`);continue;}
+      jissekiData[org]=data;
+      ensureOrg(org);
+      // 既存の実績由来値（MQL/SAL/SQL/受注・チャネル・CV種別）を一旦クリアし、古い取込値の混入を防ぐ
+      Object.keys(appData.actuals[org]||{}).forEach(ym=>{
+        const od=appData.actuals[org][ym];
+        od.cv=0;od.sal=0;od.sql=0;od.jucyu=0;od.mql_by_channel={};od.cv_by_type={};
+      });
+      let totalCv=0,totalSal=0,totalSql=0,totalJucyu=0;
+      keys.forEach(ym=>{
+        const d=ensureYM(org,ym);
+        // 実績ファイルから直接カウント: MQL/SAL/SQL/受注・流入チャネル・CV種別
+        d.cv=data[ym].cv||0;
+        d.sal=data[ym].sal||0;
+        d.sql=data[ym].sql||0;
+        d.jucyu=data[ym].jucyu||0;
+        d.mql_by_channel=data[ym].mql_by_channel||{};
+        d.cv_by_type=data[ym].cv_by_type||{};
+        totalCv+=d.cv;totalSal+=d.sal;totalSql+=d.sql;totalJucyu+=d.jucyu;
+      });
+      log.push(`✅ ${org}実績：MQL${totalCv}・SAL${totalSal}・SQL${totalSql}・受注${totalJucyu}件（実績ファイルから直接集計）`);importCount++;
+    }
+
+    // ② 予実管理（MAL/MQL/SAL/SQL・費用・目標）
+    const yInp=document.getElementById('yojitsuFile');
+    if(yInp&&yInp.files[0]){
+      const buf=await readFileAsArrayBuffer(yInp.files[0]);
+      const wb=XLSX.read(buf,{type:'array',cellDates:true});
+      const data=parseYojitsuWb(wb);
+      // 費用項目名を実ラベル（予実管理Row30-37）で更新
+      if(data.__costLabels&&data.__costLabels.some(l=>l)){
+        appData.costLabels=data.__costLabels.map((l,i)=>l||COST_ROW_LABELS[i]);
+      }
+      const importTgt=document.getElementById('importTargetsCb').checked;
+      let sessCnt=0,costCnt=0,tgtCnt=0;
+      ORGS.forEach(org=>{
+        if(!data[org]) return;
+        ensureOrg(org);
+        Object.entries(data[org].months||{}).forEach(([ym,vals])=>{
+          const d=ensureYM(org,ym);
+          // 予実管理からはセッション(MAL)・費用のみ適用。MQL/SAL/SQL/受注は実績ファイルが権威のため上書きしない
+          if(vals.sessions!==undefined){d.sessions=vals.sessions;sessCnt++;}
+          if(vals.cost_items){for(let i=4;i<8;i++) d.cost_items[i]=vals.cost_items[i]||0;costCnt++;} // ⑤〜⑧のみ予実管理から（①〜④は本数管理で算出）
+        });
+        if(importTgt){
+          Object.entries(data[org].targets||{}).forEach(([key,val])=>{
+            const parts=key.split('_');
+            const type=parts[parts.length-1];
+            const ym=parts.slice(0,-1).join('_');
+            const[y,m]=ym.split('-');if(!y||!m) return;
+            const mIdx=parseInt(m)-1;
+            const t=ensureYearTarget(org,y);
+            if(type==='mql'){t.monthly_mql[mIdx]=val;tgtCnt++;}
+            else if(type==='sess'){t.monthly_session[mIdx]=val;tgtCnt++;}
+            else if(type==='sql'){t.monthly_sql[mIdx]=val;tgtCnt++;}
+          });
+        }
+      });
+      log.push(`✅ 予実管理：MAL(セッション)${sessCnt}・費用${costCnt}件${importTgt?`・目標${tgtCnt}件`:''}（MQL/SAL/SQL/受注は実績ファイルを使用）`);importCount++;
+
+      // 参考: 予実管理のMQL実績と実績ファイル集計値の差分をコンソール出力（実績ファイルを正とする）
+      const mismatchLog=[];
+      ORGS.forEach(org=>{
+        if(!jissekiData[org]||!data[org]) return;
+        Object.entries(data[org].months||{}).forEach(([ym,yv])=>{
+          if(yv.cv===undefined) return;
+          const jd=jissekiData[org][ym];
+          const jMql=jd?(jd.cv||0):0;
+          if(yv.cv>0&&jMql>0&&yv.cv!==jMql){
+            mismatchLog.push(`${org} ${ym}: 予実MQL=${yv.cv} / 実績ファイルMQL=${jMql} → 実績ファイルを使用`);
+          }
+        });
+      });
+      if(mismatchLog.length>0){
+        log.push(`ℹ 予実管理と実績ファイルでMQLに${mismatchLog.length}件の差分あり（実績ファイルを正式データとして採用）`);
+        console.info('MQL差分（実績ファイルを採用）:\n'+mismatchLog.join('\n'));
+      }
+    }
+
+    // ③ コンテンツ本数管理（単価×本数）
+    const cInp=document.getElementById('contentFile');
+    if(cInp&&cInp.files[0]){
+      const buf=await readFileAsArrayBuffer(cInp.files[0]);
+      const wb=XLSX.read(buf,{type:'array'});
+      const data=parseContentWb(wb);
+      let cnt=0;
+      ORGS.forEach(org=>{
+        if(!data[org]) return;
+        ensureOrg(org);
+        Object.entries(data[org]).forEach(([ym,{cost,count,cost_by_type}])=>{
+          const d=ensureYM(org,ym);
+          d.cost_content=Math.round(cost);d.content_count=count;
+          // ①〜④(コラム/メルマガ/WP/事例)は本数管理の単価×本数で算出・上書き
+          for(let i=0;i<4;i++) d.cost_items[i]=cost_by_type[i]||0;
+          cnt++;
+        });
+      });
+      log.push(`✅ コンテンツ本数管理：${cnt}件取込（単価×本数で費用自動計算）`);importCount++;
+    }
+
+    if(!importCount){alert('ファイルが1つも選択されていません');return;}
+    saveData();
+    logDiv.innerHTML=log.join('<br>');logDiv.style.display='block';
+    setTimeout(()=>{closeModal('autoImportModal');renderAll();toast(`✅ 取込完了（${importCount}ファイル）`);logDiv.style.display='none';},2000);
+  }catch(err){alert('取込中にエラーが発生しました：'+err.message);console.error(err);}
+}
+
+// ─────────────────────────────────────────
+//  CONFIRM DIALOG
+// ─────────────────────────────────────────
+let _confirmCallback=null;
+function showConfirm(msg,callback){
+  document.getElementById('confirmMsg').textContent=msg;
+  _confirmCallback=callback;
+  openModal('confirmModal');
+}
+document.getElementById('confirmOkBtn').addEventListener('click',()=>{
+  closeModal('confirmModal');
+  if(_confirmCallback) _confirmCallback();
+  _confirmCallback=null;
+});
+
+// ─────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────
+function setOrg(org,el){
+  currentOrg=org;
+  document.querySelectorAll('.org-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderAll();
+}
+
+function setDateRange(){
+  const s=document.getElementById('startYMPicker').value;
+  const e=document.getElementById('endYMPicker').value;
+  if(s&&e&&s<=e){rangeStart=s;rangeEnd=e;renderAll();}
+}
+
+function switchView(view,el){
+  document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('[id^="vw-"]').forEach(v=>v.style.display='none');
+  document.getElementById('vw-'+view).style.display='block';
+  if(view==='dashboard') renderDashboard();
+  else if(view==='trend') renderTrend();
+  else if(view==='data'){const ds=document.getElementById('dataOrgSel');if(ds&&currentOrg)ds.value=currentOrg;populateDataYearSel();renderDataTable();}
+  else if(view==='targets') renderTargets();
+}
+
+function populateDataYearSel(){
+  const sel=document.getElementById('dataYearSel');
+  const cur=sel.value;sel.innerHTML='';
+  const curFY=String(getCurrentFY());
+  buildYearList().forEach(y=>{
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y+'年度';
+    if(y===cur||(!cur&&y===curFY)) o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function toast(msg){
+  const t=document.createElement('div');
+  t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateY(12px)'; t.style.transition='.3s'; setTimeout(()=>t.remove(),300); },2000);
+}
+
+// ─────────────────────────────────────────
+//  RENDER ALL
+// ─────────────────────────────────────────
+function renderDashboard(){
+  ensureHQ();
+  if(currentOrg==='ALL'){ renderHQDashboard(); return; }
+  ['card-funnel','card-charts','card-cmp'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
+  const cvp=document.getElementById('card-cvprog'); if(cvp) cvp.style.display='';
+  const dash=document.getElementById('hqDash'); if(dash) dash.style.display='none';
+  const tEl=document.getElementById('cvprogTitle'); if(tEl) tEl.innerHTML='<span class="sec-title-icon">🎯</span> MQL・SQL 目標進捗 <span id="cvOrgLabel" style="font-size:11px;color:var(--muted);font-weight:400"></span>';
+  renderKPI();renderCVProgress();renderFunnel();renderCharts();renderCompTable();
+}
+function renderTrend(){
+  ensureHQ();
+  const trendCharts=document.querySelector('#vw-trend .charts-grid');
+  const roiCard=document.getElementById('contentRoiSection')?document.getElementById('contentRoiSection').closest('.card'):null;
+  if(currentOrg==='ALL'){
+    if(trendCharts) trendCharts.style.display='none';
+    if(roiCard) roiCard.style.display='none';
+    renderHQTrendTable(); return;
+  }
+  if(trendCharts) trendCharts.style.display='';
+  if(roiCard) roiCard.style.display='';
+  renderTrendTable();renderTrendCharts();renderContentRoi();
+}
+function renderAll(){
+  const active=document.querySelector('.view-tab.active');
+  if(!active) return renderDashboard();
+  const txt=active.textContent;
+  if(txt.includes('ダッシュボード')) renderDashboard();
+  else if(txt.includes('月次推移')) renderTrend();
+  else if(txt.includes('データ')){const ds=document.getElementById('dataOrgSel');if(ds&&currentOrg)ds.value=currentOrg;populateDataYearSel();renderDataTable();}
+  else if(txt.includes('目標')) renderTargets();
+  else renderDashboard();
+}
+
+// ─────────────────────────────────────────
+//  MONTHLY TREND TABLE
+// ─────────────────────────────────────────
+function renderTrendTable(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  if(!months.length){document.getElementById('trendTableWrap').innerHTML='<div class="empty-state"><div class="big">📅</div><p>期間を選択してください</p></div>';return;}
+  const orgLabel=currentOrg==='ALL'?'全組織合計':ORG_LABEL[currentOrg];
+  if(document.getElementById('trendOrgLabel')) document.getElementById('trendOrgLabel').textContent=`（${orgLabel}）`;
+
+  const series=months.map(ym=>getData(currentOrg,ym));
+  // 会計年度（3月〜翌2月）合計列。表示期間にまたがる年度ごとに全12ヶ月を集計。
+  const fys=fysInRange(months);
+  const fyAgg=fys.map(fy=>getAgg(currentOrg,fyMonthsFull(fy)));
+  const th=months.map(ym=>`<th style="min-width:72px;text-align:right">${shortYmLabel(ym)}</th>`).join('')
+    +fys.map(fy=>`<th style="min-width:84px;text-align:right;background:#e2e8f0;border-left:2px solid #cbd5e1">${fy}年度<br>合計</th>`).join('');
+
+  function numCell(v){return `<td style="text-align:right">${v===null||v===undefined?'—':N(v)}</td>`;}
+  function yenCell(v){return `<td style="text-align:right">${v===null||v===0?'—':YFull(v)}</td>`;}
+  function tgtCell(v){return `<td style="text-align:right;color:var(--muted)">${v>0?N(v,1):'—'}</td>`;}
+  // 年度合計セル（背景付き）
+  function totNumCell(v){return `<td style="text-align:right;background:#eef2f7;font-weight:700;border-left:2px solid #cbd5e1">${v===null||v===undefined?'—':N(v)}</td>`;}
+  function totYenCell(v){return `<td style="text-align:right;background:#eef2f7;font-weight:700;border-left:2px solid #cbd5e1">${v===null||v===0?'—':YFull(v)}</td>`;}
+  function totTgtCell(v){return `<td style="text-align:right;background:#eef2f7;color:var(--muted);font-weight:700;border-left:2px solid #cbd5e1">${v>0?N(v,1):'—'}</td>`;}
+  function achCell(actual,target){
+    if(!target) return '<td style="text-align:right">—</td>';
+    const p=actual/target*100;
+    const cls=p>=90?'up-cell':p>=70?'':'down-cell';
+    return `<td class="${cls}" style="text-align:right">${N(p,1)}%</td>`;
+  }
+  function sHdr(label){return `<tr class="section-hdr"><td colspan="${2+months.length+fys.length}" style="padding:8px 10px">${label}</td></tr>`;}
+  // 実績数値行（月セル＋年度合計セル）
+  function numRow(label,fld,style=''){return `<tr><td></td><td${style?' style="'+style+'"':''}>${label}</td>${series.map(d=>numCell(d[fld])).join('')}${fyAgg.map(a=>totNumCell(a[fld])).join('')}</tr>`;}
+  // 目標行
+  function tgtRow(label,type){return `<tr><td></td><td style="color:var(--muted)">${label}</td>${months.map(ym=>tgtCell(getTarget(currentOrg,ym,type))).join('')}${fys.map(fy=>totTgtCell(getTargetSum(currentOrg,fyMonthsFull(fy),type))).join('')}</tr>`;}
+
+  let tb='';
+
+  // ─── リード実績 ───
+  tb+=sHdr('📊 リード実績');
+  tb+=numRow('MAL（セッション）','sessions');
+  tb+=numRow('MQL（CV）','cv');
+  tb+=numRow('SAL','sal');
+  tb+=numRow('SQL','sql');
+  tb+=numRow('受注','jucyu');
+  tb+=tgtRow('MAL目標','session');
+  tb+=tgtRow('MQL目標','mql');
+  tb+=tgtRow('SQL目標','sql');
+
+  // ─── 予算実績 ───
+  tb+=sHdr('💰 予算実績');
+  const costLabels=appData.costLabels||COST_ROW_LABELS;
+  for(let i=0;i<8;i++){
+    tb+=`<tr><td></td><td>予算（実績）${costLabels[i]||'費用'+(i+1)}</td>${series.map(d=>yenCell((d.cost_items||[])[i]||0)).join('')}${fyAgg.map(a=>totYenCell((a.cost_items||[])[i]||0)).join('')}</tr>`;
+  }
+
+  // ─── コンテンツマーケ実績 ───
+  tb+=sHdr('📣 コンテンツマーケ実績');
+  CHANNEL_KEYS.forEach(ch=>{
+    tb+=`<tr><td></td><td>MQL_${ch}</td>${series.map(d=>numCell((d.mql_by_channel||{})[ch]||0)).join('')}${fyAgg.map(a=>totNumCell((a.mql_by_channel||{})[ch]||0)).join('')}</tr>`;
+  });
+  tb+=`<tr><td></td><td style="font-weight:700">MQL（チャネル合計）</td>${series.map(d=>numCell(CHANNEL_KEYS.reduce((s,ch)=>s+((d.mql_by_channel||{})[ch]||0),0))).join('')}${fyAgg.map(a=>totNumCell(CHANNEL_KEYS.reduce((s,ch)=>s+((a.mql_by_channel||{})[ch]||0),0))).join('')}</tr>`;
+
+  // ─── CV実績 ───
+  tb+=sHdr('📋 CV実績');
+  CV_TYPE_KEYS.forEach(k=>{
+    tb+=`<tr><td></td><td>${CV_TYPE_LABELS[k]}</td>${series.map(d=>numCell((d.cv_by_type||{})[k]||0)).join('')}${fyAgg.map(a=>totNumCell((a.cv_by_type||{})[k]||0)).join('')}</tr>`;
+  });
+  tb+=`<tr><td></td><td style="font-weight:700">CV（合計）</td>${series.map(d=>numCell(d.cv)).join('')}${fyAgg.map(a=>totNumCell(a.cv)).join('')}</tr>`;
+
+  document.getElementById('trendTableWrap').innerHTML=`
+    <div style="overflow-x:auto">
+      <table class="data-table" style="font-size:12px;min-width:${180+months.length*80+fys.length*90}px">
+        <thead><tr>
+          <th style="min-width:80px;text-align:left;position:sticky;left:0;z-index:3;background:#f8fafc">区分</th>
+          <th style="min-width:140px;text-align:left;position:sticky;left:80px;z-index:3;background:#f8fafc;border-right:1px solid var(--border)">指標</th>
+          ${th}
+        </tr></thead>
+        <tbody>${tb}</tbody>
+      </table>
+    </div>`;
+}
+
+// ─────────────────────────────────────────
+//  TREND TABLE → CSV（UTF-8, BOM付き）
+// ─────────────────────────────────────────
+// 現在表示中の月次推移テーブル（通常組織／本部ALL 両対応）のrowデータを
+// そのままCSVとして出力。年度合計列も含む。Excelでの文字化け防止にBOMを付与。
+function downloadTrendCsv(){
+  const wrap=document.getElementById('trendTableWrap');
+  const table=wrap?wrap.querySelector('table'):null;
+  if(!table){toast('⚠ 出力できるデータがありません');return;}
+  const esc=s=>'"'+String(s==null?'':s).replace(/\s+/g,' ').trim().replace(/"/g,'""')+'"';
+  const csvRows=[];
+  table.querySelectorAll('tr').forEach(tr=>{
+    const cells=[...tr.querySelectorAll('th,td')].map(c=>esc(c.innerText||c.textContent||''));
+    csvRows.push(cells.join(','));
+  });
+  const csv='﻿'+csvRows.join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const orgTag=currentOrg==='ALL'?'本部':currentOrg;
+  a.download=`月次推移_${orgTag}_${rangeStart}_${rangeEnd}.csv`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast('✅ CSV（UTF-8）をダウンロードしました');
+}
+
+// ─────────────────────────────────────────
+//  TREND CHARTS
+// ─────────────────────────────────────────
+function renderTrendCharts(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  const labels=months.map(shortYmLabel);
+  const series=months.map(ym=>getData(currentOrg,ym));
+  const GREEN='rgba(16,185,129,0.85)',BLUE='rgba(37,99,235,0.85)';
+  const PURPLE='rgba(139,92,246,0.85)',AMBER='rgba(245,158,11,0.85)';
+  const GRAY='rgba(148,163,184,0.7)',RED='rgba(239,68,68,0.75)';
+
+  // Conversion rate chart
+  destroyChart('convRate');
+  charts['convRate']=new Chart(document.getElementById('chartConvRate').getContext('2d'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'CV率(MQL/Sess)',data:series.map(d=>d.sessions>0?Math.round(d.cv/d.sessions*1000)/10:null),borderColor:GREEN,tension:.3,fill:false},
+      {label:'SAL率(SAL/MQL)',data:series.map(d=>d.cv>0?Math.round(d.sal/d.cv*1000)/10:null),borderColor:BLUE,tension:.3,fill:false},
+      {label:'SQL率(SQL/SAL)',data:series.map(d=>d.sal>0?Math.round(d.sql/d.sal*1000)/10:null),borderColor:PURPLE,tension:.3,fill:false},
+      {label:'受注率(受注/SQL)',data:series.map(d=>d.sql>0?Math.round(d.jucyu/d.sql*1000)/10:null),borderColor:AMBER,tension:.3,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:10}}}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'#f1f5f9'}},
+              x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+
+  // Session vs MQL with target
+  destroyChart('sessTarget');
+  charts['sessTarget']=new Chart(document.getElementById('chartSessTarget').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'セッション',data:series.map(d=>d.sessions||0),backgroundColor:'rgba(56,189,248,0.6)',yAxisID:'yS'},
+      {label:'MQL実績',data:series.map(d=>d.cv||0),backgroundColor:GREEN,borderRadius:3,yAxisID:'yC'},
+      {label:'MQL目標',data:months.map(ym=>getTarget(currentOrg,ym,'mql')||null),type:'line',borderColor:RED,borderDash:[5,4],tension:.3,fill:false,yAxisID:'yC',pointRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{font:{size:10}}}},
+      scales:{yS:{position:'left',ticks:{font:{size:11}},grid:{color:'#f1f5f9'}},
+              yC:{position:'right',ticks:{font:{size:11}},grid:{drawOnChartArea:false}},
+              x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+}
+
+// ─────────────────────────────────────────
+//  CONTENT ROI
+// ─────────────────────────────────────────
+function renderContentRoi(){
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  const orgsToShow=currentOrg==='ALL'?ORGS:[currentOrg];
+
+  const html=orgsToShow.map(org=>{
+    const data=months.map(ym=>{
+      const d=getRawData(org,ym);
+      const cnt=d.content_count||0,cc=getContentCost(d),mc=getOtherCost(d);
+      const total=mc+cc;
+      const roi=cnt>0&&total>0?Math.round(total/cnt):null;
+      return {ym,cnt,cc,mc,total,roi};
+    });
+
+    const totalCount=data.reduce((s,d)=>s+d.cnt,0);
+    const totalCC=data.reduce((s,d)=>s+d.cc,0);
+    const totalMC=data.reduce((s,d)=>s+d.mc,0);
+    const totalTotal=totalCC+totalMC;
+    const roiTotal=totalCount>0&&totalTotal>0?Math.round(totalTotal/totalCount):null;
+    const hasAny=data.some(d=>d.cnt>0||d.cc>0||d.mc>0);
+    const orgLbl=orgsToShow.length>1?org:ORG_LABEL[org];
+
+    // 列ヘッダー（年月 + 合計）
+    const thCols=months.map(m=>`<th style="text-align:right;min-width:80px;padding:6px 8px;white-space:nowrap">${shortYmLabel(m)}</th>`).join('');
+
+    function mc(v,bold=false,color=''){
+      const s=`text-align:right;padding:5px 8px${bold?';font-weight:700':''}${color?';color:'+color:''}`;
+      return `<td style="${s}">${v}</td>`;
+    }
+    const lc=`style="font-weight:600;padding:5px 10px;background:#f8fafc;white-space:nowrap;border-right:1px solid var(--border)"`;
+
+    const countRow=`<tr><td ${lc}>本数</td>${data.map(d=>mc(d.cnt>0?N(d.cnt):'—')).join('')}${mc(totalCount>0?N(totalCount):'—',true)}</tr>`;
+    const ccRow   =`<tr><td ${lc}>コンテンツ費</td>${data.map(d=>mc(d.cc>0?YFull(d.cc):'—')).join('')}${mc(totalCC>0?YFull(totalCC):'—',true)}</tr>`;
+    const mcRow2  =`<tr><td ${lc}>マーケ費(広告他)</td>${data.map(d=>mc(d.mc>0?YFull(d.mc):'—')).join('')}${mc(totalMC>0?YFull(totalMC):'—',true)}</tr>`;
+    const roiRow  =`<tr><td ${lc}>ROI（費÷本）</td>${data.map(d=>mc(d.roi!==null?Y(d.roi):'—',true,'var(--navy)')).join('')}${mc(roiTotal!==null?Y(roiTotal):'—',true,'var(--navy)')}</tr>`;
+
+    const emptyRow=!hasAny?`<tr><td colspan="${months.length+2}" style="text-align:center;color:var(--muted);padding:12px;font-size:12px">データなし（コンテンツ本数管理ファイルを取込んでください）</td></tr>`:'';
+
+    return `<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+      <div class="content-roi-org" style="padding:10px 14px">${orgLbl}</div>
+      <div style="overflow-x:auto">
+        <table class="data-table" style="font-size:12px;min-width:${170+(months.length+1)*83}px">
+          <thead><tr>
+            <th style="text-align:left;min-width:110px;padding:6px 10px;position:sticky;left:0;z-index:2;background:#f8fafc;border-right:1px solid var(--border)">項目</th>
+            ${thCols}
+            <th style="text-align:right;padding:6px 8px">合計</th>
+          </tr></thead>
+          <tbody>${emptyRow||countRow+ccRow+mcRow2+roiRow}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('contentRoiSection').innerHTML=
+    html+'<div style="font-size:11px;color:var(--muted);margin-top:4px">※ ROI = 総費用（マーケ費＋コンテンツ費）÷ 制作本数。コンテンツ本数管理ファイル（③）を取込むと自動計算されます。</div>';
+}
+
+
+// ═════════════════════════════════════════
+//  マーケティング本部(ALL) 独自KPI モジュール
+//  ※ 会計年度(3月〜翌2月)・表示レイアウトは他事業と共通。本部はKGI/KPIが異なるため
+//    KPI項目・目標・費用を自由に定義できる（合算表示は行わず独自KPIのみ）。
+// ═════════════════════════════════════════
+function ensureHQ(){
+  if(!appData.hq||typeof appData.hq!=='object') appData.hq={};
+  const h=appData.hq;
+  h.kpis=Array.isArray(h.kpis)?h.kpis:[];
+  h.costs=Array.isArray(h.costs)?h.costs:[];
+  h.actuals=h.actuals||{};   // KPI実績 {ym:{kpiId:val}}
+  h.cactuals=h.cactuals||{}; // 費用実績 {ym:{costId:val}}
+  h.targets=h.targets||{};   // KPI月次目標 {ym:{kpiId:val}}
+  return h;
+}
+function hqNewId(pfx){return (pfx||'k')+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function hqEsc(x){return String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function hqFyMonths(y){const fy=parseInt(y);return [3,4,5,6,7,8,9,10,11,12,1,2].map(m=>{const cy=m>=3?fy:fy+1;return `${cy}-${String(m).padStart(2,'0')}`;});}
+function hqAct(ym,id){return (ensureHQ().actuals[ym]||{})[id]||0;}
+function hqCost(ym,id){return (ensureHQ().cactuals[ym]||{})[id]||0;}
+function hqTgt(ym,id){return (ensureHQ().targets[ym]||{})[id]||0;}
+function hqSumAct(ms,id){return ms.reduce((s,ym)=>s+hqAct(ym,id),0);}
+function hqSumCost(ms,id){return ms.reduce((s,ym)=>s+hqCost(ym,id),0);}
+function hqSumTgt(ms,id){return ms.reduce((s,ym)=>s+hqTgt(ym,id),0);}
+
+// ── KPI/費用 項目管理 ──
+function hqAddKpi(){const h=ensureHQ();const name=prompt('追加するKPI項目名を入力してください（例：受注金額、商談数 など）');if(!name||!name.trim())return;const unit=prompt('単位（任意。例：件・円・%）','')||'';h.kpis.push({id:hqNewId('k'),name:name.trim(),unit:(unit||'').trim()});saveData();renderTargets();toast('✅ KPI項目を追加しました');}
+function hqRenameKpi(id){const k=ensureHQ().kpis.find(x=>x.id===id);if(!k)return;const name=prompt('KPI項目名',k.name);if(name==null)return;k.name=name.trim();saveData();renderTargets();}
+function hqUnitKpi(id,val){const k=ensureHQ().kpis.find(x=>x.id===id);if(!k)return;k.unit=(val||'').trim();saveData();}
+function hqDelKpi(id){showConfirm('このKPI項目と関連する実績・目標を削除しますか？',()=>{const h=ensureHQ();h.kpis=h.kpis.filter(x=>x.id!==id);Object.values(h.actuals).forEach(o=>delete o[id]);Object.values(h.targets).forEach(o=>delete o[id]);saveData();renderTargets();toast('🗑 削除しました');});}
+function hqAddCost(){const h=ensureHQ();const name=prompt('追加する費用項目名を入力してください（例：広告費、ツール費 など）');if(!name||!name.trim())return;h.costs.push({id:hqNewId('c'),name:name.trim()});saveData();renderTargets();toast('✅ 費用項目を追加しました');}
+function hqRenameCost(id){const c=ensureHQ().costs.find(x=>x.id===id);if(!c)return;const name=prompt('費用項目名',c.name);if(name==null)return;c.name=name.trim();saveData();renderTargets();}
+function hqDelCost(id){showConfirm('この費用項目と関連する実績を削除しますか？',()=>{const h=ensureHQ();h.costs=h.costs.filter(x=>x.id!==id);Object.values(h.cactuals).forEach(o=>delete o[id]);saveData();renderTargets();toast('🗑 削除しました');});}
+
+// ── 本部 ダッシュボード ──
+function renderHQDashboard(){
+  const h=ensureHQ();
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  ['card-funnel','card-charts','card-cmp'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  const cvp=document.getElementById('card-cvprog'); if(cvp) cvp.style.display=(h.kpis.length?'':'none');
+  const tEl=document.getElementById('cvprogTitle'); if(tEl) tEl.innerHTML='<span class="sec-title-icon">🎯</span> 本部KPI 目標進捗 <span style="font-size:11px;color:var(--muted);font-weight:400">（マーケティング本部）</span>';
+  const grid=document.getElementById('kpiGrid');
+  const dash=document.getElementById('hqDash'); dash.style.display='';
+  if(!h.kpis.length&&!h.costs.length){
+    grid.innerHTML='<div class="info-box" style="grid-column:1/-1">マーケティング本部の独自KPI項目が未設定です。「🎯 目標設定」タブで KPI項目・目標・費用 を自由に追加してください。</div>';
+    document.getElementById('cvGrid').innerHTML=''; dash.innerHTML=''; return;
+  }
+  // KPIカード
+  const clsList=['session','cv','roi','cpa','cost'];
+  grid.innerHTML=h.kpis.map((k,i)=>{
+    const act=hqSumAct(months,k.id),tgt=hqSumTgt(months,k.id);
+    const pct=tgt>0?N(act/tgt*100,1)+'%':'目標未設定';
+    return `<div class="kpi-card ${clsList[i%5]}"><div class="kpi-lbl">📌 ${hqEsc(k.name)}${k.unit?'（'+hqEsc(k.unit)+'）':''}</div><div class="kpi-val">${N(act)}</div><div class="kpi-sub">目標: ${N(tgt,1)} ／ 達成率: ${pct}</div></div>`;
+  }).join('')||'<div class="info-box" style="grid-column:1/-1">KPI項目が未設定です。</div>';
+  // 進捗バー
+  document.getElementById('cvGrid').innerHTML=h.kpis.map(k=>{
+    const act=hqSumAct(months,k.id),tgt=hqSumTgt(months,k.id);
+    const pct=tgt>0?act/tgt*100:0;
+    const color=pct>=90?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
+    const pc=pct>=90?'prog-good':pct>=70?'prog-warn':'prog-bad';
+    return `<div class="cv-item"><div class="cv-item-title">${hqEsc(k.name)}</div><div class="cv-nums"><span class="cv-pct" style="color:${color}">${tgt>0?N(pct,1)+'%':'目標未設定'}</span><span class="cv-detail">${N(act)} / ${N(tgt,1)}</span></div><div class="prog-bar"><div class="prog-fill ${pc}" style="width:${Math.min(pct,100)}%"></div></div></div>`;
+  }).join('');
+  // 費用サマリ
+  if(h.costs.length){
+    const th=months.map(ym=>`<th style="text-align:right;min-width:72px">${shortYmLabel(ym)}</th>`).join('');
+    const rows=h.costs.map(c=>`<tr><td style="text-align:left;font-weight:600">${hqEsc(c.name)}</td>${months.map(ym=>`<td style="text-align:right">${hqCost(ym,c.id)?YFull(hqCost(ym,c.id)):'—'}</td>`).join('')}<td style="text-align:right;font-weight:700">${YFull(hqSumCost(months,c.id))}</td></tr>`).join('');
+    const totAll=h.costs.reduce((s,c)=>s+hqSumCost(months,c.id),0);
+    dash.innerHTML=`<div class="card card-pad" style="margin-bottom:14px"><div class="sec-title"><span class="sec-title-icon">💰</span>本部 費用（期間内）</div><div style="overflow-x:auto"><table class="data-table" style="font-size:12px"><thead><tr><th style="text-align:left">費用項目</th>${th}<th style="text-align:right">合計</th></tr></thead><tbody>${rows}<tr><td style="text-align:left;font-weight:700">合計</td>${months.map(ym=>`<td style="text-align:right;font-weight:700">${YFull(h.costs.reduce((s,c)=>s+hqCost(ym,c.id),0))}</td>`).join('')}<td style="text-align:right;font-weight:700">${YFull(totAll)}</td></tr></tbody></table></div></div>`;
+  } else dash.innerHTML='';
+}
+
+// ── 本部 月次推移テーブル ──
+function renderHQTrendTable(){
+  const h=ensureHQ();
+  const months=getMonthsInRange(rangeStart,rangeEnd);
+  const wrap=document.getElementById('trendTableWrap');
+  const lbl=document.getElementById('trendOrgLabel'); if(lbl) lbl.textContent='（マーケティング本部）';
+  if(!months.length){wrap.innerHTML='<div class="empty-state"><div class="big">📅</div><p>期間を選択してください</p></div>';return;}
+  if(!h.kpis.length&&!h.costs.length){wrap.innerHTML='<div class="info-box">マーケティング本部の独自KPI項目が未設定です。「🎯 目標設定」タブで追加してください。</div>';return;}
+  const fys=fysInRange(months);
+  const th=months.map(ym=>`<th style="min-width:72px;text-align:right">${shortYmLabel(ym)}</th>`).join('')
+    +fys.map(fy=>`<th style="min-width:84px;text-align:right;background:#e2e8f0;border-left:2px solid #cbd5e1">${fy}年度<br>合計</th>`).join('');
+  const totTd='text-align:right;background:#eef2f7;font-weight:700;border-left:2px solid #cbd5e1';
+  let tb='';
+  if(h.kpis.length){
+    tb+=`<tr class="section-hdr"><td colspan="${2+months.length+fys.length}" style="padding:8px 10px">📊 KPI実績・目標</td></tr>`;
+    h.kpis.forEach(k=>{
+      tb+=`<tr><td></td><td>${hqEsc(k.name)}${k.unit?'（'+hqEsc(k.unit)+'）':''}</td>${months.map(ym=>`<td style="text-align:right">${hqAct(ym,k.id)?N(hqAct(ym,k.id)):'—'}</td>`).join('')}${fys.map(fy=>{const v=fyMonthsFull(fy).reduce((s,ym)=>s+hqAct(ym,k.id),0);return `<td style="${totTd}">${v?N(v):'—'}</td>`;}).join('')}</tr>`;
+      tb+=`<tr><td></td><td style="color:var(--muted)">${hqEsc(k.name)} 目標</td>${months.map(ym=>`<td style="text-align:right;color:var(--muted)">${hqTgt(ym,k.id)>0?N(hqTgt(ym,k.id),1):'—'}</td>`).join('')}${fys.map(fy=>{const v=fyMonthsFull(fy).reduce((s,ym)=>s+hqTgt(ym,k.id),0);return `<td style="${totTd};color:var(--muted)">${v>0?N(v,1):'—'}</td>`;}).join('')}</tr>`;
+    });
+  }
+  if(h.costs.length){
+    tb+=`<tr class="section-hdr"><td colspan="${2+months.length+fys.length}" style="padding:8px 10px">💰 費用</td></tr>`;
+    h.costs.forEach(c=>{
+      tb+=`<tr><td></td><td>${hqEsc(c.name)}</td>${months.map(ym=>`<td style="text-align:right">${hqCost(ym,c.id)?YFull(hqCost(ym,c.id)):'—'}</td>`).join('')}${fys.map(fy=>{const v=fyMonthsFull(fy).reduce((s,ym)=>s+hqCost(ym,c.id),0);return `<td style="${totTd}">${v?YFull(v):'—'}</td>`;}).join('')}</tr>`;
+    });
+    tb+=`<tr><td></td><td style="font-weight:700">費用合計</td>${months.map(ym=>`<td style="text-align:right;font-weight:700">${YFull(h.costs.reduce((s,c)=>s+hqCost(ym,c.id),0))}</td>`).join('')}${fys.map(fy=>{const v=fyMonthsFull(fy).reduce((s,ym)=>s+h.costs.reduce((ss,c)=>ss+hqCost(ym,c.id),0),0);return `<td style="${totTd}">${YFull(v)}</td>`;}).join('')}</tr>`;
+  }
+  wrap.innerHTML=`<div style="overflow-x:auto"><table class="data-table" style="font-size:12px;min-width:${180+months.length*80+fys.length*90}px"><thead><tr><th style="min-width:80px;text-align:left;position:sticky;left:0;z-index:3;background:#f8fafc">区分</th><th style="min-width:160px;text-align:left;position:sticky;left:80px;z-index:3;background:#f8fafc;border-right:1px solid var(--border)">KPI/費用</th>${th}</tr></thead><tbody>${tb}</tbody></table></div>`;
+}
+
+// ── 本部 データ入力（月次実績） ──
+function renderHQDataTable(){
+  const h=ensureHQ();
+  const std=document.getElementById('stdDataTblWrap'); if(std) std.style.display='none';
+  const ib=document.querySelector('#dataStdCard .info-box'); if(ib) ib.style.display='none';
+  const wrap=document.getElementById('hqDataWrap'); wrap.style.display='';
+  const y=document.getElementById('dataYearSel').value||String(getCurrentFY());
+  const months=hqFyMonths(y);
+  if(!h.kpis.length&&!h.costs.length){
+    wrap.innerHTML='<div class="info-box">マーケティング本部の独自KPI項目・費用項目が未設定です。「🎯 目標設定」タブで追加してから実績を入力してください。</div>';return;
+  }
+  const th=months.map(ym=>{const mm=parseInt(ym.split('-')[1]);return `<th style="min-width:78px;text-align:center">${mm}月${mm<=2?'('+ym.split('-')[0]+')':''}</th>`;}).join('');
+  let body='';
+  if(h.kpis.length){
+    body+=`<tr class="section-hdr"><td colspan="${1+months.length}" style="padding:6px 10px">KPI実績</td></tr>`;
+    body+=h.kpis.map(k=>`<tr><td style="text-align:left;white-space:nowrap">${hqEsc(k.name)}${k.unit?'（'+hqEsc(k.unit)+'）':''}</td>${months.map(ym=>`<td><input type="number" step="any" data-hqk="${k.id}" data-ym="${ym}" value="${hqAct(ym,k.id)}"></td>`).join('')}</tr>`).join('');
+  }
+  if(h.costs.length){
+    body+=`<tr class="section-hdr"><td colspan="${1+months.length}" style="padding:6px 10px">費用（円）</td></tr>`;
+    body+=h.costs.map(c=>`<tr><td style="text-align:left;white-space:nowrap">${hqEsc(c.name)}</td>${months.map(ym=>`<td><input type="number" step="any" data-hqc="${c.id}" data-ym="${ym}" value="${hqCost(ym,c.id)}"></td>`).join('')}</tr>`).join('');
+  }
+  wrap.innerHTML=`<div class="info-box" style="margin-bottom:12px">💡 マーケティング本部の独自KPI・費用の月次実績を入力してください（会計年度：3月〜翌2月）。項目の追加・変更は「🎯 目標設定」タブで行います。「💾 保存」で確定します。</div>
+  <div class="input-tbl-wrap"><table class="input-tbl" style="min-width:${160+months.length*82}px"><thead><tr><th style="text-align:left;min-width:150px">項目</th>${th}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function saveHQDataTable(){
+  const h=ensureHQ();
+  document.querySelectorAll('#hqDataWrap input[type=number]').forEach(inp=>{
+    const ym=inp.dataset.ym,v=parseFloat(inp.value)||0;
+    if(inp.dataset.hqk!=null){(h.actuals[ym]||(h.actuals[ym]={}))[inp.dataset.hqk]=v;}
+    else if(inp.dataset.hqc!=null){(h.cactuals[ym]||(h.cactuals[ym]={}))[inp.dataset.hqc]=v;}
+  });
+  saveData();toast('✅ 本部データを保存しました');
+}
+
+// ── 本部 目標設定（KPI/費用 項目管理 ＋ 月次目標） ──
+function renderHQTargets(){
+  const h=ensureHQ();
+  const wrap=document.getElementById('hqTargetWrap');
+  document.getElementById('targetGrid').style.display='none';
+  wrap.style.display='';
+  const years=buildYearList();
+  // 項目管理パネル
+  const kpiRows=h.kpis.map(k=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <span style="font-weight:600;min-width:160px">📌 ${hqEsc(k.name)}</span>
+    <span style="font-size:11px;color:var(--muted)">単位</span>
+    <input type="text" value="${hqEsc(k.unit||'')}" onchange="hqUnitKpi('${k.id}',this.value)" style="width:70px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px">
+    <button onclick="hqRenameKpi('${k.id}')" style="padding:3px 8px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer">名称変更</button>
+    <button onclick="hqDelKpi('${k.id}')" style="padding:3px 8px;font-size:11px;border:none;border-radius:4px;background:var(--red);color:#fff;cursor:pointer">削除</button>
+  </div>`).join('')||'<div style="font-size:12px;color:var(--muted);margin-bottom:6px">KPI項目がありません</div>';
+  const costRows=h.costs.map(c=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <span style="font-weight:600;min-width:160px">💴 ${hqEsc(c.name)}</span>
+    <button onclick="hqRenameCost('${c.id}')" style="padding:3px 8px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:#fff;cursor:pointer">名称変更</button>
+    <button onclick="hqDelCost('${c.id}')" style="padding:3px 8px;font-size:11px;border:none;border-radius:4px;background:var(--red);color:#fff;cursor:pointer">削除</button>
+  </div>`).join('')||'<div style="font-size:12px;color:var(--muted);margin-bottom:6px">費用項目がありません</div>';
+  // 月次目標エディタ（KPI×年度）
+  let tgtHtml='';
+  if(h.kpis.length){
+    tgtHtml=h.kpis.map(k=>{
+      const blocks=years.map(y=>{
+        const fy=parseInt(y);const ms=hqFyMonths(y);
+        const lbls=[3,4,5,6,7,8,9,10,11,12,1,2].map(m=>`<span class="monthly-lbl-cell">${m}月</span>`).join('');
+        const annual=ms.reduce((s,ym)=>s+hqTgt(ym,k.id),0);
+        const annualId=`hqann_${k.id}_${fy}`;
+        const inputs=ms.map(ym=>`<input class="hq-tgt-input monthly-tgt-input" type="number" step="0.1" data-kpi="${k.id}" data-ym="${ym}" value="${hqTgt(ym,k.id)}" min="0">`).join('');
+        return `<div class="target-year-block"><span class="target-year-lbl">${y}年度（3月〜翌2月）</span>
+          <div class="monthly-lbl-row">${lbls}</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+            <span style="font-size:11px;color:var(--muted);width:50px;flex-shrink:0">年間合計</span>
+            <input type="number" step="0.1" id="${annualId}" value="${Math.round(annual*10)/10}" min="0" style="width:90px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:right">
+            <button onclick="hqDistAnnual('${k.id}',${fy},'${annualId}')" style="padding:3px 8px;font-size:11px;border:none;border-radius:4px;background:var(--blue);color:#fff;cursor:pointer">均等配分</button>
+          </div>
+          <div class="monthly-input-row">${inputs}</div></div>`;
+      }).join('');
+      return `<div class="target-org"><div class="target-org-name">📌 ${hqEsc(k.name)}${k.unit?'（'+hqEsc(k.unit)+'）':''} 月次目標</div>${blocks}</div>`;
+    }).join('');
+  }
+  wrap.innerHTML=`<div class="info-box" style="margin-bottom:14px">🏢 <b>マーケティング本部（独自KPI）</b>：他事業とKGI/KPIが異なるため、KPI項目・目標・費用を自由に設定できます（会計年度：3月〜翌2月）。実績は「📝 データ入力」タブの「本部(ALL)」で入力します。</div>
+  <div class="card" style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+    <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px">KPI項目</div>
+    ${kpiRows}
+    <button onclick="hqAddKpi()" style="margin-top:6px;padding:5px 12px;font-size:12px;border:none;border-radius:6px;background:var(--green);color:#fff;cursor:pointer">＋ KPI項目を追加</button>
+    <div style="font-size:13px;font-weight:700;color:var(--navy);margin:14px 0 8px">費用項目</div>
+    ${costRows}
+    <button onclick="hqAddCost()" style="margin-top:6px;padding:5px 12px;font-size:12px;border:none;border-radius:6px;background:var(--green);color:#fff;cursor:pointer">＋ 費用項目を追加</button>
+  </div>
+  ${tgtHtml}`;
+}
+function hqDistAnnual(kpiId,fy,annualId){
+  const v=parseFloat(document.getElementById(annualId).value)||0;
+  const per=Math.round(v/12*10)/10;
+  hqFyMonths(String(fy)).forEach(ym=>{
+    const el=document.querySelector(`.hq-tgt-input[data-kpi="${kpiId}"][data-ym="${ym}"]`);
+    if(el) el.value=per;
+  });
+  toast(`✅ ${v}を12ヶ月均等配分しました（月${per}）`);
+}
+function saveHQTargets(){
+  const h=ensureHQ();
+  document.querySelectorAll('.hq-tgt-input').forEach(inp=>{
+    const id=inp.dataset.kpi,ym=inp.dataset.ym;
+    const v=Math.round((parseFloat(inp.value)||0)*10)/10;
+    (h.targets[ym]||(h.targets[ym]={}))[id]=v;
+  });
+  saveData();toast('✅ 本部の目標を保存しました');renderAll();
+}
+
+// ─────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────
+function init(){
+  appData=loadData();
+  ensureHQ();
+  // ChartDataLabels をグローバル登録（デフォルト無効）
+  if(typeof ChartDataLabels!=='undefined'){
+    Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels',{display:false});
+  }
+  const now=new Date();
+  const fy=getCurrentFY(now);  // 現在年度（3月始まり）
+  rangeStart=`${fy}-03`;       // 今年度3月
+  rangeEnd=`${fy+1}-02`;       // 翌年2月
+
+  document.getElementById('startYMPicker').value=rangeStart;
+  document.getElementById('endYMPicker').value=rangeEnd;
+
+  populateDataYearSel();
+  renderDashboard();
+}
+
+init();
+</script>
+</body>
+</html>
