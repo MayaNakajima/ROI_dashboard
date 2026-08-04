@@ -310,7 +310,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
       <div class="info-box" style="margin-bottom:12px">
         💡 セッション・CV・SAL・SQL・受注、および CV実績（問合せ／資料DL／WPDL）は直接編集できます。<br>
         CV実績はExcel取込値が初期値として入り、ここで自由に修正できます（再取込しない限り保持されます）。<br>
-        費用（マーケ費・コンテンツ費）は本数管理／予実管理の取込値から自動計算のため編集不可、CPA（費用÷MQL）・SQL CPA（費用÷SQL）も自動計算です。<br>
+        費用①〜⑧（予算実績）は下の「予算実績 月次入力」セクションで直接編集できます（Excel取込値が初期値として入ります）。マーケ費用・コンテンツ費用・CPA・SQL CPAはその入力から自動計算されます。<br>
         保存ボタンを押すまでデータは確定されません。行の「×」で月データを削除できます。
       </div>
       <div class="input-tbl-wrap" id="stdDataTblWrap">
@@ -336,6 +336,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
           <tbody id="dataTbody"></tbody>
         </table>
       </div>
+      <div id="costDataWrap" style="margin-top:18px"></div>
       <div id="hqDataWrap" style="display:none"></div>
     </div>
   </div>
@@ -1062,7 +1063,7 @@ function buildYearList(){
 function renderDataTable(){
   ensureHQ();
   const org=document.getElementById('dataOrgSel').value;
-  if(org==='ALL'){ renderHQDataTable(); return; }
+  if(org==='ALL'){ renderHQDataTable(); const cw=document.getElementById('costDataWrap'); if(cw){cw.style.display='none';cw.innerHTML='';} return; }
   const std=document.getElementById('stdDataTblWrap'); if(std) std.style.display='';
   const ib=document.querySelector('#dataStdCard .info-box'); if(ib) ib.style.display='';
   const hw=document.getElementById('hqDataWrap'); if(hw){hw.style.display='none';hw.innerHTML='';}
@@ -1085,8 +1086,8 @@ function renderDataTable(){
       <td><input type="number" data-field="sal" data-ym="${ym}" value="${d.sal}" min="0"></td>
       <td><input type="number" data-field="sql" data-ym="${ym}" value="${d.sql}" min="0"></td>
       <td><input type="number" data-field="jucyu" data-ym="${ym}" value="${d.jucyu}" min="0"></td>
-      <td class="calc-cell">${YFull(getMktgCost(d))}</td>
-      <td class="calc-cell">${YFull(getContentCost(d))}</td>
+      <td class="calc-cell" id="mktgcost_${ym}">${YFull(getMktgCost(d))}</td>
+      <td class="calc-cell" id="contentcost_${ym}">${YFull(getContentCost(d))}</td>
       <td class="calc-cell" id="cpa_${ym}" data-cost="${getTotalCost(d)}">${cpa!==null?Y(Math.round(cpa)):'—'}</td>
       <td class="calc-cell" id="cpasql_${ym}" data-cost="${getTotalCost(d)}">${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
       <td><input type="number" data-field="cvt_inquiry" data-ym="${ym}" value="${ct.inquiry||0}" min="0"></td>
@@ -1110,6 +1111,63 @@ function renderDataTable(){
       if(elSql){const cost=parseFloat(elSql.dataset.cost)||0;elSql.textContent=(sql>0&&cost>0)?Y(Math.round(cost/sql)):'—';}
     });
   });
+  renderCostDataTable(org,allMonths);
+}
+
+// ── 予算実績（費用①〜⑧）月次入力テーブル ──
+function renderCostDataTable(org,allMonths){
+  const costLabels=appData.costLabels||COST_ROW_LABELS;
+  const th=allMonths.map(ym=>{const mm=parseInt(ym.split('-')[1]);return `<th style="min-width:78px;text-align:center">${mm}月${mm<=2?'('+ym.split('-')[0]+')':''}</th>`;}).join('');
+  const rows=costLabels.map((label,i)=>{
+    const cells=allMonths.map(ym=>{
+      const d=getRawData(org,ym);
+      const v=(d.cost_items||[])[i]||0;
+      return `<td><input type="number" step="1" min="0" data-costidx="${i}" data-ym="${ym}" value="${v}"></td>`;
+    }).join('');
+    return `<tr><td style="text-align:left;white-space:nowrap">${i+1<=4?'①②③④'[i]:'⑤⑥⑦⑧'[i-4]} ${label}</td>${cells}</tr>`;
+  }).join('');
+  const wrap=document.getElementById('costDataWrap');
+  wrap.style.display='';
+  wrap.innerHTML=`
+    <div class="sec-title" style="margin:6px 0 8px"><span class="sec-title-icon">💰</span>予算実績（費用①〜⑧）月次入力</div>
+    <div class="info-box" style="margin-bottom:12px">
+      💡 費用①〜⑧は月次で直接編集できます。①〜④（${costLabels.slice(0,4).join('/')}）はコンテンツ本数管理、⑤〜⑧（${costLabels.slice(4,8).join('/')}）は予実管理からの取込値が初期値として入りますが、ここで自由に修正できます（再取込を行うと取込対象の項目は上書きされます）。<br>
+      編集すると上の「マーケ費用」「コンテンツ費用」「CPA」「SQL CPA」も自動再計算されます。保存ボタンで確定します。
+    </div>
+    <div class="input-tbl-wrap">
+      <table class="input-tbl" style="min-width:${160+allMonths.length*82}px">
+        <thead><tr><th style="text-align:left;min-width:150px">費用項目</th>${th}</tr></thead>
+        <tbody id="costDataTbody">${rows}</tbody>
+      </table>
+    </div>`;
+  document.querySelectorAll('#costDataTbody input[type=number]').forEach(inp=>{
+    inp.addEventListener('input',()=>recalcCostRow(inp.dataset.ym));
+  });
+}
+
+// 費用入力の変更を「マーケ費用/コンテンツ費用/CPA/SQL CPA」表示に即時反映
+function recalcCostRow(ym){
+  const inputs=document.querySelectorAll(`#costDataTbody input[data-ym="${ym}"]`);
+  if(!inputs.length) return;
+  const vals=Array(8).fill(0);
+  inputs.forEach(inp=>{vals[parseInt(inp.dataset.costidx)]=parseFloat(inp.value)||0;});
+  const mktgCost=vals.reduce((s,v)=>s+v,0);
+  const contentCost=vals[0]+vals[1]+vals[2]+vals[3];
+  const mEl=document.getElementById('mktgcost_'+ym); if(mEl) mEl.textContent=YFull(mktgCost);
+  const cEl=document.getElementById('contentcost_'+ym); if(cEl) cEl.textContent=YFull(contentCost);
+  const cpaEl=document.getElementById('cpa_'+ym);
+  const cpaSqlEl=document.getElementById('cpasql_'+ym);
+  if(cpaEl) cpaEl.dataset.cost=mktgCost;
+  if(cpaSqlEl) cpaSqlEl.dataset.cost=mktgCost;
+  const row=cpaEl?cpaEl.closest('tr'):(cpaSqlEl?cpaSqlEl.closest('tr'):null);
+  if(row){
+    const cvInp=row.querySelector('input[data-field="cv"]');
+    const sqlInp=row.querySelector('input[data-field="sql"]');
+    const cv=parseFloat(cvInp?cvInp.value:0)||0;
+    const sql=parseFloat(sqlInp?sqlInp.value:0)||0;
+    if(cpaEl) cpaEl.textContent=(cv>0&&mktgCost>0)?Y(Math.round(mktgCost/cv)):'—';
+    if(cpaSqlEl) cpaSqlEl.textContent=(sql>0&&mktgCost>0)?Y(Math.round(mktgCost/sql)):'—';
+  }
 }
 
 function saveDataTable(){
@@ -1119,8 +1177,12 @@ function saveDataTable(){
     const ym=inp.dataset.ym,field=inp.dataset.field;
     const d=ensureYM(org,ym);
     if(field&&field.indexOf('cvt_')===0){const k=field.slice(4);if(!d.cv_by_type)d.cv_by_type={};d.cv_by_type[k]=parseFloat(inp.value)||0;}
-    else if(field==='cost_mktg_total'){d.cost_items[0]=parseFloat(inp.value)||0;}
     else{d[field]=parseFloat(inp.value)||0;}
+  });
+  document.querySelectorAll('#costDataTbody input[type=number]').forEach(inp=>{
+    const ym=inp.dataset.ym,idx=parseInt(inp.dataset.costidx);
+    const d=ensureYM(org,ym);
+    d.cost_items[idx]=parseFloat(inp.value)||0;
   });
   saveData();toast('✅ データを保存しました');
 }
