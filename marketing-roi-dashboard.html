@@ -164,6 +164,15 @@ select:focus{outline:2px solid var(--blue);outline-offset:1px}
 textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:monospace;resize:vertical}
 textarea:focus{outline:2px solid var(--blue);outline-offset:1px}
 input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);border-radius:6px;width:100%;background:#f8fafc;cursor:pointer}
+.cv-upload-area{border:2px dashed var(--blue);border-radius:10px;padding:22px;text-align:center;background:#f8fafc;transition:.15s}
+.cv-upload-area.dragover{background:#eef4ff;border-color:var(--navy)}
+.cv-file-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:5px 12px;margin:3px;font-size:12px}
+.cv-file-chip .tag{font-size:10px;font-weight:700;color:#fff;border-radius:10px;padding:1px 7px}
+.cv-file-chip .rm{cursor:pointer;color:var(--red);font-weight:700}
+.cv-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}
+.cv-cardbox{border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;background:#fff}
+.cv-cardbox .n{font-size:22px;font-weight:800;color:var(--navy)}
+.cv-cardbox .l{font-size:11px;color:var(--muted);margin-top:3px}
 .map-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .map-row label{font-size:12px;width:160px;flex-shrink:0;color:var(--muted)}
 .map-row select{flex:1;padding:5px 8px;font-size:12px}
@@ -225,6 +234,8 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
     <div class="view-tab active" onclick="switchView('dashboard',this)">📈 ダッシュボード</div>
     <div class="view-tab" onclick="switchView('trend',this)">📊 月次推移</div>
     <div class="view-tab" onclick="switchView('data',this)">📝 データ入力</div>
+    <div class="view-tab" onclick="switchView('cvagg',this)">🧮 CV集計</div>
+    <div class="view-tab" onclick="switchView('cvcount',this)">🔢 CVカウント</div>
     <div class="view-tab" onclick="switchView('targets',this)">🎯 目標設定</div>
   </div>
 
@@ -330,6 +341,9 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
               <th>CV<br>問合せ</th>
               <th>CV<br>資料DL</th>
               <th>CV<br>WPDL</th>
+              <th>CV<br>カタログ</th>
+              <th>CV<br>申込</th>
+              <th>CV<br>その他</th>
               <th></th>
             </tr>
           </thead>
@@ -353,6 +367,61 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
     </div>
     <div style="margin-top:12px;display:flex;justify-content:flex-end">
       <button class="btn btn-success" onclick="saveTargets()">💾 目標を保存</button>
+    </div>
+  </div>
+
+  <!-- ═══ CV集計 View (HubSpotレポート集計) ═══ -->
+  <div id="vw-cvagg" style="display:none">
+    <div class="card card-pad">
+      <div class="sec-title"><span class="sec-title-icon">🧮</span>CV集計（HubSpotレポート）</div>
+      <div class="info-box" style="margin-bottom:12px">
+        💡 <b>使い方（①→②の順）</b>：まずこの「CV集計」でHubSpotレポートを集計→Excel出力し、実績ファイルに貼り付けます。営業がSAL/SQL/受注を記入後、「CVカウント」タブで実績ファイルを取り込みMQLをダッシュボードへ反映します。<br>
+        各事業部の<b>初回CVレポート</b>と<b>メルマガ経由レポート</b>（2シート目を自動参照）を、まとめてアップロードしてください。ファイルのシート名から<b>事業部・種別を自動判別</b>します。<br>
+        メルマガ経由レポートは、<b>自事業部以外（別事業部＝MED含む全て）のメルマガ由来CVを自動除外</b>します（自事業部のメルマガCVのみ残す）。<br>
+        分類：問合せ／資料DL／WP／カタログ(MED)／申し込み(SCH)／その他。<b>汎用フォーム(.bdash_form)・展示会アンケート・ヒアリングアンケートはCV総数から除外</b>します。会社名は法人格を正規化し、<b>月内は会社（個人はメール）で重複除去</b>します。
+      </div>
+      <div class="cv-upload-area" id="cvaggDrop">
+        <input type="file" id="cvaggFile" accept=".xlsx,.xls" multiple style="display:none" onchange="cvaggAddFiles(this.files)">
+        <div style="font-weight:600;color:var(--navy);margin-bottom:6px">📁 HubSpotレポートをドラッグ&ドロップ、または</div>
+        <button class="btn btn-primary" onclick="document.getElementById('cvaggFile').click()">ファイルを選択</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">複数選択可（初回CV／メルマガ経由の両方）</div>
+      </div>
+      <div id="cvaggFileList" style="margin-top:12px"></div>
+      <div class="toolbar" style="margin-top:14px;flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <div><div class="filter-lbl">開始</div><input type="month" id="cvaggStart"></div>
+        <div><div class="filter-lbl">終了</div><input type="month" id="cvaggEnd"></div>
+        <button class="btn btn-success" onclick="cvaggAnalyze()">📈 集計する</button>
+        <button class="btn btn-ghost" onclick="cvaggClear()">クリア</button>
+        <button class="btn btn-primary" id="cvaggDlBtn" onclick="cvaggDownload()" style="display:none">📥 Excelダウンロード</button>
+      </div>
+      <div id="cvaggStatus" style="margin-top:12px"></div>
+      <div id="cvaggResults" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- ═══ CVカウント View (実績ファイル集計→MQL反映) ═══ -->
+  <div id="vw-cvcount" style="display:none">
+    <div class="card card-pad">
+      <div class="sec-title"><span class="sec-title-icon">🔢</span>CVカウント（実績ファイル）</div>
+      <div class="info-box" style="margin-bottom:12px">
+        💡 CV集計→実績ファイル貼付→営業がSAL/SQL/受注を記入、の<b>後</b>に使います。実績ファイル（.xlsm/.xlsx）を取り込み、<b>MQL（合計＋種別ごと）</b>を集計してダッシュボードへ反映します。<br>
+        顧客一覧シートは<b>シート位置に依存せず内容から自動検出</b>します（1枚目でも3枚目でも可）。<b>SAL/SQL/受注は取り込みません</b>（従来どおり実績ファイル①由来のまま）。<br>
+        反映はプレビュー確認後に実行され、<b>手動入力（データ入力タブ）は維持</b>されます。
+      </div>
+      <div class="toolbar" style="flex-wrap:wrap;gap:10px;align-items:flex-end">
+        <div>
+          <div class="filter-lbl">対象事業部</div>
+          <select id="cvcountOrg"><option value="AUTO">自動判別</option><option value="UN">UN</option><option value="SCH">SCH</option><option value="MED">MED</option><option value="IS">IS</option></select>
+        </div>
+        <div><div class="filter-lbl">ファイル</div><input type="file" id="cvcountFile" accept=".xlsx,.xlsm,.xls" onchange="cvcountLoad(this)"></div>
+        <div><div class="filter-lbl">開始</div><input type="month" id="cvcountStart"></div>
+        <div><div class="filter-lbl">終了</div><input type="month" id="cvcountEnd"></div>
+        <button class="btn btn-success" onclick="cvcountAnalyze()">🔢 カウントする</button>
+        <button class="btn btn-ghost" onclick="cvcountClear()">クリア</button>
+      </div>
+      <div id="cvcountStatus" style="margin-top:12px"></div>
+      <div id="cvcountResults" style="margin-top:8px"></div>
+      <div id="cvcountReflect" style="margin-top:12px"></div>
     </div>
   </div>
 
@@ -512,8 +581,9 @@ const CHANNEL_LABELS = {
   Offline:'Offline',Other:'Other',Unknown:'不明'
 };
 // CV種別キー
-const CV_TYPE_KEYS = ['inquiry','service_dl','wp_dl'];
-const CV_TYPE_LABELS = {inquiry:'CV（問い合わせ）',service_dl:'CV（サービス資料DL）',wp_dl:'CV（WPDL）'};
+const CV_TYPE_KEYS = ['inquiry','service_dl','wp_dl','catalog','moushikomi','other'];
+const CV_TYPE_LABELS = {inquiry:'CV（問い合わせ）',service_dl:'CV（サービス資料DL）',wp_dl:'CV（WPDL）',catalog:'CV（カタログ）',moushikomi:'CV（申し込み）',other:'CV（その他）'};
+const CV_TYPE_SHORT = {inquiry:'問合せ',service_dl:'資料DL',wp_dl:'WPDL',catalog:'カタログ',moushikomi:'申込',other:'その他'};
 // コンテンツ種別→cost_itemsインデックス
 const CONTENT_TYPE_TO_IDX = {
   'コラム':0,'コラム記事':0,'コラム（広告含む）':0,
@@ -592,7 +662,7 @@ function ensureYearTarget(org,y){
   return t;
 }
 
-const EMBEDDED_DATA={"version":"4.2","targets":{"UN":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,25,25,25,25,25,25,25,25,25,25],"monthly_session":[0,0,3302,3302,3302,3302,3302,3302,3302,3302,3302,3302],"monthly_sql":[0,0,5,5,5,5,5,5,5,5,5,5]},"2027":{"monthly_mql":[25,25,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3302,3302,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[5,5,0,0,0,0,0,0,0,0,0,0]}},"SCH":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,6,6,6,6,6,6,6,6,6,6],"monthly_session":[0,0,3574,3574,3574,3574,3574,3574,3574,3574,3574,3574],"monthly_sql":[0,0,1,1,1,1,1,1,1,1,1,1]},"2027":{"monthly_mql":[6,6,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3574,3574,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[1,1,0,0,0,0,0,0,0,0,0,0]}},"MED":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,38,38,38,38,38,38,38,38,38,38],"monthly_session":[0,0,3903,3903,3903,3903,3903,3903,3903,3903,3903,3903],"monthly_sql":[0,0,2,2,2,2,2,2,2,2,2,2]},"2027":{"monthly_mql":[38,38,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3903,3903,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]}},"IS":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,23,23,23,23,23,23,23,23,23,23],"monthly_session":[0,0,2097,2097,2097,2097,2097,2097,2097,2097,2097,2097],"monthly_sql":[0,0,1,1,1,1,1,1,1,1,1,1]},"2027":{"monthly_mql":[23,23,0,0,0,0,0,0,0,0,0,0],"monthly_session":[2097,2097,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[1,1,0,0,0,0,0,0,0,0,0,0]}}},"actuals":{"UN":{"2024-09":{"sessions":129,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":2,"Direct":1},"cv_by_type":{"wp_dl":2,"inquiry":1}},"2024-10":{"sessions":911,"cv":7,"sal":2,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":1,"Organic":2,"Referral":4},"cv_by_type":{"inquiry":4,"wp_dl":3}},"2024-11":{"sessions":2080,"cv":25,"sal":4,"sql":5,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":8,"Direct":6,"Organic":5,"Referral":4,"Email":2},"cv_by_type":{"service_dl":9,"wp_dl":10,"inquiry":6}},"2025-01":{"sessions":3187,"cv":16,"sal":3,"sql":2,"jucyu":1,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":3,"Email":2,"Paid":5,"Direct":2,"Organic":3,"Other":1},"cv_by_type":{"inquiry":8,"wp_dl":4,"service_dl":4}},"2025-07":{"sessions":5181,"cv":45,"sal":9,"sql":3,"jucyu":0,"cost_items":[55000,60000,0,10000,154768,0,375000,0],"cost_content":125000,"content_count":4,"mql_by_channel":{"Other":41,"Paid":4},"cv_by_type":{"service_dl":17,"inquiry":20,"wp_dl":8}},"2025-08":{"sessions":2621,"cv":33,"sal":4,"sql":7,"jucyu":0,"cost_items":[0,30000,0,0,134796,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Paid":8,"Other":24,"Email":1},"cv_by_type":{"service_dl":15,"wp_dl":11,"inquiry":7}},"2024-12":{"sessions":1487,"cv":10,"sal":2,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":4,"Direct":2,"Referral":3,"Paid":1},"cv_by_type":{"inquiry":4,"wp_dl":5,"service_dl":1}},"2025-09":{"sessions":2797,"cv":30,"sal":6,"sql":8,"jucyu":2,"cost_items":[0,0,0,0,229185,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":30},"cv_by_type":{"service_dl":18,"wp_dl":3,"inquiry":9}},"2025-02":{"sessions":1772,"cv":18,"sal":6,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":3,"Email":2,"Referral":6,"Paid":3,"Organic":4},"cv_by_type":{"inquiry":8,"wp_dl":6,"service_dl":4}},"2025-03":{"sessions":2488,"cv":19,"sal":5,"sql":5,"jucyu":0,"cost_items":[0,90000,0,0,153114,0,487500,0],"cost_content":90000,"content_count":3,"mql_by_channel":{"Organic":5,"Referral":5,"Paid":4,"Direct":2,"Other":2,"Email":1},"cv_by_type":{"service_dl":5,"inquiry":9,"wp_dl":5}},"2026-04":{"sessions":3178,"cv":11,"sal":3,"sql":2,"jucyu":0,"cost_items":[78000,43000,0,0,97826,55000,200000,0],"cost_content":121000,"content_count":2,"mql_by_channel":{"Other":7,"Email":4},"cv_by_type":{"inquiry":3,"wp_dl":7,"service_dl":1}},"2025-04":{"sessions":1959,"cv":20,"sal":4,"sql":6,"jucyu":0,"cost_items":[220000,30000,0,10000,157036,0,487500,0],"cost_content":260000,"content_count":4,"mql_by_channel":{"Direct":5,"Paid":8,"Referral":3,"Organic":3,"Email":1},"cv_by_type":{"inquiry":9,"wp_dl":6,"service_dl":5}},"2025-05":{"sessions":2159,"cv":14,"sal":4,"sql":3,"jucyu":1,"cost_items":[0,30000,0,20000,150477,0,375000,0],"cost_content":50000,"content_count":3,"mql_by_channel":{"Other":2,"Paid":4,"Referral":5,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":4,"wp_dl":3,"service_dl":7}},"2026-03":{"sessions":3021,"cv":8,"sal":1,"sql":2,"jucyu":0,"cost_items":[356000,75000,0,355000,137479,55000,200000,0],"cost_content":786000,"content_count":7,"mql_by_channel":{"Other":8},"cv_by_type":{"inquiry":7,"wp_dl":1}},"2026-01":{"sessions":3355,"cv":13,"sal":3,"sql":3,"jucyu":2,"cost_items":[330000,45000,0,355000,217467,55000,200000,0],"cost_content":730000,"content_count":5,"mql_by_channel":{"Other":13},"cv_by_type":{"wp_dl":5,"service_dl":3,"inquiry":5}},"2025-11":{"sessions":2881,"cv":23,"sal":4,"sql":4,"jucyu":1,"cost_items":[0,30000,0,0,236641,55000,200000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":23},"cv_by_type":{"service_dl":10,"inquiry":12,"wp_dl":1}},"2025-06":{"sessions":2553,"cv":17,"sal":4,"sql":4,"jucyu":0,"cost_items":[220000,30000,0,10000,154410,0,375000,0],"cost_content":260000,"content_count":4,"mql_by_channel":{"Paid":7,"Referral":4,"Organic":2,"Direct":4},"cv_by_type":{"service_dl":8,"wp_dl":6,"inquiry":3}},"2025-10":{"sessions":3226,"cv":19,"sal":3,"sql":2,"jucyu":0,"cost_items":[110000,0,0,0,230988,55000,200000,0],"cost_content":110000,"content_count":1,"mql_by_channel":{"Other":19},"cv_by_type":{"inquiry":10,"service_dl":9}},"2025-12":{"sessions":2908,"cv":14,"sal":5,"sql":3,"jucyu":0,"cost_items":[0,0,0,355000,199267,55000,200000,0],"cost_content":355000,"content_count":1,"mql_by_channel":{"Other":14},"cv_by_type":{"inquiry":7,"service_dl":5,"wp_dl":2}},"2026-02":{"sessions":3007,"cv":13,"sal":3,"sql":2,"jucyu":0,"cost_items":[110000,105000,0,0,204932,55000,200000,0],"cost_content":215000,"content_count":6,"mql_by_channel":{"Other":13},"cv_by_type":{"service_dl":2,"wp_dl":4,"inquiry":7}},"2026-05":{"sessions":2639,"cv":44,"sal":3,"sql":2,"jucyu":0,"cost_items":[0,73000,500000,0,0,55000,200000,0],"cost_content":573000,"content_count":3,"mql_by_channel":{"Other":30,"Email":14},"cv_by_type":{"inquiry":25,"service_dl":8,"wp_dl":11}},"2026-06":{"sessions":4301,"cv":22,"sal":6,"sql":5,"jucyu":0,"cost_items":[0,0,0,0,558446,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":19,"Email":3},"cv_by_type":{"wp_dl":8,"inquiry":12,"service_dl":2}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"SCH":{"2024-10":{"sessions":1167,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":2,"Organic":1},"cv_by_type":{"inquiry":2,"wp_dl":1}},"2024-11":{"sessions":1136,"cv":6,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":3,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":4,"wp_dl":1,"service_dl":1}},"2025-03":{"sessions":1948,"cv":8,"sal":1,"sql":1,"jucyu":1,"cost_items":[0,30000,0,0,155543,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":3,"Referral":1,"Paid":1,"Other":3},"cv_by_type":{"wp_dl":1,"inquiry":5,"service_dl":2}},"2024-12":{"sessions":1191,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":2,"Organic":2},"cv_by_type":{"inquiry":2,"service_dl":1,"wp_dl":1}},"2025-01":{"sessions":1553,"cv":3,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Email":1},"cv_by_type":{"wp_dl":2,"inquiry":1}},"2025-02":{"sessions":1856,"cv":3,"sal":0,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":1,"Paid":1,"Organic":1},"cv_by_type":{"inquiry":1,"service_dl":1,"wp_dl":1}},"2025-04":{"sessions":1793,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,127626,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":1,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":3,"wp_dl":1}},"2025-05":{"sessions":1571,"cv":5,"sal":3,"sql":3,"jucyu":0,"cost_items":[0,30000,0,0,90145,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":3,"Email":1,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":1}},"2025-09":{"sessions":1474,"cv":3,"sal":0,"sql":0,"jucyu":1,"cost_items":[0,60000,0,0,0,55000,200000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":3},"cv_by_type":{"inquiry":3}},"2025-06":{"sessions":1823,"cv":7,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,151696,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":2,"Email":1,"Organic":3,"Paid":1},"cv_by_type":{"inquiry":4,"wp_dl":1,"service_dl":2}},"2025-07":{"sessions":1907,"cv":0,"sal":0,"sql":1,"jucyu":0,"cost_items":[220000,0,0,0,140117,0,375000,0],"cost_content":220000,"content_count":2,"mql_by_channel":{},"cv_by_type":{}},"2025-08":{"sessions":1415,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,125449,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":1,"Direct":1},"cv_by_type":{"service_dl":1,"inquiry":1}},"2025-10":{"sessions":1499,"cv":1,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":1},"cv_by_type":{"service_dl":1}},"2026-01":{"sessions":2227,"cv":2,"sal":0,"sql":2,"jucyu":0,"cost_items":[275000,60000,0,0,151103,55000,200000,0],"cost_content":335000,"content_count":5,"mql_by_channel":{"Other":2},"cv_by_type":{"service_dl":2}},"2025-11":{"sessions":1791,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,15000,0,0,176103,55000,200000,0],"cost_content":15000,"content_count":1,"mql_by_channel":{"Other":2},"cv_by_type":{"inquiry":2}},"2025-12":{"sessions":2637,"cv":2,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,45000,0,0,160373,55000,200000,0],"cost_content":45000,"content_count":1,"mql_by_channel":{"Other":2},"cv_by_type":{"inquiry":2}},"2026-02":{"sessions":3811,"cv":3,"sal":0,"sql":1,"jucyu":0,"cost_items":[143000,0,0,0,151302,55000,200000,0],"cost_content":143000,"content_count":2,"mql_by_channel":{"Other":3},"cv_by_type":{"inquiry":3}},"2026-03":{"sessions":2465,"cv":7,"sal":0,"sql":0,"jucyu":0,"cost_items":[246000,45000,0,0,201773,55000,200000,0],"cost_content":291000,"content_count":4,"mql_by_channel":{"Other":7},"cv_by_type":{"inquiry":5,"wp_dl":2}},"2026-04":{"sessions":2750,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,201830,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":3},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2026-05":{"sessions":2887,"cv":4,"sal":1,"sql":0,"jucyu":0,"cost_items":[176000,90000,0,0,201837,55000,200000,0],"cost_content":266000,"content_count":4,"mql_by_channel":{"Other":4},"cv_by_type":{"service_dl":1,"wp_dl":1,"inquiry":2}},"2026-06":{"sessions":2821,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,201929,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":3},"cv_by_type":{"service_dl":1,"inquiry":2}},"2024-08":{"sessions":59,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2024-09":{"sessions":597,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"MED":{"2024-02":{"sessions":0,"cv":1,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"inquiry":1}},"2025-02":{"sessions":2167,"cv":6,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":3,"Organic":1,"Referral":1,"Email":1},"cv_by_type":{"service_dl":5,"wp_dl":1}},"2025-05":{"sessions":3250,"cv":33,"sal":5,"sql":4,"jucyu":0,"cost_items":[0,60000,0,0,141813,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Organic":6,"Email":17,"Direct":1,"Paid":7,"Other":1,"Referral":1},"cv_by_type":{"service_dl":29,"inquiry":3,"wp_dl":1}},"2024-05":{"sessions":0,"cv":1,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"service_dl":1}},"2024-06":{"sessions":0,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":1,"Email":1},"cv_by_type":{"wp_dl":1,"service_dl":1}},"2024-07":{"sessions":0,"cv":1,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"wp_dl":1}},"2024-08":{"sessions":1175,"cv":3,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1,"Direct":1,"Organic":1},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-09":{"sessions":1635,"cv":17,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":13,"Direct":1,"Organic":1,"Referral":1,"Paid":1},"cv_by_type":{"wp_dl":13,"inquiry":1,"service_dl":3}},"2024-12":{"sessions":2712,"cv":20,"sal":2,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":6,"Email":10,"Organic":3,"Referral":1},"cv_by_type":{"service_dl":9,"wp_dl":10,"inquiry":1}},"2025-11":{"sessions":2833,"cv":8,"sal":2,"sql":0,"jucyu":1,"cost_items":[0,0,0,0,220838,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":8},"cv_by_type":{"service_dl":7,"inquiry":1}},"2024-10":{"sessions":2788,"cv":14,"sal":0,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":3,"Paid":8,"Email":2,"Direct":1},"cv_by_type":{"service_dl":12,"wp_dl":2}},"2024-11":{"sessions":2811,"cv":16,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Paid":7,"Email":3,"Referral":3,"Direct":1},"cv_by_type":{"service_dl":13,"wp_dl":2,"inquiry":1}},"2025-01":{"sessions":2292,"cv":17,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":9,"Paid":3,"Organic":2,"Referral":2,"Direct":1},"cv_by_type":{"wp_dl":9,"service_dl":8}},"2025-03":{"sessions":2279,"cv":20,"sal":0,"sql":2,"jucyu":0,"cost_items":[220000,30000,0,0,141184,0,487500,0],"cost_content":250000,"content_count":3,"mql_by_channel":{"Direct":3,"Paid":4,"Referral":3,"Email":4,"Organic":4,"Other":2},"cv_by_type":{"service_dl":19,"inquiry":1}},"2025-04":{"sessions":2674,"cv":26,"sal":6,"sql":4,"jucyu":0,"cost_items":[220000,60000,0,0,120357,0,487500,0],"cost_content":280000,"content_count":4,"mql_by_channel":{"Email":3,"Paid":7,"Organic":11,"Other":2,"Referral":3},"cv_by_type":{"service_dl":20,"wp_dl":1,"inquiry":5}},"2025-10":{"sessions":3183,"cv":32,"sal":3,"sql":0,"jucyu":1,"cost_items":[0,30000,0,0,219760,55000,200000,0],"cost_content":30000,"content_count":2,"mql_by_channel":{"Other":24,"Email":8},"cv_by_type":{"service_dl":29,"inquiry":3}},"2025-06":{"sessions":3298,"cv":18,"sal":4,"sql":3,"jucyu":0,"cost_items":[0,0,0,0,157550,0,375000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":6,"Paid":7,"Referral":3,"Other":2},"cv_by_type":{"service_dl":16,"wp_dl":1,"inquiry":1}},"2025-07":{"sessions":3258,"cv":50,"sal":9,"sql":1,"jucyu":0,"cost_items":[0,60000,0,0,148628,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":16,"Paid":9,"Email":25},"cv_by_type":{"service_dl":45,"inquiry":3,"wp_dl":2}},"2025-08":{"sessions":2471,"cv":22,"sal":3,"sql":2,"jucyu":1,"cost_items":[55000,0,0,0,137854,0,375000,0],"cost_content":55000,"content_count":1,"mql_by_channel":{"Email":3,"Paid":3,"Other":16},"cv_by_type":{"service_dl":21,"inquiry":1}},"2025-09":{"sessions":2992,"cv":30,"sal":7,"sql":0,"jucyu":0,"cost_items":[55000,30000,0,0,229185,55000,200000,750000],"cost_content":85000,"content_count":2,"mql_by_channel":{"Other":22,"Email":8},"cv_by_type":{"service_dl":26,"wp_dl":1,"inquiry":3}},"2025-12":{"sessions":3119,"cv":18,"sal":3,"sql":0,"jucyu":0,"cost_items":[220000,45000,0,0,201733,55000,200000,0],"cost_content":265000,"content_count":4,"mql_by_channel":{"Other":17,"Email":1},"cv_by_type":{"service_dl":18}},"2026-02":{"sessions":3472,"cv":52,"sal":20,"sql":2,"jucyu":0,"cost_items":[0,90000,0,10000,218303,55000,200000,0],"cost_content":100000,"content_count":3,"mql_by_channel":{"Other":24,"Email":28},"cv_by_type":{"service_dl":27,"wp_dl":21,"inquiry":4}},"2026-01":{"sessions":2764,"cv":44,"sal":7,"sql":0,"jucyu":0,"cost_items":[110000,75000,0,0,205539,55000,200000,0],"cost_content":185000,"content_count":3,"mql_by_channel":{"Other":24,"Email":20},"cv_by_type":{"service_dl":30,"wp_dl":6,"inquiry":8}},"2026-03":{"sessions":2188,"cv":13,"sal":4,"sql":1,"jucyu":0,"cost_items":[246000,0,0,0,134990,55000,200000,0],"cost_content":246000,"content_count":3,"mql_by_channel":{"Other":12,"Email":1},"cv_by_type":{"inquiry":4,"service_dl":9}},"2026-06":{"sessions":2648,"cv":27,"sal":1,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,148195,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":12,"Email":15},"cv_by_type":{"service_dl":26,"inquiry":1}},"2026-04":{"sessions":2398,"cv":31,"sal":3,"sql":2,"jucyu":0,"cost_items":[78000,88000,0,0,130077,55000,200000,0],"cost_content":166000,"content_count":3,"mql_by_channel":{"Other":22,"Email":9},"cv_by_type":{"service_dl":25,"inquiry":4,"wp_dl":2}},"2026-05":{"sessions":2455,"cv":34,"sal":3,"sql":0,"jucyu":0,"cost_items":[78000,86000,0,0,133213,55000,200000,0],"cost_content":164000,"content_count":3,"mql_by_channel":{"Other":14,"Email":20},"cv_by_type":{"service_dl":14,"wp_dl":20}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"IS":{"2024-07":{"sessions":371,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":1,"Direct":2},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-08":{"sessions":923,"cv":5,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Referral":2,"Organic":1},"cv_by_type":{"inquiry":3,"service_dl":2}},"2024-09":{"sessions":712,"cv":6,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":2,"Organic":2,"Referral":2},"cv_by_type":{"wp_dl":4,"service_dl":1,"inquiry":1}},"2024-10":{"sessions":755,"cv":3,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1,"Direct":1,"Referral":1},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-11":{"sessions":4615,"cv":9,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Email":5,"Paid":2},"cv_by_type":{"wp_dl":5,"inquiry":2,"service_dl":2}},"2024-12":{"sessions":1022,"cv":17,"sal":4,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":1,"Paid":2,"Email":12,"Organic":1,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":2,"wp_dl":11}},"2025-06":{"sessions":1028,"cv":12,"sal":2,"sql":2,"jucyu":0,"cost_items":[0,60000,0,0,114931,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":2,"Email":7,"Organic":2,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":8}},"2026-03":{"sessions":1317,"cv":13,"sal":0,"sql":1,"jucyu":1,"cost_items":[378000,45000,250000,1065000,201481,55000,200000,2978000],"cost_content":1738000,"content_count":9,"mql_by_channel":{"Other":3,"Email":10},"cv_by_type":{"inquiry":1,"service_dl":12}},"2025-01":{"sessions":759,"cv":8,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":3,"Paid":3,"Referral":2},"cv_by_type":{"service_dl":7,"wp_dl":1}},"2025-02":{"sessions":1100,"cv":67,"sal":5,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":6,"Referral":2,"Email":59},"cv_by_type":{"service_dl":62,"inquiry":4,"wp_dl":1}},"2024-02":{"sessions":0,"cv":0,"sal":0,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-03":{"sessions":764,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,155570,0,487500,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":2,"Direct":1,"Other":1},"cv_by_type":{"service_dl":2,"inquiry":2}},"2025-04":{"sessions":1778,"cv":6,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,154913,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Email":1,"Paid":4,"Referral":1},"cv_by_type":{"service_dl":5,"inquiry":1}},"2024-04":{"sessions":0,"cv":0,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-05":{"sessions":972,"cv":5,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,155138,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Email":3,"Paid":1,"Referral":1},"cv_by_type":{"service_dl":4,"inquiry":1}},"2024-05":{"sessions":0,"cv":0,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-07":{"sessions":3160,"cv":16,"sal":6,"sql":0,"jucyu":0,"cost_items":[0,35000,0,0,133762,0,375000,0],"cost_content":35000,"content_count":1,"mql_by_channel":{"Other":4,"Paid":1,"Email":11},"cv_by_type":{"inquiry":4,"service_dl":12}},"2025-09":{"sessions":1652,"cv":5,"sal":1,"sql":1,"jucyu":0,"cost_items":[70000,0,0,60000,0,55000,200000,0],"cost_content":130000,"content_count":8,"mql_by_channel":{"Direct":2,"Other":2,"Email":1},"cv_by_type":{"inquiry":3,"service_dl":1,"wp_dl":1}},"2025-08":{"sessions":1281,"cv":25,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,35000,0,0,72401,0,375000,0],"cost_content":35000,"content_count":1,"mql_by_channel":{"Other":3,"Email":22},"cv_by_type":{"service_dl":10,"wp_dl":14,"inquiry":1}},"2025-10":{"sessions":1120,"cv":16,"sal":4,"sql":1,"jucyu":0,"cost_items":[0,30000,0,10000,0,55000,200000,0],"cost_content":40000,"content_count":2,"mql_by_channel":{"Other":3,"Email":13},"cv_by_type":{"inquiry":1,"service_dl":15}},"2025-11":{"sessions":1551,"cv":9,"sal":1,"sql":0,"jucyu":0,"cost_items":[110000,30000,0,10000,187046,55000,200000,0],"cost_content":150000,"content_count":3,"mql_by_channel":{"Email":9},"cv_by_type":{"service_dl":9}},"2025-12":{"sessions":1613,"cv":24,"sal":3,"sql":0,"jucyu":0,"cost_items":[0,15000,0,10000,169972,55000,200000,0],"cost_content":25000,"content_count":2,"mql_by_channel":{"Email":23,"Other":1},"cv_by_type":{"service_dl":23,"inquiry":1}},"2026-01":{"sessions":1364,"cv":32,"sal":2,"sql":1,"jucyu":0,"cost_items":[220000,60000,0,0,151179,55000,200000,0],"cost_content":280000,"content_count":4,"mql_by_channel":{"Email":26,"Other":6},"cv_by_type":{"service_dl":27,"inquiry":5}},"2026-02":{"sessions":1222,"cv":39,"sal":10,"sql":3,"jucyu":0,"cost_items":[55000,90000,0,355000,151333,55000,200000,0],"cost_content":500000,"content_count":4,"mql_by_channel":{"Email":37,"Other":2},"cv_by_type":{"service_dl":18,"wp_dl":20,"inquiry":1}},"2026-04":{"sessions":1450,"cv":5,"sal":2,"sql":1,"jucyu":0,"cost_items":[143000,45000,500000,0,200883,55000,200000,0],"cost_content":688000,"content_count":5,"mql_by_channel":{"Email":3,"Other":2},"cv_by_type":{"service_dl":4,"inquiry":1}},"2026-05":{"sessions":1172,"cv":14,"sal":3,"sql":0,"jucyu":0,"cost_items":[198000,45000,0,0,193258,55000,200000,0],"cost_content":243000,"content_count":3,"mql_by_channel":{"Email":11,"Other":3},"cv_by_type":{"wp_dl":4,"service_dl":8,"inquiry":2}},"2026-06":{"sessions":1452,"cv":16,"sal":0,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,194972,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":3,"Email":13},"cv_by_type":{"inquiry":3,"service_dl":13}},"2024-06":{"sessions":537,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-07":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-08":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}}},"costLabels":["コラム","メルマガ","WP","事例","広告","Web運用","コンサル","その他"]};
+const EMBEDDED_DATA={"version":"4.2","targets":{"UN":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,25,25,25,25,25,25,25,25,25,25],"monthly_session":[0,0,3302,3302,3302,3302,3302,3302,3302,3302,3302,3302],"monthly_sql":[0,0,5,5,5,5,5,5,5,5,5,5]},"2027":{"monthly_mql":[25,25,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3302,3302,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[5,5,0,0,0,0,0,0,0,0,0,0]}},"SCH":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,6,6,6,6,6,6,6,6,6,6],"monthly_session":[0,0,3574,3574,3574,3574,3574,3574,3574,3574,3574,3574],"monthly_sql":[0,0,1,1,1,1,1,1,1,1,1,1]},"2027":{"monthly_mql":[6,6,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3574,3574,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[1,1,0,0,0,0,0,0,0,0,0,0]}},"MED":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,38,38,38,38,38,38,38,38,38,38],"monthly_session":[0,0,3903,3903,3903,3903,3903,3903,3903,3903,3903,3903],"monthly_sql":[0,0,2,2,2,2,2,2,2,2,2,2]},"2027":{"monthly_mql":[38,38,0,0,0,0,0,0,0,0,0,0],"monthly_session":[3903,3903,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]}},"IS":{"2024":{"monthly_mql":[0,0,3,4,4,4,4,4,5,5,5,6],"monthly_session":[0,0,269,349,404,454,504,564,614,664,724,874],"monthly_sql":[0,0,0,1,1,1,1,1,1,2,2,2]},"2025":{"monthly_mql":[7,7,0,0,0,0,0,0,0,0,0,0],"monthly_session":[924,924,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[2,2,0,0,0,0,0,0,0,0,0,0]},"2026":{"monthly_mql":[0,0,23,23,23,23,23,23,23,23,23,23],"monthly_session":[0,0,2097,2097,2097,2097,2097,2097,2097,2097,2097,2097],"monthly_sql":[0,0,1,1,1,1,1,1,1,1,1,1]},"2027":{"monthly_mql":[23,23,0,0,0,0,0,0,0,0,0,0],"monthly_session":[2097,2097,0,0,0,0,0,0,0,0,0,0],"monthly_sql":[1,1,0,0,0,0,0,0,0,0,0,0]}}},"actuals":{"UN":{"2024-09":{"sessions":129,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":2,"Direct":1},"cv_by_type":{"wp_dl":2,"inquiry":1}},"2024-10":{"sessions":911,"cv":7,"sal":2,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":1,"Organic":2,"Referral":4},"cv_by_type":{"inquiry":4,"wp_dl":3}},"2024-11":{"sessions":2080,"cv":25,"sal":4,"sql":5,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":8,"Direct":6,"Organic":5,"Referral":4,"Email":2},"cv_by_type":{"service_dl":9,"wp_dl":10,"inquiry":6}},"2025-01":{"sessions":3187,"cv":16,"sal":3,"sql":2,"jucyu":1,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":3,"Email":2,"Paid":5,"Direct":2,"Organic":3,"Other":1},"cv_by_type":{"inquiry":8,"wp_dl":4,"service_dl":4}},"2025-07":{"sessions":5181,"cv":45,"sal":8,"sql":3,"jucyu":0,"cost_items":[55000,60000,0,10000,154768,0,375000,0],"cost_content":125000,"content_count":4,"mql_by_channel":{"Other":11,"Organic":14,"Direct":15,"Paid":4,"Email":1},"cv_by_type":{"service_dl":17,"inquiry":20,"wp_dl":8}},"2025-08":{"sessions":2621,"cv":29,"sal":4,"sql":6,"jucyu":0,"cost_items":[0,30000,0,0,134796,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Paid":8,"Direct":8,"Organic":9,"Email":1,"Offline":2,"Other":1},"cv_by_type":{"service_dl":15,"wp_dl":7,"inquiry":7}},"2024-12":{"sessions":1487,"cv":10,"sal":2,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":4,"Direct":2,"Referral":3,"Paid":1},"cv_by_type":{"inquiry":4,"wp_dl":5,"service_dl":1}},"2025-09":{"sessions":2797,"cv":30,"sal":6,"sql":8,"jucyu":2,"cost_items":[0,0,0,0,229185,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":11,"Other":14,"Direct":5},"cv_by_type":{"service_dl":18,"wp_dl":3,"inquiry":9}},"2025-02":{"sessions":1772,"cv":18,"sal":6,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":3,"Email":2,"Referral":6,"Paid":3,"Organic":4},"cv_by_type":{"inquiry":8,"wp_dl":6,"service_dl":4}},"2025-03":{"sessions":2488,"cv":19,"sal":5,"sql":2,"jucyu":0,"cost_items":[0,90000,0,0,153114,0,487500,0],"cost_content":90000,"content_count":3,"mql_by_channel":{"Organic":5,"Referral":5,"Paid":4,"Direct":2,"Other":2,"Email":1},"cv_by_type":{"service_dl":5,"inquiry":9,"wp_dl":5}},"2026-04":{"sessions":3178,"cv":11,"sal":3,"sql":1,"jucyu":0,"cost_items":[78000,43000,0,0,97826,55000,200000,0],"cost_content":121000,"content_count":2,"mql_by_channel":{"Direct":2,"Other":2,"Email":5,"Organic":2},"cv_by_type":{"inquiry":3,"wp_dl":7,"service_dl":1}},"2025-04":{"sessions":1959,"cv":20,"sal":4,"sql":5,"jucyu":0,"cost_items":[220000,30000,0,10000,157036,0,487500,0],"cost_content":260000,"content_count":4,"mql_by_channel":{"Direct":5,"Paid":8,"Referral":3,"Organic":3,"Email":1},"cv_by_type":{"inquiry":9,"wp_dl":6,"service_dl":5}},"2025-05":{"sessions":2159,"cv":13,"sal":4,"sql":3,"jucyu":1,"cost_items":[0,30000,0,20000,150477,0,375000,0],"cost_content":50000,"content_count":3,"mql_by_channel":{"Other":2,"Paid":4,"Referral":4,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":4,"wp_dl":3,"service_dl":6}},"2026-03":{"sessions":3021,"cv":8,"sal":1,"sql":0,"jucyu":0,"cost_items":[356000,75000,0,355000,137479,55000,200000,0],"cost_content":786000,"content_count":7,"mql_by_channel":{"Organic":3,"Direct":2,"Other":3},"cv_by_type":{"inquiry":7,"wp_dl":1}},"2026-01":{"sessions":3355,"cv":13,"sal":3,"sql":3,"jucyu":2,"cost_items":[330000,45000,0,355000,217467,55000,200000,0],"cost_content":730000,"content_count":5,"mql_by_channel":{"Organic":3,"Other":9,"Direct":1},"cv_by_type":{"wp_dl":5,"service_dl":3,"inquiry":5}},"2025-11":{"sessions":2881,"cv":22,"sal":4,"sql":4,"jucyu":1,"cost_items":[0,30000,0,0,236641,55000,200000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":5,"Other":10,"Direct":7},"cv_by_type":{"service_dl":9,"inquiry":12,"wp_dl":1}},"2025-06":{"sessions":2553,"cv":15,"sal":4,"sql":4,"jucyu":0,"cost_items":[220000,30000,0,10000,154410,0,375000,0],"cost_content":260000,"content_count":4,"mql_by_channel":{"Paid":7,"Referral":3,"Organic":2,"Direct":3},"cv_by_type":{"service_dl":8,"wp_dl":5,"inquiry":2}},"2025-10":{"sessions":3226,"cv":19,"sal":3,"sql":2,"jucyu":0,"cost_items":[110000,0,0,0,230988,55000,200000,0],"cost_content":110000,"content_count":1,"mql_by_channel":{"Direct":2,"Other":12,"Organic":5},"cv_by_type":{"inquiry":10,"service_dl":9}},"2025-12":{"sessions":2908,"cv":14,"sal":5,"sql":3,"jucyu":0,"cost_items":[0,0,0,355000,199267,55000,200000,0],"cost_content":355000,"content_count":1,"mql_by_channel":{"Organic":4,"Other":5,"Direct":5},"cv_by_type":{"inquiry":7,"service_dl":5,"wp_dl":2}},"2026-02":{"sessions":3007,"cv":13,"sal":3,"sql":2,"jucyu":0,"cost_items":[110000,105000,0,0,204932,55000,200000,0],"cost_content":215000,"content_count":6,"mql_by_channel":{"Offline":4,"Organic":2,"Direct":3,"Other":4},"cv_by_type":{"service_dl":1,"wp_dl":4,"inquiry":7,"catalog":1}},"2026-05":{"sessions":2639,"cv":44,"sal":3,"sql":2,"jucyu":0,"cost_items":[0,73000,500000,0,0,55000,200000,0],"cost_content":573000,"content_count":3,"mql_by_channel":{"Other":15,"Direct":6,"Organic":9,"Email":14},"cv_by_type":{"inquiry":25,"service_dl":8,"wp_dl":11}},"2026-06":{"sessions":4301,"cv":22,"sal":6,"sql":5,"jucyu":0,"cost_items":[0,0,0,0,558446,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":6,"Email":3,"Other":6,"Organic":5,"Offline":2},"cv_by_type":{"wp_dl":8,"inquiry":12,"service_dl":2}},"2026-07":{"sessions":0,"cv":29,"sal":2,"sql":3,"jucyu":1,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":11,"Direct":1,"Organic":8,"Email":9},"cv_by_type":{"inquiry":14,"wp_dl":15}},"2026-08":{"sessions":0,"cv":19,"sal":6,"sql":5,"jucyu":1,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":8,"Organic":4,"Direct":5,"Email":2},"cv_by_type":{"inquiry":9,"service_dl":3,"wp_dl":7}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"SCH":{"2024-10":{"sessions":1167,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":2,"Organic":1},"cv_by_type":{"inquiry":2,"wp_dl":1}},"2024-11":{"sessions":1136,"cv":6,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":3,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":4,"wp_dl":1,"service_dl":1}},"2025-03":{"sessions":1948,"cv":8,"sal":0,"sql":0,"jucyu":1,"cost_items":[0,30000,0,0,155543,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":3,"Referral":1,"Paid":1,"Other":3},"cv_by_type":{"wp_dl":1,"inquiry":5,"service_dl":2}},"2024-12":{"sessions":1191,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":2,"Organic":2},"cv_by_type":{"inquiry":2,"service_dl":1,"wp_dl":1}},"2025-01":{"sessions":1553,"cv":3,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Email":1},"cv_by_type":{"wp_dl":2,"inquiry":1}},"2025-02":{"sessions":1856,"cv":3,"sal":0,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":1,"Paid":1,"Organic":1},"cv_by_type":{"inquiry":1,"service_dl":1,"wp_dl":1}},"2025-04":{"sessions":1793,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,127626,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":1,"Organic":2,"Direct":1},"cv_by_type":{"inquiry":3,"wp_dl":1}},"2025-05":{"sessions":1571,"cv":5,"sal":3,"sql":3,"jucyu":0,"cost_items":[0,30000,0,0,90145,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":3,"Email":1,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":1}},"2025-09":{"sessions":1474,"cv":3,"sal":0,"sql":0,"jucyu":1,"cost_items":[0,60000,0,0,0,55000,200000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Referral":1,"Offline":1,"Email":1},"cv_by_type":{"inquiry":1,"moushikomi":2}},"2025-06":{"sessions":1823,"cv":7,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,151696,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Other":2,"Email":1,"Organic":3,"Paid":1},"cv_by_type":{"inquiry":4,"wp_dl":1,"service_dl":2}},"2025-07":{"sessions":1907,"cv":0,"sal":0,"sql":1,"jucyu":0,"cost_items":[220000,0,0,0,140117,0,375000,0],"cost_content":220000,"content_count":2,"mql_by_channel":{},"cv_by_type":{}},"2025-08":{"sessions":1415,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,125449,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Organic":1,"Direct":1},"cv_by_type":{"service_dl":1,"inquiry":1}},"2025-10":{"sessions":1499,"cv":1,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":1},"cv_by_type":{"service_dl":1}},"2026-01":{"sessions":2227,"cv":2,"sal":0,"sql":2,"jucyu":0,"cost_items":[275000,60000,0,0,151103,55000,200000,0],"cost_content":335000,"content_count":5,"mql_by_channel":{"Organic":1,"Direct":1},"cv_by_type":{"service_dl":2}},"2025-11":{"sessions":1791,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,15000,0,0,176103,55000,200000,0],"cost_content":15000,"content_count":1,"mql_by_channel":{"Organic":1,"Direct":1},"cv_by_type":{"inquiry":2}},"2025-12":{"sessions":2637,"cv":2,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,45000,0,0,160373,55000,200000,0],"cost_content":45000,"content_count":1,"mql_by_channel":{"Direct":1,"Other":1},"cv_by_type":{"inquiry":2}},"2026-02":{"sessions":3811,"cv":3,"sal":0,"sql":1,"jucyu":0,"cost_items":[143000,0,0,0,151302,55000,200000,0],"cost_content":143000,"content_count":2,"mql_by_channel":{"Organic":2,"Direct":1},"cv_by_type":{"inquiry":3}},"2026-03":{"sessions":2465,"cv":7,"sal":0,"sql":0,"jucyu":0,"cost_items":[246000,45000,0,0,201773,55000,200000,0],"cost_content":291000,"content_count":4,"mql_by_channel":{"Direct":1,"Other":4,"Organic":2},"cv_by_type":{"inquiry":5,"wp_dl":2}},"2026-04":{"sessions":2750,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,201830,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Other":1},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2026-05":{"sessions":2887,"cv":4,"sal":1,"sql":0,"jucyu":0,"cost_items":[176000,90000,0,0,201837,55000,200000,0],"cost_content":266000,"content_count":4,"mql_by_channel":{"Other":2,"Offline":1,"Direct":1},"cv_by_type":{"service_dl":1,"wp_dl":1,"inquiry":2}},"2026-06":{"sessions":2821,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,201929,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Other":1},"cv_by_type":{"service_dl":1,"inquiry":2}},"2024-08":{"sessions":59,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2024-09":{"sessions":597,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-07":{"sessions":0,"cv":2,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2},"cv_by_type":{"inquiry":1,"wp_dl":1}},"2026-08":{"sessions":0,"cv":1,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":1},"cv_by_type":{"inquiry":1}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"MED":{"2024-02":{"sessions":0,"cv":1,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"other":1}},"2025-02":{"sessions":2167,"cv":6,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":3,"Organic":1,"Referral":1,"Email":1},"cv_by_type":{"catalog":5,"wp_dl":1}},"2025-05":{"sessions":3250,"cv":27,"sal":5,"sql":3,"jucyu":0,"cost_items":[0,60000,0,0,141813,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Organic":5,"Email":13,"Direct":1,"Paid":6,"Other":1,"Referral":1},"cv_by_type":{"catalog":25,"wp_dl":1,"inquiry":1}},"2024-05":{"sessions":0,"cv":1,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"catalog":1}},"2024-06":{"sessions":0,"cv":2,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":1,"Email":1},"cv_by_type":{"wp_dl":1,"catalog":1}},"2024-07":{"sessions":0,"cv":1,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1},"cv_by_type":{"wp_dl":1}},"2024-08":{"sessions":1175,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1,"Direct":1,"Organic":1},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-09":{"sessions":1635,"cv":17,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":13,"Direct":1,"Organic":1,"Referral":1,"Paid":1},"cv_by_type":{"wp_dl":13,"inquiry":1,"catalog":3}},"2024-12":{"sessions":2712,"cv":20,"sal":2,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":6,"Email":10,"Organic":3,"Referral":1},"cv_by_type":{"catalog":9,"wp_dl":10,"inquiry":1}},"2025-11":{"sessions":2833,"cv":8,"sal":2,"sql":0,"jucyu":1,"cost_items":[0,0,0,0,220838,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Other":7,"Organic":1},"cv_by_type":{"catalog":7,"inquiry":1}},"2024-10":{"sessions":2788,"cv":14,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":3,"Paid":8,"Email":2,"Direct":1},"cv_by_type":{"catalog":12,"wp_dl":2}},"2024-11":{"sessions":2811,"cv":16,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Paid":7,"Email":3,"Referral":3,"Direct":1},"cv_by_type":{"catalog":13,"wp_dl":2,"inquiry":1}},"2025-01":{"sessions":2292,"cv":17,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":9,"Paid":3,"Organic":2,"Referral":2,"Direct":1},"cv_by_type":{"wp_dl":9,"catalog":8}},"2025-03":{"sessions":2279,"cv":20,"sal":0,"sql":0,"jucyu":0,"cost_items":[220000,30000,0,0,141184,0,487500,0],"cost_content":250000,"content_count":3,"mql_by_channel":{"Direct":3,"Paid":4,"Referral":3,"Email":4,"Organic":4,"Other":2},"cv_by_type":{"catalog":19,"inquiry":1}},"2025-04":{"sessions":2674,"cv":26,"sal":6,"sql":4,"jucyu":0,"cost_items":[220000,60000,0,0,120357,0,487500,0],"cost_content":280000,"content_count":4,"mql_by_channel":{"Email":3,"Paid":7,"Organic":11,"Other":2,"Referral":3},"cv_by_type":{"catalog":20,"wp_dl":1,"inquiry":5}},"2025-10":{"sessions":3183,"cv":32,"sal":3,"sql":0,"jucyu":1,"cost_items":[0,30000,0,0,219760,55000,200000,0],"cost_content":30000,"content_count":2,"mql_by_channel":{"Other":17,"Offline":2,"Organic":3,"Direct":2,"Email":8},"cv_by_type":{"catalog":29,"inquiry":3}},"2025-06":{"sessions":3298,"cv":18,"sal":4,"sql":3,"jucyu":0,"cost_items":[0,0,0,0,157550,0,375000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":6,"Paid":7,"Referral":3,"Other":2},"cv_by_type":{"catalog":16,"wp_dl":1,"inquiry":1}},"2025-07":{"sessions":3258,"cv":45,"sal":9,"sql":1,"jucyu":0,"cost_items":[0,60000,0,0,148628,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":6,"Offline":1,"Paid":8,"Email":21,"Direct":7,"Organic":2},"cv_by_type":{"catalog":41,"inquiry":2,"wp_dl":2}},"2025-08":{"sessions":2471,"cv":22,"sal":3,"sql":2,"jucyu":1,"cost_items":[55000,0,0,0,137854,0,375000,0],"cost_content":55000,"content_count":1,"mql_by_channel":{"Email":3,"Paid":3,"Organic":8,"Direct":3,"Other":3,"Offline":2},"cv_by_type":{"catalog":21,"inquiry":1}},"2025-09":{"sessions":2992,"cv":30,"sal":7,"sql":1,"jucyu":0,"cost_items":[55000,30000,0,0,229185,55000,200000,750000],"cost_content":85000,"content_count":2,"mql_by_channel":{"Organic":8,"Other":12,"Email":8,"Direct":2},"cv_by_type":{"catalog":26,"wp_dl":1,"inquiry":3}},"2025-12":{"sessions":3119,"cv":18,"sal":3,"sql":0,"jucyu":0,"cost_items":[220000,45000,0,0,201733,55000,200000,0],"cost_content":265000,"content_count":4,"mql_by_channel":{"Offline":1,"Direct":4,"Organic":6,"Other":6,"Email":1},"cv_by_type":{"catalog":18}},"2026-02":{"sessions":3472,"cv":51,"sal":20,"sql":2,"jucyu":0,"cost_items":[0,90000,0,10000,218303,55000,200000,0],"cost_content":100000,"content_count":3,"mql_by_channel":{"Other":12,"Email":27,"Organic":3,"Direct":9},"cv_by_type":{"catalog":27,"wp_dl":20,"inquiry":4}},"2026-01":{"sessions":2764,"cv":44,"sal":7,"sql":0,"jucyu":0,"cost_items":[110000,75000,0,0,205539,55000,200000,0],"cost_content":185000,"content_count":3,"mql_by_channel":{"Direct":2,"Email":20,"Organic":6,"Other":13,"Offline":3},"cv_by_type":{"catalog":30,"wp_dl":6,"inquiry":8}},"2026-03":{"sessions":2188,"cv":13,"sal":4,"sql":1,"jucyu":0,"cost_items":[246000,0,0,0,134990,55000,200000,0],"cost_content":246000,"content_count":3,"mql_by_channel":{"Other":9,"Organic":2,"Direct":1,"Email":1},"cv_by_type":{"inquiry":4,"catalog":9}},"2026-06":{"sessions":2648,"cv":27,"sal":2,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,148195,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Organic":2,"Other":5,"Email":15,"Direct":3,"Offline":2},"cv_by_type":{"catalog":26,"inquiry":1}},"2026-04":{"sessions":2398,"cv":31,"sal":3,"sql":2,"jucyu":0,"cost_items":[78000,88000,0,0,130077,55000,200000,0],"cost_content":166000,"content_count":3,"mql_by_channel":{"Direct":3,"Other":10,"Offline":4,"Email":9,"Organic":5},"cv_by_type":{"catalog":25,"inquiry":4,"wp_dl":2}},"2026-05":{"sessions":2455,"cv":33,"sal":3,"sql":0,"jucyu":0,"cost_items":[78000,86000,0,0,133213,55000,200000,0],"cost_content":164000,"content_count":3,"mql_by_channel":{"Organic":2,"Other":8,"Email":19,"Direct":3,"Offline":1},"cv_by_type":{"catalog":14,"wp_dl":19}},"2026-07":{"sessions":0,"cv":44,"sal":3,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":34,"Other":9,"Organic":1},"cv_by_type":{"catalog":44}},"2026-08":{"sessions":0,"cv":20,"sal":6,"sql":6,"jucyu":1,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":8,"Other":5,"Offline":2,"Direct":4,"Organic":1},"cv_by_type":{"catalog":16,"inquiry":3,"wp_dl":1}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":2,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}},"IS":{"2024-07":{"sessions":371,"cv":3,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Referral":1,"Direct":2},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-08":{"sessions":923,"cv":5,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Referral":2,"Organic":1},"cv_by_type":{"inquiry":3,"service_dl":2}},"2024-09":{"sessions":712,"cv":6,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":2,"Organic":2,"Referral":2},"cv_by_type":{"wp_dl":4,"service_dl":1,"inquiry":1}},"2024-10":{"sessions":755,"cv":3,"sal":1,"sql":1,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":1,"Direct":1,"Referral":1},"cv_by_type":{"wp_dl":1,"inquiry":2}},"2024-11":{"sessions":4615,"cv":9,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Email":5,"Paid":2},"cv_by_type":{"wp_dl":5,"inquiry":2,"service_dl":2}},"2024-12":{"sessions":1022,"cv":17,"sal":4,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":1,"Paid":2,"Email":12,"Organic":1,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":2,"wp_dl":11}},"2025-06":{"sessions":1028,"cv":12,"sal":2,"sql":1,"jucyu":0,"cost_items":[0,60000,0,0,114931,0,375000,0],"cost_content":60000,"content_count":2,"mql_by_channel":{"Other":2,"Email":7,"Organic":2,"Referral":1},"cv_by_type":{"inquiry":4,"service_dl":8}},"2026-03":{"sessions":1317,"cv":13,"sal":0,"sql":0,"jucyu":1,"cost_items":[378000,45000,250000,1065000,201481,55000,200000,2978000],"cost_content":1738000,"content_count":9,"mql_by_channel":{"Other":1,"Email":10,"Offline":1,"Organic":1},"cv_by_type":{"inquiry":1,"service_dl":12}},"2025-01":{"sessions":759,"cv":8,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":3,"Paid":3,"Referral":2},"cv_by_type":{"service_dl":7,"wp_dl":1}},"2025-02":{"sessions":1100,"cv":67,"sal":5,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":6,"Referral":2,"Email":59},"cv_by_type":{"service_dl":62,"inquiry":4,"wp_dl":1}},"2024-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-03":{"sessions":764,"cv":4,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,155570,0,487500,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Paid":2,"Direct":1,"Other":1},"cv_by_type":{"service_dl":2,"inquiry":2}},"2025-04":{"sessions":1778,"cv":6,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,154913,0,487500,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Email":1,"Paid":4,"Referral":1},"cv_by_type":{"service_dl":5,"inquiry":1}},"2024-04":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-05":{"sessions":972,"cv":5,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,30000,0,0,155138,0,375000,0],"cost_content":30000,"content_count":1,"mql_by_channel":{"Email":3,"Paid":1,"Referral":1},"cv_by_type":{"service_dl":4,"inquiry":1}},"2024-05":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2025-07":{"sessions":3160,"cv":16,"sal":6,"sql":0,"jucyu":0,"cost_items":[0,35000,0,0,133762,0,375000,0],"cost_content":35000,"content_count":1,"mql_by_channel":{"Other":3,"Organic":1,"Paid":1,"Email":11},"cv_by_type":{"inquiry":4,"service_dl":12}},"2025-09":{"sessions":1652,"cv":5,"sal":1,"sql":1,"jucyu":0,"cost_items":[70000,0,0,60000,0,55000,200000,0],"cost_content":130000,"content_count":8,"mql_by_channel":{"Direct":2,"Referral":1,"Email":1,"Other":1},"cv_by_type":{"inquiry":3,"service_dl":1,"wp_dl":1}},"2025-08":{"sessions":1281,"cv":24,"sal":2,"sql":0,"jucyu":0,"cost_items":[0,35000,0,0,72401,0,375000,0],"cost_content":35000,"content_count":1,"mql_by_channel":{"Direct":2,"Email":21,"Referral":1},"cv_by_type":{"service_dl":10,"wp_dl":13,"inquiry":1}},"2025-10":{"sessions":1120,"cv":15,"sal":4,"sql":1,"jucyu":0,"cost_items":[0,30000,0,10000,0,55000,200000,0],"cost_content":40000,"content_count":2,"mql_by_channel":{"Other":1,"Direct":1,"Email":13},"cv_by_type":{"inquiry":1,"service_dl":14}},"2025-11":{"sessions":1551,"cv":9,"sal":1,"sql":0,"jucyu":0,"cost_items":[110000,30000,0,10000,187046,55000,200000,0],"cost_content":150000,"content_count":3,"mql_by_channel":{"Email":9},"cv_by_type":{"service_dl":9}},"2025-12":{"sessions":1613,"cv":24,"sal":3,"sql":0,"jucyu":0,"cost_items":[0,15000,0,10000,169972,55000,200000,0],"cost_content":25000,"content_count":2,"mql_by_channel":{"Email":23,"Other":1},"cv_by_type":{"service_dl":23,"inquiry":1}},"2026-01":{"sessions":1364,"cv":32,"sal":2,"sql":1,"jucyu":0,"cost_items":[220000,60000,0,0,151179,55000,200000,0],"cost_content":280000,"content_count":4,"mql_by_channel":{"Email":26,"Other":3,"Direct":1,"Offline":1,"Organic":1},"cv_by_type":{"service_dl":27,"inquiry":5}},"2026-02":{"sessions":1222,"cv":39,"sal":10,"sql":3,"jucyu":0,"cost_items":[55000,90000,0,355000,151333,55000,200000,0],"cost_content":500000,"content_count":4,"mql_by_channel":{"Email":37,"Other":1,"Organic":1},"cv_by_type":{"service_dl":18,"wp_dl":20,"inquiry":1}},"2026-04":{"sessions":1450,"cv":5,"sal":2,"sql":1,"jucyu":0,"cost_items":[143000,45000,500000,0,200883,55000,200000,0],"cost_content":688000,"content_count":5,"mql_by_channel":{"Email":3,"Other":1,"Direct":1},"cv_by_type":{"service_dl":4,"inquiry":1}},"2026-05":{"sessions":1172,"cv":14,"sal":3,"sql":0,"jucyu":0,"cost_items":[198000,45000,0,0,193258,55000,200000,0],"cost_content":243000,"content_count":3,"mql_by_channel":{"Email":11,"Direct":1,"Offline":1,"Other":1},"cv_by_type":{"wp_dl":4,"service_dl":8,"inquiry":2}},"2026-06":{"sessions":1452,"cv":16,"sal":0,"sql":2,"jucyu":0,"cost_items":[0,0,0,0,194972,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":1,"Email":13,"Other":2},"cv_by_type":{"inquiry":3,"service_dl":13}},"2024-06":{"sessions":537,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,0,0,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-07":{"sessions":0,"cv":14,"sal":3,"sql":3,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Email":13,"Other":1},"cv_by_type":{"service_dl":3,"wp_dl":10,"inquiry":1}},"2026-08":{"sessions":0,"cv":4,"sal":1,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{"Direct":2,"Email":2},"cv_by_type":{"inquiry":2,"wp_dl":2}},"2026-09":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-10":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-11":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2026-12":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-01":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}},"2027-02":{"sessions":0,"cv":0,"sal":0,"sql":0,"jucyu":0,"cost_items":[0,0,0,0,0,55000,200000,0],"cost_content":0,"content_count":0,"mql_by_channel":{},"cv_by_type":{}}}},"costLabels":["コラム","メルマガ","WP","事例","広告","Web運用","コンサル","その他"]};
 // 費用ラベルが未設定/プレースホルダ(①〜⑧・費用N)の場合は実項目名に補正
 function migrateData(d){
   if(!Array.isArray(d.costLabels)||d.costLabels.length<8||d.costLabels.some(l=>!l||/^[①-⑧]$/.test(String(l))||/^費用\d?$/.test(String(l)))){
@@ -690,21 +760,25 @@ function classifyChannel(val){
   if(v.includes('offline')||v.includes('オフライン')||v.includes('イベント')||v.includes('展示会')) return 'Offline';
   return 'Other';
 }
-// CV種別分類
+// CV種別分類（確定タクソノミー・6分類）
+// お問合せ / 資料DL / WP / カタログ(MEDのみ) / 申し込み(SCHのみ) / その他
+// ※初回コンバージョン文字列・CTA文字列の双方に適用可能。CV集計/CVカウント/実績取込で共通利用。
 function classifyCVType(val){
   if(!val||String(val).trim()==='') return null;
   const v=String(val).trim();
-  // ③ WP系: WP / ホワイトペーパー / お役立ち資料 / WP1・WP2 等
-  if(v.includes('WPダウンロード')||v.includes('お役立ち資料')||v.includes('ホワイトペーパー')) return 'wp_dl';
-  const wpMatch=v.match(/[｜|]WP\d*[｜|$]/)||v.match(/\|WP\d/);
-  if(wpMatch) return 'wp_dl';
-  if(/\bWP\d+\b/.test(v)||/[｜|]WP\d/.test(v)||/(^|[^A-Za-z])WP([^A-Za-z]|$)/i.test(v)) return 'wp_dl';
-  // ② 資料ダウンロード系: 資料DL / サービス資料 / 会社案内 / カタログ 等
-  if(v.includes('サービス資料')||v.includes('カタログDL')||v.includes('総合カタログ')||
-     v.includes('カタログ')||v.includes('会社案内')||v.includes('資料ダウンロードフォーム')) return 'service_dl';
-  if(v.includes('資料DL')&&!v.includes('お役立ち')) return 'service_dl';
-  // ① 問い合わせ系: お問合せ・ご相談 / 問い合わせ 等（上記以外すべて）
-  return 'inquiry';
+  // ① WP系（お役立ち資料・ホワイトペーパー含む）を最優先（「資料」を含むため先に判定）
+  if(v.includes('WPダウンロード')||v.includes('お役立ち資料')||v.includes('ホワイトペーパー')||
+     /(^|[^A-Za-z])WP\d*([^A-Za-z]|$)/i.test(v)) return 'wp_dl';
+  // ② カタログ系（MEDのみ運用：総合カタログ / カタログ）
+  if(v.includes('カタログ')) return 'catalog';
+  // ③ 申し込み系（SCHのみ運用：展示特設サイトお申込み 等）
+  if(v.includes('申込')||v.includes('申し込み')||v.includes('お申込')||v.includes('展示特設サイト')) return 'moushikomi';
+  // ④ 資料DL系（サービス資料 / 資料ダウンロード / 会社案内）
+  if(v.includes('サービス資料')||v.includes('資料ダウンロード')||v.includes('資料DL')||v.includes('会社案内')) return 'service_dl';
+  // ⑤ お問合せ系（問合せ / 相談 / 見積）
+  if(v.includes('問合せ')||v.includes('問い合わせ')||v.includes('相談')||v.includes('見積')) return 'inquiry';
+  // ⑥ 上記いずれにも該当しない（.bdash_form・アンケート等）
+  return 'other';
 }
 // コンテンツ種別→インデックス変換
 function getContentTypeIdx(typeStr){
@@ -1090,9 +1164,7 @@ function renderDataTable(){
       <td class="calc-cell" id="contentcost_${ym}">${YFull(getContentCost(d))}</td>
       <td class="calc-cell" id="cpa_${ym}" data-cost="${getTotalCost(d)}">${cpa!==null?Y(Math.round(cpa)):'—'}</td>
       <td class="calc-cell" id="cpasql_${ym}" data-cost="${getTotalCost(d)}">${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
-      <td><input type="number" data-field="cvt_inquiry" data-ym="${ym}" value="${ct.inquiry||0}" min="0"></td>
-      <td><input type="number" data-field="cvt_service_dl" data-ym="${ym}" value="${ct.service_dl||0}" min="0"></td>
-      <td><input type="number" data-field="cvt_wp_dl" data-ym="${ym}" value="${ct.wp_dl||0}" min="0"></td>
+      ${CV_TYPE_KEYS.map(k=>`<td><input type="number" data-field="cvt_${k}" data-ym="${ym}" value="${ct[k]||0}" min="0"></td>`).join('')}
       <td><button class="del-btn" onclick="confirmDelRow('${org}','${ym}')">×</button></td>
     </tr>`;
   }).join('');
@@ -1957,6 +2029,8 @@ function switchView(view,el){
   if(view==='dashboard') renderDashboard();
   else if(view==='trend') renderTrend();
   else if(view==='data'){const ds=document.getElementById('dataOrgSel');if(ds&&currentOrg)ds.value=currentOrg;populateDataYearSel();renderDataTable();}
+  else if(view==='cvagg') cvaggInit();
+  else if(view==='cvcount') cvcountInit();
   else if(view==='targets') renderTargets();
 }
 
@@ -2437,6 +2511,415 @@ function saveHQTargets(){
 // ─────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+//  CV集計 / CVカウント 共通モジュール
+// ═══════════════════════════════════════════════════════════════════
+const CVX_ORGS=['UN','SCH','MED','IS'];
+// メルマガ経由レポートは自事業部以外（別事業部＝MED含む全て）のメルマガCVを除外する
+const CVX_CAT_KEYS=CV_TYPE_KEYS;                 // ['inquiry','service_dl','wp_dl','catalog','moushikomi','other']
+const CVX_CAT_LABEL=CV_TYPE_SHORT;               // {inquiry:'問合せ',...}
+// 会社名ヘッダー候補（事業部で異なる：貴社名/学校名/医療機関名 等）。既存 parseJissekiWb と同等
+const CVX_COMP_HDRS=['企業名','会社名','貴社名','御社名','社名','医療機関名','団体名','学校名','法人名','組織名','店舗名','園名'];
+const CVX_EMAIL_HDRS=['メールアドレス','Ｅメール','Eメール','E-mail','e-mail','Email','email','メール'];
+const CVX_NAME_HDRS=['お名前','氏名','ご担当者','担当者','名前'];
+const CVX_DATE_HDRS=['初回コンバージョン日','__hs_event_native_timestamp','回答日時','日時'];
+// CV総数から完全除外する対象（カウントしない）：汎用フォーム・展示会アンケート・ヒアリングアンケート
+const CVX_DROP_KEYS=['bdash_form','page-item-layout','展示会アンケート','白衣ラフィーリア','ヒアリングアンケート'];
+function cvxIsExcluded(v){ if(v==null) return false; const s=String(v); return CVX_DROP_KEYS.some(k=>s.includes(k)); }
+let cvx_uid=0;
+
+// 法人格正規化（重複除去キー用）
+function cvxNormCompany(name){
+  if(name==null) return '';
+  let s=String(name).trim().replace(/　/g,' ');
+  s=s.replace(/株式会社|㈱|\(株\)|（株）|\(株|（株|株\)|株）/g,'株式会社');
+  s=s.replace(/有限会社|㈲|\(有\)|（有）|\(有|（有|有\)|有）/g,'有限会社');
+  s=s.replace(/合同会社|㈾|\(同\)|（同）/g,'合同会社');
+  s=s.replace(/一般社団法人|（一社）/g,'一般社団法人');
+  s=s.replace(/一般財団法人|（一財）/g,'一般財団法人');
+  s=s.replace(/[\s　]+/g,'').toLowerCase();
+  return s;
+}
+// 日付→年月キー（Excelシリアル/文字列/Date対応。シリアルはUTC基準で既存実績パーサと一致）
+function cvxYM(v){
+  if(v==null||v==='') return null;
+  if(typeof v==='number'){ if(v<20000||v>80000) return null; const d=new Date(Math.round((v-25569)*86400*1000)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`; }
+  if(v instanceof Date){ if(isNaN(v)) return null; return `${v.getFullYear()}-${String(v.getMonth()+1).padStart(2,'0')}`; }
+  const s=String(v).trim(); const m=s.match(/(\d{4})[\/\-年](\d{1,2})/); if(m) return `${m[1]}-${String(m[2]).padStart(2,'0')}`;
+  const d=new Date(s); if(!isNaN(d)) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  return null;
+}
+// 並べ替え用の比較値（早い順）
+function cvxDateVal(v){ if(typeof v==='number') return v; if(v instanceof Date) return v.getTime()/86400000+25569; const d=new Date(String(v)); return isNaN(d)?0:d.getTime()/86400000+25569; }
+// 期間内判定（ym文字列, start/end は 'YYYY-MM' または null）
+function cvxInPeriod(ym,start,end){
+  if(!ym) return false; const [y,m]=ym.split('-').map(Number); const p=y*12+m;
+  if(start){const[sy,sm]=start.split('-').map(Number); if(p<sy*12+sm) return false;}
+  if(end){const[ey,em]=end.split('-').map(Number); if(p>ey*12+em) return false;}
+  return true;
+}
+// 重複除去エンティティキー（企業名優先／個人・空欄はメール）
+function cvxEntityKey(company,email,name){
+  const nm=(name==null?'':String(name)).trim();
+  const em=(email==null?'':String(email)).trim().toLowerCase().replace(/[\s　]+/g,'');
+  let compN=cvxNormCompany(company);
+  const nameN=cvxNormCompany(nm);
+  if(compN==='個人'||compN==='personal'||compN==='なし'||compN==='ありません') compN='';
+  if(compN && compN!==nameN) return 'C:'+compN;
+  if(em) return 'E:'+em;
+  if(compN) return 'C:'+compN;
+  if(nameN) return 'N:'+nameN;
+  return 'U:'+(cvx_uid++);
+}
+// CTAの先頭事業部を取得（例 "IS｜メルマガNo.39｜cta1｜WP6" → "IS"）
+function cvxCtaOwner(cta){
+  if(!cta) return null; const s=String(cta).trim();
+  const m=s.match(/^(UN|SCH|MED|IS)\s*[｜|]/)||s.match(/^(UN|SCH|MED|IS)(?![A-Za-z])/);
+  return m?m[1]:null;
+}
+function cvxReadFile(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>{try{res(XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:false}));}catch(err){rej(err);}};
+    r.onerror=()=>rej(new Error('読込失敗'));
+    r.readAsArrayBuffer(file);
+  });
+}
+// ヘッダー行から列インデックスを検出（部分一致）
+function cvxFindCol(hdr,subs){for(let i=0;i<hdr.length;i++){const h=hdr[i];if(h&&subs.some(s=>h.includes(s)))return i;}return -1;}
+function cvxStatus(id,msg,type){
+  const c={success:'#d4edda|#155724',error:'#f8d7da|#721c24',info:'#d1ecf1|#0c5460',warn:'#fff3cd|#856404'}[type||'info'].split('|');
+  document.getElementById(id).innerHTML=`<div style="padding:11px 14px;border-radius:8px;background:${c[0]};color:${c[1]};font-size:12px;font-weight:600">${msg}</div>`;
+}
+
+// ─────────────────────────────────────────
+//  CV集計（HubSpotレポート）
+// ─────────────────────────────────────────
+let cvaggFiles=[];   // {name, org, type, ws}
+let cvaggResult=null;
+
+function cvaggInit(){
+  if(!document.getElementById('cvaggStart').value) document.getElementById('cvaggStart').value=rangeStart;
+  if(!document.getElementById('cvaggEnd').value) document.getElementById('cvaggEnd').value=rangeEnd;
+  const drop=document.getElementById('cvaggDrop');
+  if(drop&&!drop._bound){drop._bound=1;
+    ['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('dragover');}));
+    ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('dragover');}));
+    drop.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files)cvaggAddFiles(e.dataTransfer.files);});
+  }
+}
+async function cvaggAddFiles(files){
+  const arr=Array.from(files).filter(f=>/\.xlsx?$/i.test(f.name));
+  for(const f of arr){
+    if(cvaggFiles.some(x=>x.name===f.name)) continue;
+    try{
+      const wb=await cvxReadFile(f);
+      const sName=wb.SheetNames[1]||wb.SheetNames[0];
+      const ws=wb.Sheets[sName];
+      let org=null; const mo=sName.match(/(UN|SCH|MED|IS)/); if(mo) org=mo[1];
+      let type=/メルマガ経由/.test(sName)?'mailmag':'initial';
+      // シート名で判別できない場合はヘッダーB列で判定
+      if(!org||true){
+        const hd=XLSX.utils.sheet_to_json(ws,{header:1,range:0,defval:''})[0]||[];
+        const b=String(hd[1]||'');
+        if(/CTA/.test(b)&&!/初回コンバージョン/.test(b)) type='mailmag';
+        else if(/初回コンバージョン/.test(b)) type='initial';
+      }
+      cvaggFiles.push({name:f.name,org,type,ws});
+    }catch(err){cvxStatus('cvaggStatus','❌ '+f.name+'：'+err.message,'error');}
+  }
+  cvaggRenderFiles();
+}
+function cvaggRenderFiles(){
+  const box=document.getElementById('cvaggFileList');
+  if(!cvaggFiles.length){box.innerHTML='';return;}
+  const tagColor={initial:'#2563eb',mailmag:'#0891b2'};
+  box.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px">取込ファイル（'+cvaggFiles.length+'）</div>'+
+    cvaggFiles.map((f,i)=>{
+      const t=f.type==='mailmag'?'メルマガ経由':'初回CV';
+      const org=f.org||'?';
+      return `<span class="cv-file-chip"><span class="tag" style="background:${tagColor[f.type]}">${org}/${t}</span>${f.name}<span class="rm" onclick="cvaggRemove(${i})">✕</span></span>`;
+    }).join('');
+}
+function cvaggRemove(i){cvaggFiles.splice(i,1);cvaggRenderFiles();}
+function cvaggClear(){cvaggFiles=[];cvaggResult=null;document.getElementById('cvaggFile').value='';cvaggRenderFiles();document.getElementById('cvaggResults').innerHTML='';document.getElementById('cvaggStatus').innerHTML='';document.getElementById('cvaggDlBtn').style.display='none';}
+
+function cvaggAnalyze(){
+  if(!cvaggFiles.length){cvxStatus('cvaggStatus','⚠️ HubSpotレポートをアップロードしてください','warn');return;}
+  const start=document.getElementById('cvaggStart').value||null;
+  const end=document.getElementById('cvaggEnd').value||null;
+  const rowsByOrg={UN:[],SCH:[],MED:[],IS:[]};
+  const eLabelByOrg={};  // 事業部→E列内容の見出し（着用人数/病床数/ご予算/生徒数）
+  const stat={files:0,total:0,inPeriod:0,excluded:0,dropped:0,noOrg:0};
+  cvaggFiles.forEach(f=>{
+    if(!f.org){stat.noOrg++;return;}
+    stat.files++;
+    const rows=XLSX.utils.sheet_to_json(f.ws,{header:1,defval:'',raw:true});
+    if(rows.length<2) return;
+    const hdr=(rows[0]||[]).map(h=>h==null?'':String(h).trim());
+    const compCol =cvxFindCol(hdr,CVX_COMP_HDRS);
+    const emailCol=cvxFindCol(hdr,CVX_EMAIL_HDRS);
+    const nameCol =cvxFindCol(hdr,CVX_NAME_HDRS);
+    const dateCol =cvxFindCol(hdr,CVX_DATE_HDRS);
+    const ctaCol  =cvxFindCol(hdr,['CTA']);
+    // 流入チャネル：初回レポートのJ列「オリジナル トラフィック ソース」（ドリルダウンより手前が先にヒット）
+    const channelCol=cvxFindCol(hdr,['オリジナル トラフィック ソース','流入チャネル','流入経路']);
+    // E列内容：初回レポートのE列（着用予定人数/病床数/ご予算/生徒数）。見出しは実レポートのE列ヘッダーを使用
+    const eContentCol=(f.type==='initial')?4:-1;
+    if(f.type==='initial'&&eContentCol>=0&&!eLabelByOrg[f.org]) eLabelByOrg[f.org]=String(hdr[eContentCol]||'内容');
+    // 種別判定用の文字列列：初回=初回コンバージョン(B)、メルマガ=CTA(B)
+    let typeCol;
+    if(f.type==='mailmag') typeCol=ctaCol>=0?ctaCol:1;
+    else { typeCol=cvxFindCol(hdr,['初回コンバージョン']); if(typeCol<0) typeCol=1; }
+    rows.slice(1).forEach(r=>{
+      if(!r) return; stat.total++;
+      const typeStr=r[typeCol];
+      const ym=cvxYM(dateCol>=0?r[dateCol]:null);
+      if(!ym||!cvxInPeriod(ym,start,end)) return;
+      // 汎用フォーム・展示会アンケート等はCV総数から完全除外（カウントしない）
+      if(cvxIsExcluded(typeStr)){stat.dropped++;return;}
+      // メルマガ経由：自事業部以外（別事業部＝MED含む全て）のメルマガ由来CVを除外
+      if(f.type==='mailmag'){
+        const owner=cvxCtaOwner(ctaCol>=0?r[ctaCol]:'');
+        if(owner&&owner!==f.org){stat.excluded++;return;}
+      }
+      stat.inPeriod++;
+      const cat=classifyCVType(typeStr)||'other';
+      rowsByOrg[f.org].push({
+        ym, cat,
+        dateVal:cvxDateVal(dateCol>=0?r[dateCol]:null),
+        dateRaw:dateCol>=0?r[dateCol]:'',
+        company:compCol>=0?r[compCol]:'',
+        name:nameCol>=0?r[nameCol]:'',
+        email:emailCol>=0?r[emailCol]:'',
+        colE:eContentCol>=0?(r[eContentCol]||''):'',
+        channel:(f.type==='initial'&&channelCol>=0)?(r[channelCol]||''):'',
+        cvType:typeStr||'',
+        source:f.type==='mailmag'?'メルマガ経由':'初回CV'
+      });
+    });
+  });
+  // 月内重複除去（会社/メール）＋集計
+  const perOrg={}, detailByOrg={}; let dupRemoved=0;
+  CVX_ORGS.forEach(org=>{
+    const rows=rowsByOrg[org].slice().sort((a,b)=>a.dateVal-b.dateVal);
+    const seen={}, monthly={}, detail=[];
+    rows.forEach(row=>{
+      const key=cvxEntityKey(row.company,row.email,row.name);
+      const sk=row.ym+'|'+key;
+      if(seen[sk]){dupRemoved++;return;}
+      seen[sk]=1;
+      if(!monthly[row.ym]){monthly[row.ym]={};CVX_CAT_KEYS.forEach(k=>monthly[row.ym][k]=0);}
+      monthly[row.ym][row.cat]++;
+      detail.push(row);
+    });
+    perOrg[org]=monthly; detailByOrg[org]=detail;
+  });
+  cvaggResult={perOrg,detailByOrg,eLabel:eLabelByOrg,start,end,stat:{...stat,dupRemoved}};
+  cvaggRenderResults();
+  cvxStatus('cvaggStatus',`✅ 集計完了（対象 ${stat.inPeriod} 件／CV対象外除外 ${stat.dropped} 件／メルマガ他事業除外 ${stat.excluded} 件／重複除去 ${dupRemoved} 件）`,'success');
+  document.getElementById('cvaggDlBtn').style.display='none';
+}
+
+function cvaggRenderResults(){
+  const {perOrg,detailByOrg}=cvaggResult;
+  // 全月一覧
+  const monthsSet=new Set(); CVX_ORGS.forEach(o=>Object.keys(perOrg[o]).forEach(m=>monthsSet.add(m)));
+  const months=[...monthsSet].sort();
+  const catTot=org=>{const t={};CVX_CAT_KEYS.forEach(k=>t[k]=0);Object.values(perOrg[org]).forEach(mm=>CVX_CAT_KEYS.forEach(k=>t[k]+=mm[k]));return t;};
+  const sumCat=t=>CVX_CAT_KEYS.reduce((s,k)=>s+t[k],0);
+  let grand=0; const orgTots={}; CVX_ORGS.forEach(o=>{orgTots[o]=catTot(o);grand+=sumCat(orgTots[o]);});
+  let html='<div class="cv-cards">';
+  html+=`<div class="cv-cardbox"><div class="n">${grand}</div><div class="l">CV合計（重複除去後）</div></div>`;
+  CVX_ORGS.forEach(o=>{html+=`<div class="cv-cardbox"><div class="n">${sumCat(orgTots[o])}</div><div class="l">${o}</div></div>`;});
+  html+='</div>';
+  // 事業部別ダウンロード（実績ファイル貼付用・旧アプリ互換の「期間全体集計」形式）
+  const dlOrgs=CVX_ORGS.filter(o=>(detailByOrg[o]||[]).length>0);
+  if(dlOrgs.length){
+    html+='<div class="info-box" style="margin:4px 0 12px"><b>📥 事業部別ダウンロード（実績ファイル貼付用）：</b> '+
+      dlOrgs.map(o=>`<button class="btn btn-primary" style="margin:2px 4px" onclick="cvaggDownloadOrg('${o}')">${o}（${(detailByOrg[o]||[]).length}件）</button>`).join('')+
+      '</div>';
+  }
+  // 事業部×カテゴリ
+  html+='<div class="sec-title" style="margin:14px 0 8px;font-size:14px">事業部別 種別集計</div>';
+  html+='<div class="input-tbl-wrap"><table class="data-table"><thead><tr><th>事業部</th>'+CVX_CAT_KEYS.map(k=>`<th>${CVX_CAT_LABEL[k]}</th>`).join('')+'<th>合計</th></tr></thead><tbody>';
+  CVX_ORGS.forEach(o=>{const t=orgTots[o];html+=`<tr><td>${o}</td>${CVX_CAT_KEYS.map(k=>`<td>${t[k]}</td>`).join('')}<td><b>${sumCat(t)}</b></td></tr>`;});
+  const gt={};CVX_CAT_KEYS.forEach(k=>gt[k]=CVX_ORGS.reduce((s,o)=>s+orgTots[o][k],0));
+  html+=`<tr class="section-hdr"><td>合計</td>${CVX_CAT_KEYS.map(k=>`<td>${gt[k]}</td>`).join('')}<td><b>${grand}</b></td></tr>`;
+  html+='</tbody></table></div>';
+  // 事業部別 月次
+  CVX_ORGS.forEach(o=>{
+    const mk=Object.keys(perOrg[o]).sort(); if(!mk.length) return;
+    html+=`<div class="sec-title" style="margin:16px 0 8px;font-size:13px">${o} 月次内訳</div>`;
+    html+='<div class="input-tbl-wrap"><table class="data-table"><thead><tr><th>年月</th>'+CVX_CAT_KEYS.map(k=>`<th>${CVX_CAT_LABEL[k]}</th>`).join('')+'<th>合計</th></tr></thead><tbody>';
+    mk.forEach(m=>{const mm=perOrg[o][m];const tot=CVX_CAT_KEYS.reduce((s,k)=>s+mm[k],0);html+=`<tr><td>${m}</td>${CVX_CAT_KEYS.map(k=>`<td>${mm[k]}</td>`).join('')}<td><b>${tot}</b></td></tr>`;});
+    html+='</tbody></table></div>';
+  });
+  document.getElementById('cvaggResults').innerHTML=html;
+}
+
+// 事業部別Excelダウンロード（旧アプリ互換の単一シート「期間全体集計」）
+// 列: A空 / B初回コンバージョン / C年月日・時間 / D・E（メール＆会社名。MEDは実績の貼付先に合わせ会社名→メール） / Fお名前 / G E列の内容 / H流入チャネル
+function cvaggDownloadOrg(org){
+  if(!cvaggResult){return;}
+  const det=(cvaggResult.detailByOrg||{})[org]||[];
+  if(!det.length){cvxStatus('cvaggStatus',`⚠️ ${org} は出力対象データがありません`,'warn');return;}
+  const eLabel=(cvaggResult.eLabel&&cvaggResult.eLabel[org])?cvaggResult.eLabel[org]:'内容';
+  const compFirst=(org==='MED'); // MED実績の顧客一覧はD列＝会社名（医療機関名）
+  const gHead='E列の内容：'+eLabel;
+  const head=compFirst
+    ? ['','初回コンバージョン','年月日・時間','会社名','Eメール','お名前',gHead,'流入チャネル']
+    : ['','初回コンバージョン','年月日・時間','Eメール','会社名','お名前',gHead,'流入チャネル'];
+  const data=[head];
+  det.forEach(r=>{
+    data.push(compFirst
+      ? ['',r.cvType,r.dateRaw,r.company,r.email,r.name,r.colE,r.channel]
+      : ['',r.cvType,r.dateRaw,r.email,r.company,r.name,r.colE,r.channel]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  const rng=XLSX.utils.decode_range(ws['!ref']);
+  for(let R=1;R<=rng.e.r;R++){const a=XLSX.utils.encode_cell({c:2,r:R});if(ws[a]&&typeof ws[a].v==='number')ws[a].z='yyyy/mm/dd hh:mm:ss';}
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'期間全体集計');
+  const pl=ym=>{if(!ym)return'';const p=ym.split('-');return `${parseInt(p[0])}年${parseInt(p[1])}月`;};
+  const fn=`${org}｜期間コンバージョン集計_${pl(cvaggResult.start)}-${pl(cvaggResult.end)}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb,fn);
+}
+// 旧ボタン互換（現在は事業部別ボタンを使用）
+function cvaggDownload(){ if(!cvaggResult)return; const o=CVX_ORGS.find(x=>((cvaggResult.detailByOrg||{})[x]||[]).length); if(o) cvaggDownloadOrg(o); }
+
+// ─────────────────────────────────────────
+//  CVカウント（実績ファイル→MQL反映）
+// ─────────────────────────────────────────
+let cvcountWb=null, cvcountResult=null, cvcountDetectedOrg=null;
+
+function cvcountInit(){
+  if(!document.getElementById('cvcountStart').value) document.getElementById('cvcountStart').value=rangeStart;
+  if(!document.getElementById('cvcountEnd').value) document.getElementById('cvcountEnd').value=rangeEnd;
+}
+async function cvcountLoad(input){
+  const f=input.files[0]; if(!f) return;
+  try{
+    cvcountWb=await cvxReadFile(f);
+    // 事業部の自動判別（シート名 "{ORG}｜CVレポート" またはファイル名）
+    cvcountDetectedOrg=null;
+    for(const sn of cvcountWb.SheetNames){const m=sn.match(/^(UN|SCH|MED|IS)\s*[｜|]/);if(m){cvcountDetectedOrg=m[1];break;}}
+    if(!cvcountDetectedOrg){const m=f.name.match(/(UN|SCH|MED|IS)/i);if(m)cvcountDetectedOrg=m[1].toUpperCase();}
+    const sel=document.getElementById('cvcountOrg');
+    if(sel.value==='AUTO'&&cvcountDetectedOrg){/*keep AUTO but show*/}
+    cvxStatus('cvcountStatus',`✅ 読込完了：${f.name}${cvcountDetectedOrg?'（事業部自動判別：'+cvcountDetectedOrg+'）':''}`,'success');
+  }catch(err){cvxStatus('cvcountStatus','❌ 読込失敗：'+err.message,'error');cvcountWb=null;}
+}
+// 顧客一覧シートを内容から自動検出（位置非依存）
+// 判定: CVフラグ+回答日時を必須とし、「顧客一覧」名・SAL/受注列（=営業が記入する正シート）・行数を重視。
+// これにより、同名で複数ある場合や旧・部分シートより、SAL付きの最新シートを確実に選ぶ。
+function cvcountDetectSheet(wb){
+  let best=null,bestScore=-1;
+  wb.SheetNames.forEach(sn=>{
+    const ws=wb.Sheets[sn]; if(!ws) return;
+    const hd=(XLSX.utils.sheet_to_json(ws,{header:1,range:0,defval:''})[0]||[]).map(h=>h==null?'':String(h).trim());
+    if(!hd.length) return;
+    const hasCv=cvxFindCol(hd,['CVフラグ','CV種別'])>=0;
+    const hasDate=cvxFindCol(hd,['回答日時','日時'])>=0;
+    if(!(hasCv&&hasDate)) return; // 必須
+    let score=0;
+    if(/顧客一覧/.test(sn)) score+=10;
+    if(cvxFindCol(hd,['SAL'])>=0) score+=5;
+    if(cvxFindCol(hd,['受注'])>=0) score+=2;
+    if(cvxFindCol(hd,CVX_COMP_HDRS)>=0) score+=1;
+    if(cvxFindCol(hd,CVX_EMAIL_HDRS)>=0) score+=1;
+    let rc=0; try{rc=XLSX.utils.decode_range(ws['!ref']).e.r;}catch(e){}
+    score+=Math.min(rc,50000)/100000; // 行数を微小タイブレーク
+    if(score>bestScore){bestScore=score;best=sn;}
+  });
+  return best;
+}
+function cvcountAnalyze(){
+  if(!cvcountWb){cvxStatus('cvcountStatus','⚠️ 実績ファイルをアップロードしてください','warn');return;}
+  const sel=document.getElementById('cvcountOrg').value;
+  const org=(sel==='AUTO')?cvcountDetectedOrg:sel;
+  if(!org){cvxStatus('cvcountStatus','⚠️ 事業部を判別できませんでした。対象事業部を選択してください','warn');return;}
+  const sheetName=cvcountDetectSheet(cvcountWb);
+  if(!sheetName){cvxStatus('cvcountStatus','❌ 顧客一覧シート（CVフラグ・回答日時を含む）が見つかりませんでした','error');return;}
+  const start=document.getElementById('cvcountStart').value||null;
+  const end=document.getElementById('cvcountEnd').value||null;
+  const rows=XLSX.utils.sheet_to_json(cvcountWb.Sheets[sheetName],{header:1,defval:'',raw:true});
+  const hdr=(rows[0]||[]).map(h=>h==null?'':String(h).trim());
+  const cvCol  =cvxFindCol(hdr,['CVフラグ','CV種別']);
+  const dateCol=cvxFindCol(hdr,['回答日時','日時']);
+  const compCol=cvxFindCol(hdr,CVX_COMP_HDRS);
+  const mailCol=cvxFindCol(hdr,CVX_EMAIL_HDRS);
+  const nameCol=cvxFindCol(hdr,CVX_NAME_HDRS);
+  const salCol =cvxFindCol(hdr,['SAL']);
+  const sqlCol =cvxFindCol(hdr,['SQL']);
+  const jucyuCol=cvxFindCol(hdr,['受注']);
+  const monthly={}; const seen={}; let total=0,dup=0,skip=0;
+  function ens(ym){if(!monthly[ym]){monthly[ym]={cv:0,sal:0,sql:0,jucyu:0,cats:{}};CVX_CAT_KEYS.forEach(k=>monthly[ym].cats[k]=0);}}
+  // 日付順に安定させる
+  const body=rows.slice(1).map((r,i)=>({r,i,dv:cvxDateVal(dateCol>=0?r[dateCol]:null)})).sort((a,b)=>a.dv-b.dv);
+  body.forEach(({r})=>{
+    if(!r) return;
+    const cvFlag=cvCol>=0?r[cvCol]:'';
+    if(cvFlag==null||String(cvFlag).trim()==='') {skip++;return;}
+    // 汎用フォーム・展示会アンケート等はCV総数から完全除外（カウントしない）
+    if(cvxIsExcluded(cvFlag)){skip++;return;}
+    const ym=cvxYM(dateCol>=0?r[dateCol]:null);
+    if(!ym||!cvxInPeriod(ym,start,end)) return;
+    const key=cvxEntityKey(compCol>=0?r[compCol]:'',mailCol>=0?r[mailCol]:'',nameCol>=0?r[nameCol]:'');
+    const sk=ym+'|'+key;
+    total++;
+    if(seen[sk]){dup++; }
+    else{
+      seen[sk]=1; ens(ym); monthly[ym].cv++;
+      const cat=classifyCVType(cvFlag)||'other'; monthly[ym].cats[cat]++;
+    }
+    // 参考：SAL/SQL/受注（表示のみ・反映しない）※列の日付が入っていればカウント
+    if(salCol>=0){const s=cvxYM(r[salCol]);if(s&&cvxInPeriod(s,start,end)){ens(s);monthly[s].sal++;}}
+    if(sqlCol>=0){const s=cvxYM(r[sqlCol]);if(s&&cvxInPeriod(s,start,end)){ens(s);monthly[s].sql++;}}
+    if(jucyuCol>=0){const s=cvxYM(r[jucyuCol]);if(s&&cvxInPeriod(s,start,end)){ens(s);monthly[s].jucyu++;}}
+  });
+  cvcountResult={org,sheetName,monthly,hasSAL:salCol>=0};
+  cvcountRenderResults();
+  cvxStatus('cvcountStatus',`✅ カウント完了（${org}／シート「${sheetName}」／MQL重複除去 ${dup} 件）`,'success');
+}
+function cvcountRenderResults(){
+  const {org,monthly,hasSAL}=cvcountResult;
+  const months=Object.keys(monthly).sort();
+  const tot={cv:0};CVX_CAT_KEYS.forEach(k=>tot[k]=0);let tSal=0,tSql=0,tJu=0;
+  months.forEach(m=>{tot.cv+=monthly[m].cv;CVX_CAT_KEYS.forEach(k=>tot[k]+=monthly[m].cats[k]);tSal+=monthly[m].sal;tSql+=monthly[m].sql;tJu+=monthly[m].jucyu;});
+  let html='<div class="cv-cards">';
+  html+=`<div class="cv-cardbox"><div class="n">${tot.cv}</div><div class="l">MQL合計</div></div>`;
+  CVX_CAT_KEYS.forEach(k=>{html+=`<div class="cv-cardbox"><div class="n">${tot[k]}</div><div class="l">${CVX_CAT_LABEL[k]}</div></div>`;});
+  html+='</div>';
+  html+='<div class="sec-title" style="margin:14px 0 8px;font-size:14px">月別 MQL 集計（ダッシュボード反映対象）</div>';
+  html+='<div class="input-tbl-wrap"><table class="data-table"><thead><tr><th>年月</th><th>MQL合計</th>'+CVX_CAT_KEYS.map(k=>`<th>${CVX_CAT_LABEL[k]}</th>`).join('')+(hasSAL?'<th>参考SAL</th><th>参考SQL</th><th>参考受注</th>':'')+'</tr></thead><tbody>';
+  months.forEach(m=>{const d=monthly[m];html+=`<tr><td>${m}</td><td><b>${d.cv}</b></td>${CVX_CAT_KEYS.map(k=>`<td>${d.cats[k]}</td>`).join('')}${hasSAL?`<td style="color:var(--muted)">${d.sal}</td><td style="color:var(--muted)">${d.sql}</td><td style="color:var(--muted)">${d.jucyu}</td>`:''}</tr>`;});
+  html+=`<tr class="section-hdr"><td>合計</td><td>${tot.cv}</td>${CVX_CAT_KEYS.map(k=>`<td>${tot[k]}</td>`).join('')}${hasSAL?`<td>${tSal}</td><td>${tSql}</td><td>${tJu}</td>`:''}</tr>`;
+  html+='</tbody></table></div>';
+  if(hasSAL) html+='<div style="font-size:11px;color:var(--muted);margin-top:6px">※参考SAL/SQL/受注は表示のみ。ダッシュボードのSAL/SQL/受注は従来どおり実績ファイル①取込値を使用します。</div>';
+  document.getElementById('cvcountResults').innerHTML=html;
+  document.getElementById('cvcountReflect').innerHTML=`<button class="btn btn-primary" onclick="cvcountReflect()">📥 このMQL（合計＋種別）を ${org} のダッシュボードに反映</button>`;
+}
+function cvcountReflect(){
+  if(!cvcountResult){return;}
+  const {org,monthly}=cvcountResult;
+  const months=Object.keys(monthly).sort();
+  if(!months.length){cvxStatus('cvcountStatus','⚠️ 反映するデータがありません','warn');return;}
+  showConfirm(`${org} の ${months.length} か月分について、MQL（合計＋種別）をダッシュボードに反映します。\nSAL/SQL/受注・費用・手動入力の他項目は変更しません。よろしいですか？`,()=>{
+    months.forEach(ym=>{
+      const d=ensureYM(org,ym);
+      d.cv=monthly[ym].cv;
+      const ct={}; CVX_CAT_KEYS.forEach(k=>{if(monthly[ym].cats[k]) ct[k]=monthly[ym].cats[k];});
+      d.cv_by_type=ct;
+    });
+    saveData();
+    cvxStatus('cvcountStatus',`✅ ${org} のMQLをダッシュボードに反映しました（${months.length}か月）。データ入力タブで確認・微調整できます。`,'success');
+    toast('✅ MQLを反映しました');
+    if(typeof renderDashboard==='function'&&currentOrg===org) renderDashboard();
+  });
+}
+function cvcountClear(){cvcountWb=null;cvcountResult=null;cvcountDetectedOrg=null;document.getElementById('cvcountFile').value='';document.getElementById('cvcountResults').innerHTML='';document.getElementById('cvcountReflect').innerHTML='';document.getElementById('cvcountStatus').innerHTML='';}
+
 function init(){
   appData=loadData();
   ensureHQ();
