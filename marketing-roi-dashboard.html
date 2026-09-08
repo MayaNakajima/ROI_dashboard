@@ -327,7 +327,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
         <button class="btn btn-success" onclick="saveDataTable()">💾 保存</button>
       </div>
       <div class="info-box" style="margin-bottom:12px">
-        💡 セッション・CV・SAL・SQL・受注、および CV実績（問合せ／資料DL／WPDL）は直接編集できます。<br>
+        💡 セッション・CV・SAL・SQL・提案・受注、および CV実績（問合せ／資料DL／WPDL）は直接編集できます。<br>
         CV実績はExcel取込値が初期値として入り、ここで自由に修正できます（再取込しない限り保持されます）。<br>
         費用①〜⑧（予算実績）は下の「予算実績 月次入力」セクションで直接編集できます（Excel取込値が初期値として入ります）。マーケ費用・コンテンツ費用・CPA・SQL CPAはその入力から自動計算されます。<br>
         保存ボタンを押すまでデータは確定されません。行の「×」で月データを削除できます。
@@ -341,6 +341,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
               <th>CV数</th>
               <th>SAL数</th>
               <th>SQL数</th>
+              <th>提案数</th>
               <th>受注数</th>
               <th>マーケ費用（円）</th>
               <th>コンテンツ費用（円）</th>
@@ -645,7 +646,7 @@ function ensureOrg(org){
 function ensureYM(org,ym){
   ensureOrg(org);
   if(!appData.actuals[org][ym]) appData.actuals[org][ym]={
-    sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+    sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
     cost_items:Array(8).fill(0),
     cost_content:0,content_count:0,
     mql_by_channel:{},cv_by_type:{}
@@ -655,6 +656,7 @@ function ensureYM(org,ym){
   if(!d.cost_items) d.cost_items=Array(8).fill(0);
   else { const ext=Array(8).fill(0); for(let i=0;i<8&&i<d.cost_items.length;i++) ext[i]=d.cost_items[i]||0; d.cost_items=ext; }
   if(d.content_count===undefined) d.content_count=0;
+  if(d.teian===undefined) d.teian=0; // 提案（コンペ）段。旧データは0で補完（後方互換）
   if(!d.mql_by_channel) d.mql_by_channel={};
   if(!d.cv_by_type) d.cv_by_type={};
   return d;
@@ -696,13 +698,13 @@ function saveData(){
 // ─────────────────────────────────────────
 function getRawData(org,ym){
   const d=appData.actuals[org]?.[ym];
-  if(!d) return {sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+  if(!d) return {sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
     cost_items:Array(8).fill(0),cost_content:0,content_count:0,
     mql_by_channel:{},cv_by_type:{}};
   const ci=(d.cost_items||[]);
   const cost8=Array(8).fill(0).map((_,i)=>ci[i]||0);
   return {
-    sessions:d.sessions||0,cv:d.cv||0,sal:d.sal||0,sql:d.sql||0,jucyu:d.jucyu||0,
+    sessions:d.sessions||0,cv:d.cv||0,sal:d.sal||0,sql:d.sql||0,teian:d.teian||0,jucyu:d.jucyu||0,
     cost_items:cost8,cost_content:d.cost_content||0,content_count:d.content_count||0,
     mql_by_channel:d.mql_by_channel||{},cv_by_type:d.cv_by_type||{}
   };
@@ -715,12 +717,12 @@ function getOtherCost(d){const ci=d.cost_items||[];return (ci[4]||0)+(ci[5]||0)+
 function getTotalCost(d){return getMktgCost(d);}
 function getData(org,ym){
   if(org==='ALL'){
-    const res={sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+    const res={sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
       cost_items:Array(8).fill(0),cost_content:0,content_count:0,
       mql_by_channel:{},cv_by_type:{}};
     ORGS.forEach(o=>{
       const d=getRawData(o,ym);
-      res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.jucyu+=d.jucyu;
+      res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.teian+=(d.teian||0);res.jucyu+=d.jucyu;
       res.cost_content+=d.cost_content;res.content_count+=d.content_count;
       d.cost_items.forEach((v,i)=>res.cost_items[i]+=(v||0));
       CHANNEL_KEYS.forEach(k=>res.mql_by_channel[k]=(res.mql_by_channel[k]||0)+(d.mql_by_channel[k]||0));
@@ -731,12 +733,12 @@ function getData(org,ym){
   return getRawData(org,ym);
 }
 function getAgg(org,months){
-  const res={sessions:0,cv:0,sal:0,sql:0,jucyu:0,
+  const res={sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
     cost_items:Array(8).fill(0),cost_content:0,content_count:0,
     mql_by_channel:{},cv_by_type:{}};
   months.forEach(ym=>{
     const d=getData(org,ym);
-    res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.jucyu+=d.jucyu;
+    res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.teian+=(d.teian||0);res.jucyu+=d.jucyu;
     res.cost_content+=d.cost_content;res.content_count+=d.content_count;
     d.cost_items.forEach((v,i)=>res.cost_items[i]+=(v||0));
     CHANNEL_KEYS.forEach(k=>res.mql_by_channel[k]=(res.mql_by_channel[k]||0)+(d.mql_by_channel[k]||0));
@@ -904,7 +906,7 @@ function renderKPI(){
   document.getElementById('kpiGrid').innerHTML=
     card('session','🌐','セッション数',N(cur.sessions),`目標達成率: ${sessPct}`,cur.sessions,prev.sessions)+
     card('cv','✅','MQL(CV)数',N(cur.cv),`目標達成率: ${mqlPct}`,cur.cv,prev.cv)+
-    card('roi','🔽','SAL→SQL→受注',`${N(cur.sal)}→${N(cur.sql)}→${N(cur.jucyu)}`,`MQL→SAL: ${cur.cv>0?N(cur.sal/cur.cv*100,1)+'%':'—'}`,cur.sal,prev.sal)+
+    card('roi','🔽','SAL→SQL→提案→受注',`${N(cur.sal)}→${N(cur.sql)}→${N(cur.teian||0)}→${N(cur.jucyu)}`,`勝率(受注/提案): ${(cur.teian||0)>0?N(cur.jucyu/cur.teian*100,1)+'%':'—'}`,cur.sal,prev.sal)+
     card('cpa','💰','CPA（期間合計費÷MQL）',curCPA!==null?Y(Math.round(curCPA)):'—',`総費用: ${Y(curCost)}`,curCPA,prevCPA,true)+
     card('cpa','🎯','SQL CPA（期間合計費÷SQL）',curCPASQL!==null?Y(Math.round(curCPASQL)):'—',`SQL: ${N(cur.sql)}`,curCPASQL,prevCPASQL,true)+
     card('cost','💸','マーケ費用計',Y(getMktgCost(cur)),`コンテンツ①〜④: ${Y(getContentCost(cur))} / 広告他⑤〜⑧: ${Y(getOtherCost(cur))}`,getMktgCost(cur),getMktgCost(prev),true);
@@ -985,7 +987,8 @@ function renderFunnel(){
           ${step('MQL(CV)',agg.cv,'100%','var(--sky)')}${arr}
           ${step('SAL（商談）',agg.sal,rate(agg.sal,agg.cv),'var(--blue)')}${arr}
           ${step('SQL（案件化）',agg.sql,rate(agg.sql,agg.sal),'#8b5cf6')}${arr}
-          ${step('受注',agg.jucyu,rate(agg.jucyu,agg.sql),'var(--green)')}
+          ${step('提案（コンペ）',agg.teian,rate(agg.teian,agg.sql),'#f59e0b')}${arr}
+          ${step('受注',agg.jucyu,rate(agg.jucyu,agg.teian),'var(--green)')}
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap">
           <div style="font-size:11px;color:var(--muted)">総費用: <strong>${Y(getTotalCost(agg))}</strong></div>
@@ -1004,14 +1007,15 @@ function renderFunnelOrgTable(months){
       <td>${N(d.cv)}</td>
       <td>${N(d.sal)}<span style="color:var(--muted);font-size:10px"> ${d.cv>0?N(d.sal/d.cv*100,1)+'%':''}</span></td>
       <td>${N(d.sql)}<span style="color:var(--muted);font-size:10px"> ${d.sal>0?N(d.sql/d.sal*100,1)+'%':''}</span></td>
-      <td>${N(d.jucyu)}<span style="color:var(--muted);font-size:10px"> ${d.sql>0?N(d.jucyu/d.sql*100,1)+'%':''}</span></td>
+      <td>${N(d.teian)}<span style="color:var(--muted);font-size:10px"> ${d.sql>0?N(d.teian/d.sql*100,1)+'%':''}</span></td>
+      <td>${N(d.jucyu)}<span style="color:var(--muted);font-size:10px"> ${d.teian>0?N(d.jucyu/d.teian*100,1)+'%':''}</span></td>
       <td>${cpa!==null?Y(Math.round(cpa)):'—'}</td>
       <td>${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
     </tr>`;
   }).join('');
   return `<div style="flex:1;min-width:280px;overflow-x:auto">
     <table class="data-table" style="font-size:12px">
-      <thead><tr><th style="text-align:left">組織</th><th>MQL</th><th>SAL(率)</th><th>SQL(率)</th><th>受注(率)</th><th>CPA</th><th>SQL CPA</th></tr></thead>
+      <thead><tr><th style="text-align:left">組織</th><th>MQL</th><th>SAL(率)</th><th>SQL(率)</th><th>提案(率)</th><th>受注(率)</th><th>CPA</th><th>SQL CPA</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
 }
@@ -1167,6 +1171,7 @@ function renderDataTable(){
       <td><input type="number" data-field="cv" data-ym="${ym}" value="${d.cv}" min="0"></td>
       <td><input type="number" data-field="sal" data-ym="${ym}" value="${d.sal}" min="0"></td>
       <td><input type="number" data-field="sql" data-ym="${ym}" value="${d.sql}" min="0"></td>
+      <td><input type="number" data-field="teian" data-ym="${ym}" value="${d.teian||0}" min="0"></td>
       <td><input type="number" data-field="jucyu" data-ym="${ym}" value="${d.jucyu}" min="0"></td>
       <td class="calc-cell" id="mktgcost_${ym}">${YFull(getMktgCost(d))}</td>
       <td class="calc-cell" id="contentcost_${ym}">${YFull(getContentCost(d))}</td>
@@ -1610,6 +1615,8 @@ function parseJissekiWb(wb,org){
   const jucyuColFixed=(org==='IS')?20:19;
   let jucyuCol=hdr.findIndex(h=>h==='受注');
   if(jucyuCol<0) jucyuCol=jucyuColFixed;
+  // 提案（コンペした）: ヘッダーに「提案」または「コンペ」を含む日付列。実績ファイルに列が無ければ検出されず提案=0（後方互換）
+  let teianCol=findCol('提案','コンペ'); if(teianCol<0) teianCol=findColSub('提案','コンペ');
 
   function getDateYM(v){
     if(!v) return null;
@@ -1621,7 +1628,7 @@ function parseJissekiWb(wb,org){
   }
 
   const monthly={};
-  function ens(ym){if(!monthly[ym])monthly[ym]={cv:0,sal:0,sql:0,jucyu:0,mql_by_channel:{},cv_by_type:{}};}
+  function ens(ym){if(!monthly[ym])monthly[ym]={cv:0,sal:0,sql:0,teian:0,jucyu:0,mql_by_channel:{},cv_by_type:{}};}
 
   // ── 重複除外(ユニーク判定)用の列検出 ──
   // ルール：企業名で重複除外。企業名欄が個人名/空欄の場合はメールアドレスまで突合して重複除外。
@@ -1646,7 +1653,7 @@ function parseJissekiWb(wb,org){
     return 'U:'+(_uid++); // 識別できない行は常に別件扱い（誤集約を防止）
   }
   // ステージ×月ごとに、同一エンティティは1件のみ計上（初出の行のみカウント）
-  const seen={cv:{},sal:{},sql:{},jucyu:{}};
+  const seen={cv:{},sal:{},sql:{},teian:{},jucyu:{}};
   function firstTime(stage,ym,key){
     const bucket=seen[stage][ym]||(seen[stage][ym]={});
     if(bucket[key]) return false;
@@ -1685,6 +1692,12 @@ function parseJissekiWb(wb,org){
     let sqlYM=getDateYM(row[sqlCol]);
     if(!sqlYM&&org==='IS') sqlYM=getDateYM(row[isSqlAltCol]);
     if(sqlYM && mqlYM && fyOfYM(sqlYM)===mqlFY && firstTime('sql',sqlYM,ek)){ens(sqlYM);monthly[sqlYM].sql++;}
+
+    // ── 提案（コンペした）: 提案列の月で集計。受注と同じく全期間のMQL/SAL/SQLからの引き上がりを計上（年度制限なし） ──
+    if(teianCol>=0){
+      const teianYM=getDateYM(row[teianCol]);
+      if(teianYM && firstTime('teian',teianYM,ek)){ens(teianYM);monthly[teianYM].teian++;}
+    }
 
     // ── 受注 : 受注列(IS=col20 / 他=col19)の月で集計。受注は全期間のMQL/SALからの引き上がりを計上（年度制限なし） ──
     const jucyuYM=getDateYM(row[jucyuCol]);
@@ -1900,21 +1913,22 @@ async function doAutoImport(){
       // 既存の実績由来値（MQL/SAL/SQL/受注・チャネル・CV種別）を一旦クリアし、古い取込値の混入を防ぐ
       Object.keys(appData.actuals[org]||{}).forEach(ym=>{
         const od=appData.actuals[org][ym];
-        od.cv=0;od.sal=0;od.sql=0;od.jucyu=0;od.mql_by_channel={};od.cv_by_type={};
+        od.cv=0;od.sal=0;od.sql=0;od.teian=0;od.jucyu=0;od.mql_by_channel={};od.cv_by_type={};
       });
-      let totalCv=0,totalSal=0,totalSql=0,totalJucyu=0;
+      let totalCv=0,totalSal=0,totalSql=0,totalTeian=0,totalJucyu=0;
       keys.forEach(ym=>{
         const d=ensureYM(org,ym);
-        // 実績ファイルから直接カウント: MQL/SAL/SQL/受注・流入チャネル・CV種別
+        // 実績ファイルから直接カウント: MQL/SAL/SQL/提案/受注・流入チャネル・CV種別
         d.cv=data[ym].cv||0;
         d.sal=data[ym].sal||0;
         d.sql=data[ym].sql||0;
+        d.teian=data[ym].teian||0;
         d.jucyu=data[ym].jucyu||0;
         d.mql_by_channel=data[ym].mql_by_channel||{};
         d.cv_by_type=data[ym].cv_by_type||{};
-        totalCv+=d.cv;totalSal+=d.sal;totalSql+=d.sql;totalJucyu+=d.jucyu;
+        totalCv+=d.cv;totalSal+=d.sal;totalSql+=d.sql;totalTeian+=d.teian;totalJucyu+=d.jucyu;
       });
-      log.push(`✅ ${org}実績：MQL${totalCv}・SAL${totalSal}・SQL${totalSql}・受注${totalJucyu}件（実績ファイルから直接集計）`);importCount++;
+      log.push(`✅ ${org}実績：MQL${totalCv}・SAL${totalSal}・SQL${totalSql}・提案${totalTeian}・受注${totalJucyu}件（実績ファイルから直接集計）`);importCount++;
     }
 
     // ② 予実管理（MAL/MQL/SAL/SQL・費用・目標）
@@ -2147,6 +2161,7 @@ function renderTrendTable(){
   tb+=numRow('MQL（CV）','cv');
   tb+=numRow('SAL','sal');
   tb+=numRow('SQL','sql');
+  tb+=numRow('提案（コンペ）','teian');
   tb+=numRow('受注','jucyu');
   tb+=tgtRow('MAL目標','session');
   tb+=tgtRow('MQL目標','mql');
@@ -2231,7 +2246,9 @@ function renderTrendCharts(){
       {label:'CV率(MQL/Sess)',data:series.map(d=>d.sessions>0?Math.round(d.cv/d.sessions*1000)/10:null),borderColor:GREEN,tension:.3,fill:false},
       {label:'SAL率(SAL/MQL)',data:series.map(d=>d.cv>0?Math.round(d.sal/d.cv*1000)/10:null),borderColor:BLUE,tension:.3,fill:false},
       {label:'SQL率(SQL/SAL)',data:series.map(d=>d.sal>0?Math.round(d.sql/d.sal*1000)/10:null),borderColor:PURPLE,tension:.3,fill:false},
-      {label:'受注率(受注/SQL)',data:series.map(d=>d.sql>0?Math.round(d.jucyu/d.sql*1000)/10:null),borderColor:AMBER,tension:.3,fill:false}
+      {label:'提案率(提案/SQL)',data:series.map(d=>d.sql>0?Math.round((d.teian||0)/d.sql*1000)/10:null),borderColor:'rgba(13,148,136,0.85)',tension:.3,fill:false},
+      {label:'受注率(受注/SQL)',data:series.map(d=>d.sql>0?Math.round(d.jucyu/d.sql*1000)/10:null),borderColor:AMBER,tension:.3,fill:false},
+      {label:'勝率(受注/提案)',data:series.map(d=>(d.teian||0)>0?Math.round(d.jucyu/d.teian*1000)/10:null),borderColor:RED,tension:.3,fill:false,borderDash:[4,3]}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{position:'top',labels:{font:{size:10}}}},
