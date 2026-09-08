@@ -1119,7 +1119,7 @@ function renderCompTable(){
       <td class="${rateCls(sessRate)}">${sessRate!==null?N(sessRate,1)+'%':'—'}</td>
       <td>${N(d.cv)}<span style="display:block;font-size:10px;color:var(--muted)">${tgtMql>0?'目標'+N(tgtMql,1):''}</span></td>
       <td class="${rateCls(mqlRate)}">${mqlRate!==null?N(mqlRate,1)+'%':'—'}</td>
-      <td>${N(d.sal)}</td><td>${N(d.sql)}</td><td>${N(d.jucyu)}</td>
+      <td>${N(d.sal)}</td><td>${N(d.sql)}</td><td>${N(d.teian||0)}</td><td>${N(d.jucyu)}</td>
       <td>${Y(getTotalCost(d))}</td>
       <td>${cpa!==null?Y(Math.round(cpa)):'—'}</td>
       <td>${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
@@ -1129,7 +1129,7 @@ function renderCompTable(){
     <table class="data-table" style="font-size:12px">
       <thead><tr>
         <th style="text-align:left">組織</th><th>セッション</th><th>達成率</th>
-        <th>MQL</th><th>達成率</th><th>SAL</th><th>SQL</th><th>受注</th>
+        <th>MQL</th><th>達成率</th><th>SAL</th><th>SQL</th><th>提案</th><th>受注</th>
         <th>総費用</th><th>CPA</th><th>SQL CPA</th>
       </tr></thead>
       <tbody>${rows}</tbody>
