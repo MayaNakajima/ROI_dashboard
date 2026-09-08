@@ -300,7 +300,11 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
         <div class="chart-box-lg"><canvas id="chartCvType"></canvas></div>
         <div id="cvTypeTrendEmpty" style="display:none;text-align:center;color:var(--muted);padding:20px;font-size:12px">CV種別データがありません（CVカウントタブで実績ファイルを取込んでください）。</div>
       </div>
-      <div></div>
+      <div class="card card-pad">
+        <div class="sec-title"><span class="sec-title-icon">💴</span>受注金額 推移（受注件数併記）</div>
+        <div class="chart-box-lg"><canvas id="chartRevenue"></canvas></div>
+        <div id="revenueTrendEmpty" style="display:none;text-align:center;color:var(--muted);padding:20px;font-size:12px">受注金額データがありません（実績ファイルに受注金額列を追加して取込むか、データ入力タブで入力してください）。</div>
+      </div>
     </div>
     <div class="card card-pad" style="margin-bottom:14px">
       <div class="sec-title"><span class="sec-title-icon">📦</span>コンテンツ ROI（総費用 ÷ 制作本数）</div>
@@ -327,7 +331,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
         <button class="btn btn-success" onclick="saveDataTable()">💾 保存</button>
       </div>
       <div class="info-box" style="margin-bottom:12px">
-        💡 セッション・CV・SAL・SQL・提案・受注、および CV実績（問合せ／資料DL／WPDL）は直接編集できます。<br>
+        💡 セッション・CV・SAL・SQL・提案・受注・受注金額、および CV実績（問合せ／資料DL／WPDL）は直接編集できます。<br>
         CV実績はExcel取込値が初期値として入り、ここで自由に修正できます（再取込しない限り保持されます）。<br>
         費用①〜⑧（予算実績）は下の「予算実績 月次入力」セクションで直接編集できます（Excel取込値が初期値として入ります）。マーケ費用・コンテンツ費用・CPA・SQL CPAはその入力から自動計算されます。<br>
         保存ボタンを押すまでデータは確定されません。行の「×」で月データを削除できます。
@@ -343,6 +347,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
               <th>SQL数</th>
               <th>提案数</th>
               <th>受注数</th>
+              <th>受注金額<br>（円）</th>
               <th>マーケ費用（円）</th>
               <th>コンテンツ費用（円）</th>
               <th>CPA（自動）</th>
@@ -646,7 +651,7 @@ function ensureOrg(org){
 function ensureYM(org,ym){
   ensureOrg(org);
   if(!appData.actuals[org][ym]) appData.actuals[org][ym]={
-    sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
+    sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,jucyu_amount:0,
     cost_items:Array(8).fill(0),
     cost_content:0,content_count:0,
     mql_by_channel:{},cv_by_type:{}
@@ -657,6 +662,7 @@ function ensureYM(org,ym){
   else { const ext=Array(8).fill(0); for(let i=0;i<8&&i<d.cost_items.length;i++) ext[i]=d.cost_items[i]||0; d.cost_items=ext; }
   if(d.content_count===undefined) d.content_count=0;
   if(d.teian===undefined) d.teian=0; // 提案（コンペ）段。旧データは0で補完（後方互換）
+  if(d.jucyu_amount===undefined) d.jucyu_amount=0; // 受注金額（円・初回受注額）。旧データは0で補完（後方互換）
   if(!d.mql_by_channel) d.mql_by_channel={};
   if(!d.cv_by_type) d.cv_by_type={};
   return d;
@@ -698,13 +704,13 @@ function saveData(){
 // ─────────────────────────────────────────
 function getRawData(org,ym){
   const d=appData.actuals[org]?.[ym];
-  if(!d) return {sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
+  if(!d) return {sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,jucyu_amount:0,
     cost_items:Array(8).fill(0),cost_content:0,content_count:0,
     mql_by_channel:{},cv_by_type:{}};
   const ci=(d.cost_items||[]);
   const cost8=Array(8).fill(0).map((_,i)=>ci[i]||0);
   return {
-    sessions:d.sessions||0,cv:d.cv||0,sal:d.sal||0,sql:d.sql||0,teian:d.teian||0,jucyu:d.jucyu||0,
+    sessions:d.sessions||0,cv:d.cv||0,sal:d.sal||0,sql:d.sql||0,teian:d.teian||0,jucyu:d.jucyu||0,jucyu_amount:d.jucyu_amount||0,
     cost_items:cost8,cost_content:d.cost_content||0,content_count:d.content_count||0,
     mql_by_channel:d.mql_by_channel||{},cv_by_type:d.cv_by_type||{}
   };
@@ -717,12 +723,12 @@ function getOtherCost(d){const ci=d.cost_items||[];return (ci[4]||0)+(ci[5]||0)+
 function getTotalCost(d){return getMktgCost(d);}
 function getData(org,ym){
   if(org==='ALL'){
-    const res={sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
+    const res={sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,jucyu_amount:0,
       cost_items:Array(8).fill(0),cost_content:0,content_count:0,
       mql_by_channel:{},cv_by_type:{}};
     ORGS.forEach(o=>{
       const d=getRawData(o,ym);
-      res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.teian+=(d.teian||0);res.jucyu+=d.jucyu;
+      res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.teian+=(d.teian||0);res.jucyu+=d.jucyu;res.jucyu_amount+=(d.jucyu_amount||0);
       res.cost_content+=d.cost_content;res.content_count+=d.content_count;
       d.cost_items.forEach((v,i)=>res.cost_items[i]+=(v||0));
       CHANNEL_KEYS.forEach(k=>res.mql_by_channel[k]=(res.mql_by_channel[k]||0)+(d.mql_by_channel[k]||0));
@@ -733,12 +739,12 @@ function getData(org,ym){
   return getRawData(org,ym);
 }
 function getAgg(org,months){
-  const res={sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,
+  const res={sessions:0,cv:0,sal:0,sql:0,teian:0,jucyu:0,jucyu_amount:0,
     cost_items:Array(8).fill(0),cost_content:0,content_count:0,
     mql_by_channel:{},cv_by_type:{}};
   months.forEach(ym=>{
     const d=getData(org,ym);
-    res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.teian+=(d.teian||0);res.jucyu+=d.jucyu;
+    res.sessions+=d.sessions;res.cv+=d.cv;res.sal+=d.sal;res.sql+=d.sql;res.teian+=(d.teian||0);res.jucyu+=d.jucyu;res.jucyu_amount+=(d.jucyu_amount||0);
     res.cost_content+=d.cost_content;res.content_count+=d.content_count;
     d.cost_items.forEach((v,i)=>res.cost_items[i]+=(v||0));
     CHANNEL_KEYS.forEach(k=>res.mql_by_channel[k]=(res.mql_by_channel[k]||0)+(d.mql_by_channel[k]||0));
@@ -811,6 +817,10 @@ function getTarget(org,ym,type){
 function getTargetSum(org,months,type){return months.reduce((s,ym)=>s+getTarget(org,ym,type),0);}
 function calcCPA(d){const cost=getTotalCost(d);if(!d.cv||!cost) return null;return cost/d.cv;}
 function calcCPASQL(d){const cost=getTotalCost(d);if(!d.sql||!cost) return null;return cost/d.sql;}
+// 平均受注単価（受注金額÷受注件数）
+function calcAvgDeal(d){const amt=d.jucyu_amount||0;if(!d.jucyu||!amt) return null;return amt/d.jucyu;}
+// 費用対受注金額（ROAS＝受注金額÷総費用）。1.0未満は費用割れ
+function calcROAS(d){const cost=getTotalCost(d);const amt=d.jucyu_amount||0;if(!cost||!amt) return null;return amt/cost;}
 // Legacy compat
 function totalCost(d){return getTotalCost(d);}
 function getMonthKey(y,m){return y+'-'+m;}
@@ -883,6 +893,7 @@ function renderKPI(){
   const prev=getAgg(currentOrg,prevMonths);
   const curCPA=calcCPA(cur),prevCPA=calcCPA(prev);
   const curCPASQL=calcCPASQL(cur),prevCPASQL=calcCPASQL(prev);
+  const curAvgDeal=calcAvgDeal(cur),curROAS=calcROAS(cur);
   const curCost=getTotalCost(cur),prevCost=getTotalCost(prev);
   const mqlTgt=getTargetSum(currentOrg,months,'mql');
   const sessTgt=getTargetSum(currentOrg,months,'session');
@@ -907,6 +918,7 @@ function renderKPI(){
     card('session','🌐','セッション数',N(cur.sessions),`目標達成率: ${sessPct}`,cur.sessions,prev.sessions)+
     card('cv','✅','MQL(CV)数',N(cur.cv),`目標達成率: ${mqlPct}`,cur.cv,prev.cv)+
     card('roi','🔽','SAL→SQL→提案→受注',`${N(cur.sal)}→${N(cur.sql)}→${N(cur.teian||0)}→${N(cur.jucyu)}`,`勝率(受注/提案): ${(cur.teian||0)>0?N(cur.jucyu/cur.teian*100,1)+'%':'—'}`,cur.sal,prev.sal)+
+    card('revenue','💴','受注金額（期間累計）',(cur.jucyu_amount||0)>0?Y(cur.jucyu_amount):'—',`平均受注単価: ${curAvgDeal!==null?Y(Math.round(curAvgDeal)):'—'} / 費用対受注: ${curROAS!==null?N(curROAS,2)+'倍':'—'}`,cur.jucyu_amount||0,prev.jucyu_amount||0)+
     card('cpa','💰','CPA（期間合計費÷MQL）',curCPA!==null?Y(Math.round(curCPA)):'—',`総費用: ${Y(curCost)}`,curCPA,prevCPA,true)+
     card('cpa','🎯','SQL CPA（期間合計費÷SQL）',curCPASQL!==null?Y(Math.round(curCPASQL)):'—',`SQL: ${N(cur.sql)}`,curCPASQL,prevCPASQL,true)+
     card('cost','💸','マーケ費用計',Y(getMktgCost(cur)),`コンテンツ①〜④: ${Y(getContentCost(cur))} / 広告他⑤〜⑧: ${Y(getOtherCost(cur))}`,getMktgCost(cur),getMktgCost(prev),true);
@@ -1173,6 +1185,7 @@ function renderDataTable(){
       <td><input type="number" data-field="sql" data-ym="${ym}" value="${d.sql}" min="0"></td>
       <td><input type="number" data-field="teian" data-ym="${ym}" value="${d.teian||0}" min="0"></td>
       <td><input type="number" data-field="jucyu" data-ym="${ym}" value="${d.jucyu}" min="0"></td>
+      <td><input type="number" data-field="jucyu_amount" data-ym="${ym}" value="${d.jucyu_amount||0}" min="0" step="1000"></td>
       <td class="calc-cell" id="mktgcost_${ym}">${YFull(getMktgCost(d))}</td>
       <td class="calc-cell" id="contentcost_${ym}">${YFull(getContentCost(d))}</td>
       <td class="calc-cell" id="cpa_${ym}" data-cost="${getTotalCost(d)}">${cpa!==null?Y(Math.round(cpa)):'—'}</td>
@@ -1617,6 +1630,19 @@ function parseJissekiWb(wb,org){
   if(jucyuCol<0) jucyuCol=jucyuColFixed;
   // 提案（コンペした）: ヘッダーに「提案」または「コンペ」を含む日付列。実績ファイルに列が無ければ検出されず提案=0（後方互換）
   let teianCol=findCol('提案','コンペ'); if(teianCol<0) teianCol=findColSub('提案','コンペ');
+  // 受注金額（初回受注額・円）: ヘッダーに「受注金額」を含む金額列。無ければ検出されず0（後方互換）
+  let jucyuAmtCol=findCol('受注金額'); if(jucyuAmtCol<0) jucyuAmtCol=findColSub('受注金額','受注額');
+  // 金額パース: 「¥1,200,000」「120万」等の表記から数値(円)を抽出。数値化できなければ0
+  function parseAmount(v){
+    if(v==null||v==='') return 0;
+    if(typeof v==='number') return isFinite(v)?v:0;
+    let s=String(v).trim();
+    const man=s.match(/([0-9]+(?:\.[0-9]+)?)\s*万/); // 「120万」→1,200,000
+    if(man) return Math.round(parseFloat(man[1])*10000);
+    s=s.replace(/[¥￥,，\s円]/g,'');
+    const n=parseFloat(s);
+    return isFinite(n)?n:0;
+  }
 
   function getDateYM(v){
     if(!v) return null;
@@ -1628,7 +1654,7 @@ function parseJissekiWb(wb,org){
   }
 
   const monthly={};
-  function ens(ym){if(!monthly[ym])monthly[ym]={cv:0,sal:0,sql:0,teian:0,jucyu:0,mql_by_channel:{},cv_by_type:{}};}
+  function ens(ym){if(!monthly[ym])monthly[ym]={cv:0,sal:0,sql:0,teian:0,jucyu:0,jucyu_amount:0,mql_by_channel:{},cv_by_type:{}};}
 
   // ── 重複除外(ユニーク判定)用の列検出 ──
   // ルール：企業名で重複除外。企業名欄が個人名/空欄の場合はメールアドレスまで突合して重複除外。
@@ -1701,7 +1727,11 @@ function parseJissekiWb(wb,org){
 
     // ── 受注 : 受注列(IS=col20 / 他=col19)の月で集計。受注は全期間のMQL/SALからの引き上がりを計上（年度制限なし） ──
     const jucyuYM=getDateYM(row[jucyuCol]);
-    if(jucyuYM && firstTime('jucyu',jucyuYM,ek)){ens(jucyuYM);monthly[jucyuYM].jucyu++;}
+    if(jucyuYM && firstTime('jucyu',jucyuYM,ek)){
+      ens(jucyuYM);monthly[jucyuYM].jucyu++;
+      // 受注金額（初回受注額）: 受注として計上した同一レコードの金額を加算（列が無ければ0）
+      if(jucyuAmtCol>=0) monthly[jucyuYM].jucyu_amount+=parseAmount(row[jucyuAmtCol]);
+    }
   });
   return monthly;
 }
@@ -1913,22 +1943,23 @@ async function doAutoImport(){
       // 既存の実績由来値（MQL/SAL/SQL/受注・チャネル・CV種別）を一旦クリアし、古い取込値の混入を防ぐ
       Object.keys(appData.actuals[org]||{}).forEach(ym=>{
         const od=appData.actuals[org][ym];
-        od.cv=0;od.sal=0;od.sql=0;od.teian=0;od.jucyu=0;od.mql_by_channel={};od.cv_by_type={};
+        od.cv=0;od.sal=0;od.sql=0;od.teian=0;od.jucyu=0;od.jucyu_amount=0;od.mql_by_channel={};od.cv_by_type={};
       });
-      let totalCv=0,totalSal=0,totalSql=0,totalTeian=0,totalJucyu=0;
+      let totalCv=0,totalSal=0,totalSql=0,totalTeian=0,totalJucyu=0,totalAmt=0;
       keys.forEach(ym=>{
         const d=ensureYM(org,ym);
-        // 実績ファイルから直接カウント: MQL/SAL/SQL/提案/受注・流入チャネル・CV種別
+        // 実績ファイルから直接カウント: MQL/SAL/SQL/提案/受注・受注金額・流入チャネル・CV種別
         d.cv=data[ym].cv||0;
         d.sal=data[ym].sal||0;
         d.sql=data[ym].sql||0;
         d.teian=data[ym].teian||0;
         d.jucyu=data[ym].jucyu||0;
+        d.jucyu_amount=data[ym].jucyu_amount||0;
         d.mql_by_channel=data[ym].mql_by_channel||{};
         d.cv_by_type=data[ym].cv_by_type||{};
-        totalCv+=d.cv;totalSal+=d.sal;totalSql+=d.sql;totalTeian+=d.teian;totalJucyu+=d.jucyu;
+        totalCv+=d.cv;totalSal+=d.sal;totalSql+=d.sql;totalTeian+=d.teian;totalJucyu+=d.jucyu;totalAmt+=d.jucyu_amount;
       });
-      log.push(`✅ ${org}実績：MQL${totalCv}・SAL${totalSal}・SQL${totalSql}・提案${totalTeian}・受注${totalJucyu}件（実績ファイルから直接集計）`);importCount++;
+      log.push(`✅ ${org}実績：MQL${totalCv}・SAL${totalSal}・SQL${totalSql}・提案${totalTeian}・受注${totalJucyu}件${totalAmt>0?'（受注金額'+Y(totalAmt)+'）':''}（実績ファイルから直接集計）`);importCount++;
     }
 
     // ② 予実管理（MAL/MQL/SAL/SQL・費用・目標）
@@ -2150,6 +2181,8 @@ function renderTrendTable(){
   function sHdr(label){return `<tr class="section-hdr"><td colspan="${2+months.length+fys.length}" style="padding:8px 10px">${label}</td></tr>`;}
   // 実績数値行（月セル＋年度合計セル）
   function numRow(label,fld,style=''){return `<tr><td></td><td${style?' style="'+style+'"':''}>${label}</td>${series.map(d=>numCell(d[fld])).join('')}${fyAgg.map(a=>totNumCell(a[fld])).join('')}</tr>`;}
+  // 金額行（円表示・月セル＋年度合計セル）
+  function yenRow(label,fld,style=''){return `<tr><td></td><td${style?' style="'+style+'"':''}>${label}</td>${series.map(d=>yenCell(d[fld]||0)).join('')}${fyAgg.map(a=>totYenCell(a[fld]||0)).join('')}</tr>`;}
   // 目標行
   function tgtRow(label,type){return `<tr><td></td><td style="color:var(--muted)">${label}</td>${months.map(ym=>tgtCell(getTarget(currentOrg,ym,type))).join('')}${fys.map(fy=>totTgtCell(getTargetSum(currentOrg,fyMonthsFull(fy),type))).join('')}</tr>`;}
 
@@ -2163,6 +2196,7 @@ function renderTrendTable(){
   tb+=numRow('SQL','sql');
   tb+=numRow('提案（コンペ）','teian');
   tb+=numRow('受注','jucyu');
+  tb+=yenRow('受注金額（円）','jucyu_amount');
   tb+=tgtRow('MAL目標','session');
   tb+=tgtRow('MQL目標','mql');
   tb+=tgtRow('SQL目標','sql');
@@ -2274,6 +2308,29 @@ function renderTrendCharts(){
 
   // CV種別 積み上げ推移（事業ごとに、値が1以上あるCV種別のみ積み上げ）
   renderCvTypeTrendChart(months,labels,series);
+
+  // 受注金額 推移（棒＝金額／折れ線＝受注件数を右軸に併記）。データが無ければ空状態を表示
+  destroyChart('revenue');
+  const hasRev=series.some(d=>(d.jucyu_amount||0)>0);
+  const revEmpty=document.getElementById('revenueTrendEmpty');
+  const revCanvas=document.getElementById('chartRevenue');
+  if(revEmpty) revEmpty.style.display=hasRev?'none':'';
+  if(revCanvas) revCanvas.style.display=hasRev?'':'none';
+  if(hasRev && revCanvas){
+    charts['revenue']=new Chart(revCanvas.getContext('2d'),{
+      type:'bar',
+      data:{labels,datasets:[
+        {label:'受注金額',data:series.map(d=>d.jucyu_amount||0),backgroundColor:BLUE,borderRadius:3,yAxisID:'yA'},
+        {label:'受注件数',data:series.map(d=>d.jucyu||0),type:'line',borderColor:GREEN,tension:.3,fill:false,yAxisID:'yN',pointRadius:2}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{font:{size:10}}},
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label==='受注金額'?'受注金額: '+YFull(ctx.parsed.y):'受注件数: '+N(ctx.parsed.y)}}},
+        scales:{yA:{position:'left',beginAtZero:true,ticks:{font:{size:10},callback:v=>YFull(v)},grid:{color:'#f1f5f9'}},
+                yN:{position:'right',beginAtZero:true,ticks:{font:{size:11}},grid:{drawOnChartArea:false}},
+                x:{ticks:{font:{size:10}},grid:{display:false}}}}
+    });
+  }
 }
 
 // CV種別 積み上げ棒グラフ
