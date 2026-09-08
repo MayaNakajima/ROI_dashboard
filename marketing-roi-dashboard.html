@@ -1594,15 +1594,18 @@ function parseJissekiWb(wb,org){
   // Find key columns via header
   const hdr=(rows[0]||[]).map(v=>v?String(v).trim():'');
   function findCol(...names){for(let i=0;i<hdr.length;i++){const h=hdr[i];if(names.some(n=>h===n||h===' '+n)) return i;}return -1;}
+  // 部分一致（ヘッダーが「SAL（商談した）」等に整理されても検出できるように）
+  function findColSub(...subs){for(let i=0;i<hdr.length;i++){const h=hdr[i];if(h&&subs.some(s=>h.includes(s))) return i;}return -1;}
   const cvFlagCol=findCol('CVフラグ','CV種別')>=0?findCol('CVフラグ','CV種別'):1;              // B列: CVフラグ
   const dateCol  =findCol('回答日時','回答日時orCVしたメルマガ配信日時','回答日時or CVしたメルマガ配信日時')>=0
                    ?findCol('回答日時','回答日時orCVしたメルマガ配信日時','回答日時or CVしたメルマガ配信日時'):2; // C列: CV日時(回答日時)
   const chCol    =findCol('流入チャネル','流入経路')>=0?findCol('流入チャネル','流入経路'):7;    // H列: 流入チャネル
-  // SAL: R列(col17) の日付。ヘッダー名優先→固定インデックス
-  let salCol=findCol('SAL'); if(salCol<0) salCol=17;
-  // SQL: S列(col18) の日付。ISはS列(col18) or T列(col19) いずれかに日付があれば1カウント
-  let sqlCol=findCol('SQL','SQL1')>=0?findCol('SQL','SQL1'):18;
-  const isSqlAltCol=19; // IS専用: SQL判定②(SQL2)
+  // SAL: ヘッダーに「SAL」を含む列（例:「SAL（商談した）」）。旧形式の固定R列(col17)にもフォールバック
+  let salCol=findCol('SAL'); if(salCol<0) salCol=findColSub('SAL'); if(salCol<0) salCol=17;
+  // SQL: ヘッダーに「SQL」/「SQL1」を含む列（例:「SQL（案件化した）」「SQL1（商談した）」）。旧形式の固定S列(col18)にもフォールバック
+  let sqlCol=findCol('SQL','SQL1'); if(sqlCol<0) sqlCol=findColSub('SQL1','SQL'); if(sqlCol<0) sqlCol=18;
+  // IS専用: SQL判定②(SQL2)。ヘッダーに「SQL2」を含む列→旧形式の固定T列(col19)
+  let isSqlAltCol=findColSub('SQL2'); if(isSqlAltCol<0) isSqlAltCol=19;
   // 受注: IS=U列(col20), IS以外=T列(col19)。ヘッダー名優先→固定インデックス
   const jucyuColFixed=(org==='IS')?20:19;
   let jucyuCol=hdr.findIndex(h=>h==='受注');
