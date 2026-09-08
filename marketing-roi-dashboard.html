@@ -295,6 +295,11 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
       </div>
     </div>
     <div class="card card-pad" style="margin-bottom:14px">
+      <div class="sec-title"><span class="sec-title-icon">📊</span>CV種別 積み上げ推移 <span id="cvTypeTrendLabel" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:4px"></span></div>
+      <div class="chart-box-lg"><canvas id="chartCvType"></canvas></div>
+      <div id="cvTypeTrendEmpty" style="display:none;text-align:center;color:var(--muted);padding:20px;font-size:12px">CV種別データがありません（CVカウントタブで実績ファイルを取込んでください）。</div>
+    </div>
+    <div class="card card-pad" style="margin-bottom:14px">
       <div class="sec-title"><span class="sec-title-icon">📦</span>コンテンツ ROI（総費用 ÷ 制作本数）</div>
       <div id="contentRoiSection"></div>
     </div>
@@ -2072,7 +2077,11 @@ function renderTrend(){
   if(currentOrg==='ALL'){
     if(trendCharts) trendCharts.style.display='none';
     if(roiCard) roiCard.style.display='none';
-    renderHQTrendTable(); return;
+    renderHQTrendTable();
+    // CV種別 積み上げ推移は本部合計でも表示（各事業の合算）
+    const months=getMonthsInRange(rangeStart,rangeEnd);
+    renderCvTypeTrendChart(months,months.map(shortYmLabel),months.map(ym=>getData(currentOrg,ym)));
+    return;
   }
   if(trendCharts) trendCharts.style.display='';
   if(roiCard) roiCard.style.display='';
@@ -2238,6 +2247,62 @@ function renderTrendCharts(){
       scales:{yS:{position:'left',ticks:{font:{size:11}},grid:{color:'#f1f5f9'}},
               yC:{position:'right',ticks:{font:{size:11}},grid:{drawOnChartArea:false}},
               x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+
+  // CV種別 積み上げ推移（事業ごとに、値が1以上あるCV種別のみ積み上げ）
+  renderCvTypeTrendChart(months,labels,series);
+}
+
+// CV種別 積み上げ棒グラフ
+const CV_TYPE_COLORS={
+  inquiry:'rgba(37,99,235,0.85)',     // 問合せ = ブルー
+  service_dl:'rgba(245,158,11,0.85)', // 資料DL = アンバー
+  wp_dl:'rgba(16,185,129,0.85)',      // WPDL = グリーン
+  catalog:'rgba(139,92,246,0.85)',    // カタログ = パープル
+  moushikomi:'rgba(56,189,248,0.85)', // 申込 = シアン
+  other:'rgba(148,163,184,0.85)'      // その他 = グレー
+};
+function renderCvTypeTrendChart(months,labels,series){
+  const canvas=document.getElementById('chartCvType');
+  if(!canvas) return;
+  const emptyEl=document.getElementById('cvTypeTrendEmpty');
+  const lblEl=document.getElementById('cvTypeTrendLabel');
+  if(lblEl) lblEl.textContent=currentOrg==='ALL'?'（本部合計）':'（'+currentOrg+'）';
+
+  // 選択中の事業で、期間内に1件でも1以上の値があるCV種別のみを対象にする
+  const activeKeys=CV_TYPE_KEYS.filter(k=>series.some(d=>((d.cv_by_type||{})[k]||0)>=1));
+
+  destroyChart('cvType');
+  if(activeKeys.length===0){
+    canvas.style.display='none';
+    if(emptyEl) emptyEl.style.display='block';
+    return;
+  }
+  canvas.style.display='block';
+  if(emptyEl) emptyEl.style.display='none';
+
+  const datasets=activeKeys.map(k=>({
+    label:CV_TYPE_LABELS[k],
+    data:series.map(d=>(d.cv_by_type||{})[k]||0),
+    backgroundColor:CV_TYPE_COLORS[k],
+    stack:'cv',
+    borderWidth:0
+  }));
+
+  charts['cvType']=new Chart(canvas.getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{font:{size:10},boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+N(ctx.raw)+'件',
+          footer:items=>'合計: '+N(items.reduce((s,i)=>s+(i.raw||0),0))+'件'}},
+        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,
+          anchor:'center',align:'center',font:{size:9},color:'#fff',
+          formatter:v=>v>0?N(v):''}
+      },
+      scales:{y:{stacked:true,beginAtZero:true,ticks:{font:{size:11}},grid:{color:'#f1f5f9'},title:{display:true,text:'CV件数',font:{size:10}}},
+              x:{stacked:true,ticks:{font:{size:10}},grid:{display:false}}}}
   });
 }
 
