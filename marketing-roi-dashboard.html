@@ -302,7 +302,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
         <div id="cvTypeTrendEmpty" style="display:none;text-align:center;color:var(--muted);padding:20px;font-size:12px">CV種別データがありません（CVカウントタブで実績ファイルを取込んでください）。</div>
       </div>
       <div class="card card-pad">
-        <div class="sec-title"><span class="sec-title-icon">💴</span>受注金額 推移（受注件数併記）</div>
+        <div class="sec-title"><span class="sec-title-icon">💴</span>受注金額 推移（百万円・受注件数併記）</div>
         <div class="chart-box-lg"><canvas id="chartRevenue"></canvas></div>
         <div id="revenueTrendEmpty" style="display:none;text-align:center;color:var(--muted);padding:20px;font-size:12px">受注金額データがありません（実績ファイルに受注金額列を追加して取込むか、データ入力タブで入力してください）。</div>
       </div>
@@ -348,7 +348,7 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
               <th>SQL数</th>
               <th>提案数</th>
               <th>受注数</th>
-              <th>受注金額<br>（円）</th>
+              <th>受注金額<br>（円・全桁）</th>
               <th>失注数</th>
               <th>辞退数</th>
               <th>マーケ費用（円）</th>
@@ -862,6 +862,12 @@ function YFull(v){
   if(!v) return '¥0';
   return '¥'+new Intl.NumberFormat('ja-JP').format(Math.round(v));
 }
+// 受注金額の表示（百万円単位・小数1桁）。例: 50,000,000 → 50.0百万円
+function YM(v,d=1){
+  if(v===null||v===undefined) return '—';
+  if(!v) return '0百万円';
+  return N(v/1000000,d)+'百万円';
+}
 function PCT(v,d=1){
   if(v===null||v===undefined||isNaN(v)) return '—';
   return (v>=0?'+':'')+N(v,d)+'%';
@@ -930,7 +936,7 @@ function renderKPI(){
     card('session','🌐','セッション数',N(cur.sessions),`目標達成率: ${sessPct}`,cur.sessions,prev.sessions)+
     card('cv','✅','MQL(CV)数',N(cur.cv),`目標達成率: ${mqlPct}`,cur.cv,prev.cv)+
     card('roi','🔽','SAL→SQL→提案→受注',`${N(cur.sal)}→${N(cur.sql)}→${N(cur.teian||0)}→${N(cur.jucyu)}`,`勝率(受注/提案): ${(cur.teian||0)>0?N(cur.jucyu/cur.teian*100,1)+'%':'—'}<br>失注: ${N(cur.shicchu||0)} / 辞退: ${N(cur.jitai||0)} / 決着勝率: ${calcWinRateDecided(cur)!==null?N(calcWinRateDecided(cur),1)+'%':'—'}`,cur.sal,prev.sal)+
-    card('revenue','💴','受注金額（期間累計）',(cur.jucyu_amount||0)>0?Y(cur.jucyu_amount):'—',`平均受注単価: ${curAvgDeal!==null?Y(Math.round(curAvgDeal)):'—'} / 費用対受注: ${curROAS!==null?N(curROAS,2)+'倍':'—'}`,cur.jucyu_amount||0,prev.jucyu_amount||0)+
+    card('revenue','💴','受注金額（期間累計）',(cur.jucyu_amount||0)>0?YM(cur.jucyu_amount):'—',`平均受注単価: ${curAvgDeal!==null?YM(curAvgDeal):'—'} / 費用対受注: ${curROAS!==null?N(curROAS,2)+'倍':'—'}`,cur.jucyu_amount||0,prev.jucyu_amount||0)+
     card('cpa','💰','CPA（期間合計費÷MQL）',curCPA!==null?Y(Math.round(curCPA)):'—',`総費用: ${Y(curCost)}`,curCPA,prevCPA,true)+
     card('cpa','🎯','SQL CPA（期間合計費÷SQL）',curCPASQL!==null?Y(Math.round(curCPASQL)):'—',`SQL: ${N(cur.sql)}`,curCPASQL,prevCPASQL,true)+
     card('cost','💸','マーケ費用計',Y(getMktgCost(cur)),`コンテンツ①〜④: ${Y(getContentCost(cur))} / 広告他⑤〜⑧: ${Y(getOtherCost(cur))}`,getMktgCost(cur),getMktgCost(prev),true);
@@ -1018,7 +1024,7 @@ function renderFunnel(){
           <div style="font-size:11px;color:var(--muted)">失注: <strong style="color:var(--red)">${N(agg.shicchu||0)}</strong></div>
           <div style="font-size:11px;color:var(--muted)">辞退: <strong style="color:#64748b">${N(agg.jitai||0)}</strong></div>
           <div style="font-size:11px;color:var(--muted)">決着勝率（受注÷(受注＋失注)）: <strong style="color:var(--green)">${calcWinRateDecided(agg)!==null?N(calcWinRateDecided(agg),1)+'%':'—'}</strong></div>
-          <div style="font-size:11px;color:var(--muted)">受注金額: <strong style="color:var(--navy)">${(agg.jucyu_amount||0)>0?Y(agg.jucyu_amount):'—'}</strong></div>
+          <div style="font-size:11px;color:var(--muted)">受注金額: <strong style="color:var(--navy)">${(agg.jucyu_amount||0)>0?YM(agg.jucyu_amount):'—'}</strong></div>
         </div>
         <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;flex-wrap:wrap">
           <div style="font-size:11px;color:var(--muted)">総費用: <strong>${Y(getTotalCost(agg))}</strong></div>
@@ -1042,14 +1048,14 @@ function renderFunnelOrgTable(months){
       <td>${N(d.jucyu)}<span style="color:var(--muted);font-size:10px"> ${d.teian>0?N(d.jucyu/d.teian*100,1)+'%':''}</span></td>
       <td>${N(d.shicchu||0)}</td>
       <td>${N(d.jitai||0)}</td>
-      <td>${(d.jucyu_amount||0)>0?Y(d.jucyu_amount):'—'}</td>
+      <td>${(d.jucyu_amount||0)>0?YM(d.jucyu_amount):'—'}</td>
       <td>${cpa!==null?Y(Math.round(cpa)):'—'}</td>
       <td>${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
     </tr>`;
   }).join('');
   return `<div style="flex:1;min-width:280px;overflow-x:auto">
     <table class="data-table" style="font-size:12px">
-      <thead><tr><th style="text-align:left">組織</th><th>MQL</th><th>SAL(率)</th><th>SQL(率)</th><th>提案(率)</th><th>受注(率)</th><th>失注</th><th>辞退</th><th>受注金額</th><th>CPA</th><th>SQL CPA</th></tr></thead>
+      <thead><tr><th style="text-align:left">組織</th><th>MQL</th><th>SAL(率)</th><th>SQL(率)</th><th>提案(率)</th><th>受注(率)</th><th>失注</th><th>辞退</th><th>受注金額<br>（百万円）</th><th>CPA</th><th>SQL CPA</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
 }
@@ -1156,7 +1162,7 @@ function renderCompTable(){
       <td class="${rateCls(mqlRate)}">${mqlRate!==null?N(mqlRate,1)+'%':'—'}</td>
       <td>${N(d.sal)}</td><td>${N(d.sql)}</td><td>${N(d.teian||0)}</td><td>${N(d.jucyu)}</td>
       <td>${N(d.shicchu||0)}</td><td>${N(d.jitai||0)}</td>
-      <td>${(d.jucyu_amount||0)>0?Y(d.jucyu_amount):'—'}</td>
+      <td>${(d.jucyu_amount||0)>0?YM(d.jucyu_amount):'—'}</td>
       <td>${Y(getTotalCost(d))}</td>
       <td>${cpa!==null?Y(Math.round(cpa)):'—'}</td>
       <td>${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</td>
@@ -1167,7 +1173,7 @@ function renderCompTable(){
       <thead><tr>
         <th style="text-align:left">組織</th><th>セッション</th><th>達成率</th>
         <th>MQL</th><th>達成率</th><th>SAL</th><th>SQL</th><th>提案</th><th>受注</th>
-        <th>失注</th><th>辞退</th><th>受注金額</th>
+        <th>失注</th><th>辞退</th><th>受注金額<br>（百万円）</th>
         <th>総費用</th><th>CPA</th><th>SQL CPA</th>
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -1663,16 +1669,29 @@ function parseJissekiWb(wb,org){
   // 失注・辞退: ヘッダーに「失注」「辞退」を含む日付列。無ければ検出されず0（後方互換）
   let shicchuCol=findCol('失注'); if(shicchuCol<0) shicchuCol=findColSub('失注');
   let jitaiCol=findCol('辞退'); if(jitaiCol<0) jitaiCol=findColSub('辞退');
-  // 金額パース: 「¥1,200,000」「120万」「250百万」「1.5億」等の表記から数値(円)を抽出。数値化できなければ0
-  function parseAmount(v){
+  // 備考: 受注金額列が空欄の受注行は、備考に書かれた金額（例:「受注：OW別注（50百万）」）で補完する
+  const memoCol=findColSub('備考');
+  // 金額パース: 数値セル／「¥1,200,000」「5,000,000円」「120万」「7,000万円」「250百万」「1.5億」「1億2000万」等のテキストから円を抽出。
+  // strict=true（備考用）は単位（億/千万/百万/万/円/¥）付きの数字だけを金額とみなす（日付・件数などの誤検出を防止）。数値化できなければ0
+  const AMT_MUL={'億':1e8,'千万':1e7,'百万':1e6,'万':1e4,'千':1e3};
+  function parseAmount(v,strict=false){
     if(v==null||v==='') return 0;
-    if(typeof v==='number') return isFinite(v)?v:0;
-    let s=String(v).trim().replace(/[０-９．]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[,，]/g,'');
-    const unit=s.match(/([0-9]+(?:\.[0-9]+)?)\s*(億|千万|百万|万|千)/); // 「250百万」→250,000,000
-    if(unit){const mul={'億':1e8,'千万':1e7,'百万':1e6,'万':1e4,'千':1e3}[unit[2]];return Math.round(parseFloat(unit[1])*mul);}
-    s=s.replace(/[¥￥\s円]/g,'');
-    const n=parseFloat(s);
-    return isFinite(n)?n:0;
+    if(typeof v==='number') return (!strict&&isFinite(v)&&v>0)?v:0;
+    const s=String(v).replace(/[０-９．，]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/(\d)[,，](?=\d{3})/g,'$1');
+    const num='([0-9]+(?:\\.[0-9]+)?)';
+    // 「1億2000万」のような複合表記
+    let m=s.match(new RegExp(num+'\\s*億\\s*'+num+'\\s*(千万|百万|万)'));
+    if(m) return Math.round(parseFloat(m[1])*1e8+parseFloat(m[2])*AMT_MUL[m[3]]);
+    // 単位付き（備考では「千」単体は地名等と紛れるため対象外）
+    m=s.match(new RegExp(num+'\\s*('+(strict?'億|千万|百万|万':'億|千万|百万|万|千')+')'));
+    if(m) return Math.round(parseFloat(m[1])*AMT_MUL[m[2]]);
+    // 円表記・¥表記
+    m=s.match(new RegExp('[¥￥]\\s*'+num))||s.match(new RegExp(num+'\\s*円'));
+    if(m) return Math.round(parseFloat(m[1]));
+    if(strict) return 0;
+    // 単位なしテキスト（例:「5000000」「約5000000（予定）」）は最初の数字を円とみなす
+    m=s.match(new RegExp(num));
+    return m?Math.round(parseFloat(m[1])):0;
   }
 
   function getDateYM(v){
@@ -1761,7 +1780,10 @@ function parseJissekiWb(wb,org){
     if(jucyuYM && firstTime('jucyu',jucyuYM,ek)){
       ens(jucyuYM);monthly[jucyuYM].jucyu++;
       // 受注金額（初回受注額）: 受注として計上した同一レコードの金額を加算（列が無ければ0）
-      if(jucyuAmtCol>=0) monthly[jucyuYM].jucyu_amount+=parseAmount(row[jucyuAmtCol]);
+      //   受注金額列が空欄/数値化できない場合は備考の金額表記で補完
+      let amt=jucyuAmtCol>=0?parseAmount(row[jucyuAmtCol]):0;
+      if(!amt&&memoCol>=0) amt=parseAmount(row[memoCol],true);
+      monthly[jucyuYM].jucyu_amount+=amt;
     }
 
     // ── 失注・辞退 : 各列の日付の月で集計（受注と同じく年度制限なし）。
@@ -2005,7 +2027,7 @@ async function doAutoImport(){
         d.cv_by_type=data[ym].cv_by_type||{};
         totalCv+=d.cv;totalSal+=d.sal;totalSql+=d.sql;totalTeian+=d.teian;totalJucyu+=d.jucyu;totalAmt+=d.jucyu_amount;totalShicchu+=d.shicchu;totalJitai+=d.jitai;
       });
-      log.push(`✅ ${org}実績：MQL${totalCv}・SAL${totalSal}・SQL${totalSql}・提案${totalTeian}・受注${totalJucyu}件・失注${totalShicchu}件・辞退${totalJitai}件${totalAmt>0?'（受注金額'+Y(totalAmt)+'）':''}（実績ファイルから直接集計）`);importCount++;
+      log.push(`✅ ${org}実績：MQL${totalCv}・SAL${totalSal}・SQL${totalSql}・提案${totalTeian}・受注${totalJucyu}件・失注${totalShicchu}件・辞退${totalJitai}件${totalAmt>0?'（受注金額'+YM(totalAmt)+'）':''}（実績ファイルから直接集計）`);importCount++;
     }
 
     // ② 予実管理（MAL/MQL/SAL/SQL・費用・目標）
@@ -2229,6 +2251,8 @@ function renderTrendTable(){
   function numRow(label,fld,style=''){return `<tr><td></td><td${style?' style="'+style+'"':''}>${label}</td>${series.map(d=>numCell(d[fld])).join('')}${fyAgg.map(a=>totNumCell(a[fld])).join('')}</tr>`;}
   // 金額行（円表示・月セル＋年度合計セル）
   function yenRow(label,fld,style=''){return `<tr><td></td><td${style?' style="'+style+'"':''}>${label}</td>${series.map(d=>yenCell(d[fld]||0)).join('')}${fyAgg.map(a=>totYenCell(a[fld]||0)).join('')}</tr>`;}
+  // 百万円行（受注金額用・小数1桁）
+  function millionRow(label,fld){const c=(v,tot)=>`<td style="text-align:right${tot?';background:#eef2f7;font-weight:700;border-left:2px solid #cbd5e1':''}">${v?N(v/1000000,1):'—'}</td>`;return `<tr><td></td><td>${label}</td>${series.map(d=>c(d[fld]||0,false)).join('')}${fyAgg.map(a=>c(a[fld]||0,true)).join('')}</tr>`;}
   // 目標行
   function tgtRow(label,type){return `<tr><td></td><td style="color:var(--muted)">${label}</td>${months.map(ym=>tgtCell(getTarget(currentOrg,ym,type))).join('')}${fys.map(fy=>totTgtCell(getTargetSum(currentOrg,fyMonthsFull(fy),type))).join('')}</tr>`;}
 
@@ -2242,7 +2266,7 @@ function renderTrendTable(){
   tb+=numRow('SQL','sql');
   tb+=numRow('提案（コンペ）','teian');
   tb+=numRow('受注','jucyu');
-  tb+=yenRow('受注金額（円）','jucyu_amount');
+  tb+=millionRow('受注金額（百万円）','jucyu_amount');
   tb+=numRow('失注','shicchu');
   tb+=numRow('辞退','jitai');
   tb+=tgtRow('MAL目標','session');
@@ -2373,8 +2397,8 @@ function renderTrendCharts(){
       ]},
       options:{responsive:true,maintainAspectRatio:false,
         plugins:{legend:{position:'top',labels:{font:{size:10}}},
-          tooltip:{callbacks:{label:ctx=>ctx.dataset.label==='受注金額'?'受注金額: '+YFull(ctx.parsed.y):'受注件数: '+N(ctx.parsed.y)}}},
-        scales:{yA:{position:'left',beginAtZero:true,ticks:{font:{size:10},callback:v=>YFull(v)},grid:{color:'#f1f5f9'}},
+          tooltip:{callbacks:{label:ctx=>ctx.dataset.label==='受注金額'?'受注金額: '+YM(ctx.parsed.y):'受注件数: '+N(ctx.parsed.y)}}},
+        scales:{yA:{position:'left',beginAtZero:true,ticks:{font:{size:10},callback:v=>N(v/1000000,(v%1000000)?1:0)},title:{display:true,text:'百万円',font:{size:10}},grid:{color:'#f1f5f9'}},
                 yN:{position:'right',beginAtZero:true,ticks:{font:{size:11}},grid:{drawOnChartArea:false}},
                 x:{ticks:{font:{size:10}},grid:{display:false}}}}
     });
