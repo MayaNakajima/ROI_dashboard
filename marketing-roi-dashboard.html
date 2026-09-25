@@ -831,10 +831,11 @@ function calcCPASQL(d){const cost=getTotalCost(d);if(!d.sql||!cost) return null;
 function calcCPAJucyu(d){const cost=getTotalCost(d);if(!d.jucyu||!cost) return null;return cost/d.jucyu;}
 // 平均受注単価（受注金額÷受注件数）
 function calcAvgDeal(d){const amt=d.jucyu_amount||0;if(!d.jucyu||!amt) return null;return amt/d.jucyu;}
-// 受注ROAS（％）＝受注金額÷マーケ費用×100。マーケ費用＝費用①〜⑧合計（広告・コンテンツは分けられないため合算）
-function calcROAS(d){const cost=getMktgCost(d);const amt=d.jucyu_amount||0;if(!cost||!amt) return null;return amt/cost*100;}
-// ROAS表示（％・整数・桁区切り）
-function ROASFmt(v){return v===null||v===undefined?'—':N(v,0)+'%';}
+// 受注ROAS（％）＝マーケ費用÷受注額×100（受注額に対するマーケ費用の割合。低いほど効率が良い）。
+// マーケ費用＝費用①〜⑧合計（広告・コンテンツは分けられないため合算）。受注額が0の期間は算出不可（—）
+function calcROAS(d){const cost=getMktgCost(d);const amt=d.jucyu_amount||0;if(!amt) return null;return cost/amt*100;}
+// ROAS表示（％・小数1桁）
+function ROASFmt(v){return v===null||v===undefined?'—':N(v,1)+'%';}
 // 決着勝率（％）＝受注÷(受注＋失注)。辞退は自社都合等の離脱のため分母に含めない
 function calcWinRateDecided(d){const w=d.jucyu||0,l=d.shicchu||0;if(!(w+l)) return null;return w/(w+l)*100;}
 // Legacy compat
@@ -943,7 +944,7 @@ function renderKPI(){
     card('roi','🔽','SAL→SQL→提案→受注',`${N(cur.sal)}→${N(cur.sql)}→${N(cur.teian||0)}→${N(cur.jucyu)}`,`勝率(受注/提案): ${(cur.teian||0)>0?N(cur.jucyu/cur.teian*100,1)+'%':'—'}<br>失注: ${N(cur.shicchu||0)} / 辞退: ${N(cur.jitai||0)} / 決着勝率: ${calcWinRateDecided(cur)!==null?N(calcWinRateDecided(cur),1)+'%':'—'}`,cur.sal,prev.sal)+
     card('revenue','💴','受注金額（期間累計）',(cur.jucyu_amount||0)>0?YM(cur.jucyu_amount):'—',`平均受注単価: ${curAvgDeal!==null?YM(curAvgDeal):'—'}`,cur.jucyu_amount||0,prev.jucyu_amount||0)+
     card('cpa','🏆','受注CPA（期間合計費÷受注）',curCPAJ!==null?Y(Math.round(curCPAJ)):'—',`受注: ${N(cur.jucyu)}件`,curCPAJ,prevCPAJ,true)+
-    card('revenue','📈','受注ROAS（受注金額÷マーケ費用×100）',ROASFmt(curROAS),`マーケ費用: ${Y(getMktgCost(cur))}（広告＋コンテンツ合算）`,curROAS,prevROAS)+
+    card('revenue','📈','受注ROAS（マーケ費用÷受注額×100）',ROASFmt(curROAS),`マーケ費用: ${Y(getMktgCost(cur))}（広告＋コンテンツ合算）／低いほど効率良`,curROAS,prevROAS,true)+
     card('cpa','💰','CPA（期間合計費÷MQL）',curCPA!==null?Y(Math.round(curCPA)):'—',`総費用: ${Y(curCost)}`,curCPA,prevCPA,true)+
     card('cpa','🎯','SQL CPA（期間合計費÷SQL）',curCPASQL!==null?Y(Math.round(curCPASQL)):'—',`SQL: ${N(cur.sql)}`,curCPASQL,prevCPASQL,true)+
     card('cost','💸','マーケ費用計',Y(getMktgCost(cur)),`コンテンツ①〜④: ${Y(getContentCost(cur))} / 広告他⑤〜⑧: ${Y(getOtherCost(cur))}`,getMktgCost(cur),getMktgCost(prev),true);
@@ -1038,7 +1039,7 @@ function renderFunnel(){
           <div style="font-size:11px;color:var(--muted)">CPA(÷MQL): <strong style="color:var(--blue)">${cpa!==null?Y(Math.round(cpa)):'—'}</strong></div>
           <div style="font-size:11px;color:var(--muted)">SQL CPA(÷SQL): <strong style="color:#8b5cf6">${cpaSql!==null?Y(Math.round(cpaSql)):'—'}</strong></div>
           <div style="font-size:11px;color:var(--muted)">受注CPA(÷受注): <strong style="color:var(--green)">${calcCPAJucyu(agg)!==null?Y(Math.round(calcCPAJucyu(agg))):'—'}</strong></div>
-          <div style="font-size:11px;color:var(--muted)">受注ROAS(受注金額÷マーケ費用×100): <strong style="color:var(--navy)">${ROASFmt(calcROAS(agg))}</strong></div>
+          <div style="font-size:11px;color:var(--muted)">受注ROAS(マーケ費用÷受注額×100): <strong style="color:var(--navy)">${ROASFmt(calcROAS(agg))}</strong></div>
         </div>
       </div>
       ${isSumOrg(currentOrg)?renderFunnelOrgTable(months):''}
@@ -2297,7 +2298,7 @@ function renderTrendTable(){
   tb+=sHdr('📈 費用対効果');
   const effRow=(label,fn,fmt)=>`<tr><td></td><td>${label}</td>${series.map(d=>{const v=fn(d);return `<td style="text-align:right">${v===null?'—':fmt(v)}</td>`;}).join('')}${fyAgg.map(a=>{const v=fn(a);return `<td style="text-align:right;background:#eef2f7;font-weight:700;border-left:2px solid #cbd5e1">${v===null?'—':fmt(v)}</td>`;}).join('')}</tr>`;
   tb+=effRow('受注CPA（円）',calcCPAJucyu,v=>YFull(v));
-  tb+=effRow('受注ROAS（％）',calcROAS,v=>N(v,0)+'%');
+  tb+=effRow('受注ROAS（％・マーケ費用÷受注額）',calcROAS,v=>N(v,1)+'%');
 
   // ─── コンテンツマーケ実績 ───
   tb+=sHdr('📣 コンテンツマーケ実績');
