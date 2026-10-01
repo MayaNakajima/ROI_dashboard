@@ -2,6 +2,13 @@
 
 ONWARD Marketing マーケティング本部の、事業部別・月次KPIを一元管理する **HTML単一ファイル** のダッシュボードです。バックエンドを持たず、ブラウザ上で動作します。本リポジトリは、従来ローカルフォルダ（`Downloads\05_ROIダッシュボード`）で管理していたアプリを、GitHubでの開発に移行するために構成したものです。
 
+## データ置き場
+
+- 入力データ：`C:\Users\612316\Box\【個人】612316_中島　麻耶\10_data`（2026-10 に `data/`・`reference-data/` から移動）
+  - 保存データJSON：`marketing_roi_data.json`・`marketing_roi_2026_*.json`
+  - 共通管理表（KPI-PDCA と共用）：`施策管理表.xlsx`・`マーケティング本部｜予実管理.xlsx`・`マーケティング本部｜コンテンツ制作｜本数管理.xlsx`
+- アプリの「インポート」「Excel取込」で上記フォルダのファイルを選ぶ
+
 ---
 
 ## 1. アプリ概要
@@ -23,13 +30,12 @@ ROI_dashboard/
 ├─ .gitignore                        個人情報ファイル等の除外設定
 ├─ setup_git.bat                     移行後の後始末スクリプト（残存ロック・一時ファイルの削除／Windows）
 ├─ marketing-roi-dashboard.html      アプリ本体（最新版）
-├─ data/                             保存データ（JSON・集計値のみ／個人情報なし）
-│   ├─ marketing_roi_data.json
-│   ├─ marketing_roi_2026_2026-07-06.json
-│   └─ marketing_roi_2026_2026-07-27.json
 ├─ docs/                             引き継ぎ資料・要件書・関連ドキュメント
-├─ reference-data/                   個人情報を含まない管理用Excel（予実管理・本数管理・施策管理）
 └─ archive/                          過去バージョンのHTML（_01〜_06）
+
+（リポジトリ外）C:\Users\612316\Box\【個人】612316_中島　麻耶\10_data
+├─ marketing_roi_*.json              保存データ（JSON・集計値のみ／個人情報なし。旧 data/）
+└─ 施策管理表.xlsx ほか              管理用Excel（予実管理・本数管理・施策管理。旧 reference-data/）
 ```
 
 ## 3. 個人情報の取り扱い（重要）
@@ -40,11 +46,11 @@ ROI_dashboard/
 - `ユーザーリスト.xlsx` / `売上計上全ユーザーリスト.xlsx` / `売上計上全ユーザーリスト｜LBC付与｜*.xlsx`
 - `trans_*.xlsx`（顧客企業データ） / `test｜売上データ分析_ABM×LTV.xlsx`（顧客プロファイル）
 
-これらはアプリの「BOXファイル取込／Excel取込」機能で **実行時に手動インポートする元データ** です。開発・動作確認の際は、元フォルダまたはBOXから該当ファイルを取得してインポートしてください（リポジトリには置かないこと）。
+これらはアプリの「BOXファイル取込／Excel取込」機能で **実行時に手動インポートする元データ** です。開発・動作確認の際は、`10_data`（`C:\Users\612316\Box\【個人】612316_中島　麻耶\10_data`）から該当ファイルを選んでインポートしてください（リポジトリには置かないこと）。
 
 ## 4. ローカルでの動作確認
 
-`marketing-roi-dashboard.html` をブラウザで開くだけで動作します（ローカルサーバー不要）。データは `localStorage`（キー `mktg_roi_v4`）に保存されます。過去データは `data/` のJSONを「インポート」から読み込めます。
+`marketing-roi-dashboard.html` をブラウザで開くだけで動作します（ローカルサーバー不要）。データは `localStorage`（キー `mktg_roi_v4`）に保存されます。過去データは `10_data` の `marketing_roi_*.json` を「インポート」から読み込めます。
 
 ---
 
