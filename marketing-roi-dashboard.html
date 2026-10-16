@@ -169,6 +169,10 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
 .cv-file-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:5px 12px;margin:3px;font-size:12px}
 .cv-file-chip .tag{font-size:10px;font-weight:700;color:#fff;border-radius:10px;padding:1px 7px}
 .cv-file-chip .rm{cursor:pointer;color:var(--red);font-weight:700}
+.cv-file-row{background:#fff;border:1px solid var(--border);border-radius:8px;padding:7px 12px;margin:4px 0;font-size:12px}
+.cv-file-row .tag{font-size:10px;font-weight:700;color:#fff;border-radius:10px;padding:1px 8px}
+.cv-file-row .rm{cursor:pointer;color:var(--red);font-weight:700}
+.cv-file-row .cv-file-sel{color:#fff;font-size:11px;font-weight:700;border:none;border-radius:10px;padding:2px 6px;min-width:0;cursor:pointer}
 .cv-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:12px 0}
 .cv-cardbox{border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;background:#fff}
 .cv-cardbox .n{font-size:22px;font-weight:800;color:var(--navy)}
@@ -394,8 +398,8 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
       <div class="info-box" style="margin-bottom:12px">
         💡 <b>使い方（①→②の順）</b>：まずこの「CV集計」でHubSpotレポートを集計→Excel出力し、実績ファイルに貼り付けます。営業がSAL/SQL/受注を記入後、「CVカウント」タブで実績ファイルを取り込みMQLをダッシュボードへ反映します。<br>
         各事業部の<b>初回CVレポート</b>と<b>メルマガ経由レポート</b>（2シート目を自動参照）を、まとめてアップロードしてください。ファイルのシート名から<b>事業部・種別を自動判別</b>します。<br>
-        メルマガ経由レポートは、<b>自事業部以外（別事業部＝MED含む全て）のメルマガ由来CVを自動除外</b>します（自事業部のメルマガCVのみ残す）。<br>
-        分類：問合せ／資料DL／WP／カタログ(MED)／申し込み(SCH)／その他。<b>汎用フォーム(.bdash_form)・展示会アンケート・ヒアリングアンケートはCV総数から除外</b>します。会社名は法人格を正規化し、<b>月内は会社（個人はメール）で重複除去</b>します。
+        メルマガ経由レポートは、<b>自事業部以外（別事業部＝MED含む全て）のメルマガ由来CVを自動除外</b>します（自事業部のメルマガCVのみ残す）。初回CVレポートも、<b>他事業部のフォーム（UN_／SC_／MD_／IS_ の接頭辞で判定）由来のCVを自動除外</b>します。<br>
+        分類：問合せ／資料DL／WP／カタログ(MED)／申し込み(SCH)／展示会／イベント（研究会）／その他。<b>汎用フォーム(.bdash_form)・展示会アンケート・ヒアリングアンケートはCV総数から除外</b>します。会社名は法人格を正規化し、<b>月内は会社（個人はメール）で重複除去</b>します。
       </div>
       <div class="cv-upload-area" id="cvaggDrop">
         <input type="file" id="cvaggFile" accept=".xlsx,.xls" multiple style="display:none" onchange="cvaggAddFiles(this.files)">
@@ -603,9 +607,9 @@ const CHANNEL_LABELS = {
   Offline:'Offline',Other:'Other',Unknown:'不明'
 };
 // CV種別キー
-const CV_TYPE_KEYS = ['inquiry','service_dl','wp_dl','catalog','moushikomi','other'];
-const CV_TYPE_LABELS = {inquiry:'CV（問い合わせ）',service_dl:'CV（サービス資料DL）',wp_dl:'CV（WPDL）',catalog:'CV（カタログ）',moushikomi:'CV（申し込み）',other:'CV（その他）'};
-const CV_TYPE_SHORT = {inquiry:'問合せ',service_dl:'資料DL',wp_dl:'WPDL',catalog:'カタログ',moushikomi:'申込',other:'その他'};
+const CV_TYPE_KEYS = ['inquiry','service_dl','wp_dl','catalog','moushikomi','exhibition','event','other'];
+const CV_TYPE_LABELS = {inquiry:'CV（問い合わせ）',service_dl:'CV（サービス資料DL）',wp_dl:'CV（WPDL）',catalog:'CV（カタログ）',moushikomi:'CV（申し込み）',exhibition:'CV（展示会）',event:'CV（イベント）',other:'CV（その他）'};
+const CV_TYPE_SHORT = {inquiry:'問合せ',service_dl:'資料DL',wp_dl:'WPDL',catalog:'カタログ',moushikomi:'申込',exhibition:'展示会',event:'イベント',other:'その他'};
 // コンテンツ種別→cost_itemsインデックス
 const CONTENT_TYPE_TO_IDX = {
   'コラム':0,'コラム記事':0,'コラム（広告含む）':0,
@@ -777,17 +781,33 @@ function classifyChannel(val){
   if(v==='others'||v==='other') return 'Other';
   // Japanese fallbacks
   if(v.includes('オーガニック')||v.includes('自然検索')||v.includes('seo')) return 'Organic';
-  if(v.includes('paid')||v.includes('リスティング')||v.includes('検索広告')||v.includes('cpc')) return 'Paid';
+  if(v.includes('paid')||v.includes('リスティング')||v.includes('検索広告')||v.includes('検索連動型')||v.includes('cpc')) return 'Paid';
   if(v.includes('display')||v.includes('ディスプレイ')) return 'Display';
   if(v.includes('email')||v.includes('メール')||v.includes('メルマガ')) return 'Email';
   if(v.includes('ダイレクト')||v.includes('直接')) return 'Direct';
-  if(v.includes('referral')||v.includes('参照')||v.includes('リファラル')) return 'Referral';
+  if(v.includes('referral')||v.includes('参照')||v.includes('リファラル')||v.includes('リファーラル')) return 'Referral';
   if(v.includes('organicsocial')||v.includes('ソーシャル')||v.includes('sns')) return 'OrganicSocial';
   if(v.includes('offline')||v.includes('オフライン')||v.includes('イベント')||v.includes('展示会')) return 'Offline';
   return 'Other';
 }
-// CV種別分類（確定タクソノミー・6分類）
-// お問合せ / 資料DL / WP / カタログ(MEDのみ) / 申し込み(SCHのみ) / その他
+// メルマガ経由CVの判定：CVフラグがメルマガCTA形式（例 "MED｜メルマガ37｜CTA1｜WP"）、または流入チャネルがmail
+function isMailmagCTA(cvFlag){ return /^(UN|SCH|MED|IS)\s*[｜|]/.test(String(cvFlag==null?'':cvFlag).trim()); }
+function isMailmagCV(cvFlag,channel){ return isMailmagCTA(cvFlag)||classifyChannel(channel)==='Email'; }
+// CVの持ち主の事業部：フォーム名の接頭辞（UN_/SC_/MD_/IS_）またはメルマガCTAの先頭事業部（"MED｜…"）から判定
+const CV_FORM_PREFIX_ORG={UN:'UN',SC:'SCH',MD:'MED',IS:'IS'};
+function cvOwnerOrg(cvFlag){
+  const s=String(cvFlag==null?'':cvFlag).trim();
+  const m=s.match(/^(?:入力画面|Input screen)\s*[:：]\s*(UN|SC|MD|IS)_/);
+  if(m) return CV_FORM_PREFIX_ORG[m[1]];
+  const c=s.match(/^(UN|SCH|MED|IS)\s*[｜|]/);
+  return c?c[1]:null;
+}
+// 他事業部のフォーム・メルマガ由来のCVか（自事業部の件数から除外する）
+function isOtherOrgCV(cvFlag,org){ const o=cvOwnerOrg(cvFlag); return !!(o&&org&&o!==org); }
+// MQLのチャネル分類：メルマガ経由は流入チャネル列の値に関係なく Email に寄せる
+function classifyMqlChannel(cvFlag,channel){ return isMailmagCV(cvFlag,channel)?'Email':classifyChannel(channel); }
+// CV種別分類（確定タクソノミー・8分類）
+// お問合せ / 資料DL / WP / カタログ(MEDのみ) / 申し込み(SCHのみ) / 展示会 / イベント / その他
 // ※初回コンバージョン文字列・CTA文字列の双方に適用可能。CV集計/CVカウント/実績取込で共通利用。
 function classifyCVType(val){
   if(!val||String(val).trim()==='') return null;
@@ -799,12 +819,34 @@ function classifyCVType(val){
   if(v.includes('カタログ')) return 'catalog';
   // ③ 申し込み系（SCHのみ運用：展示特設サイトお申込み 等）
   if(v.includes('申込')||v.includes('申し込み')||v.includes('お申込')||v.includes('展示特設サイト')) return 'moushikomi';
+  // ③-2 展示会系（スクール展示会 一般公開事前予約フォーム 等）※展示会アンケートはCV対象外として先に除外済み
+  if(v.includes('展示会')) return 'exhibition';
+  // ③-3 イベント系（研究会 等）
+  if(v.includes('研究会')) return 'event';
   // ④ 資料DL系（サービス資料 / 資料ダウンロード / 会社案内）
   if(v.includes('サービス資料')||v.includes('資料ダウンロード')||v.includes('資料DL')||v.includes('会社案内')) return 'service_dl';
   // ⑤ お問合せ系（問合せ / 相談 / 見積）
-  if(v.includes('問合せ')||v.includes('問い合わせ')||v.includes('相談')||v.includes('見積')) return 'inquiry';
+  if(v.includes('問合せ')||v.includes('問い合わせ')||v.includes('相談')||v.includes('見積')||v.includes('直接返信')) return 'inquiry';
   // ⑥ 上記いずれにも該当しない（.bdash_form・アンケート等）
   return 'other';
+}
+// 末尾に種別が無いメルマガCTA（例 "MED｜メルマガ58｜footer2"）を、同じデータ内の過去CVから補完する仕組み。
+// 同じ事業部・同じ位置（cta1/footer2 等）のCTAの種別がすべて同じときだけ、その種別を採用する（ばらつく場合は補完しない）
+function ctaPositionKey(v){
+  const m=String(v==null?'':v).trim().match(/^(UN|SCH|MED|IS)\s*[｜|].*?[｜|]\s*((?:cta|footer)\d*)\s*(?:[｜|]|$)/i);
+  return m?m[1]+'|'+m[2].toLowerCase():null;
+}
+function buildCtaTypeHints(values){
+  const seen={};
+  values.forEach(v=>{const k=ctaPositionKey(v); if(!k) return; const c=classifyCVType(v); if(!c||c==='other') return; (seen[k]||(seen[k]=new Set())).add(c);});
+  const hints={}; Object.keys(seen).forEach(k=>{if(seen[k].size===1) hints[k]=[...seen[k]][0];});
+  return hints;
+}
+function classifyCVTypeHinted(v,hints){
+  const c=classifyCVType(v);
+  if(c!=='other'||!hints) return c;
+  const k=ctaPositionKey(v);
+  return (k&&hints[k])||c;
 }
 // コンテンツ種別→インデックス変換
 function getContentTypeIdx(typeStr){
@@ -1752,13 +1794,21 @@ function parseJissekiWb(wb,org){
   // 会計年度(3月〜翌2月)判定
   function fyOfYM(ym){if(!ym)return null;const p=ym.split('-');const y=parseInt(p[0]),m=parseInt(p[1]);return m>=3?y:y-1;}
 
-  rows.slice(1).forEach(row=>{
+  // 同月・同一エンティティの重複は「最も早いCV」を残すため、CV日時順に並べ替える（日付なしは末尾・元の順序を維持）
+  const dateKey=v=>{if(v instanceof Date)return v.getTime();if(typeof v==='number'&&v>40000)return (v-25569)*86400000;const t=Date.parse(String(v||''));return isNaN(t)?Infinity:t;};
+  const body=rows.slice(1).map((row,i)=>({row,i,t:row?dateKey(row[dateCol]):Infinity}))
+    .sort((a,b)=>(a.t-b.t)||(a.i-b.i)).map(x=>x.row);
+  // 末尾に種別が無いメルマガCTAは、同じシート内の同位置CTAの種別で補完
+  const ctaHints=buildCtaTypeHints(body.map(r=>r?r[cvFlagCol]:null));
+
+  body.forEach(row=>{
     if(!row) return;
     const ek=entityKey(row);
 
     // ── このリードのMQL(CVフラグ有＆C列日付)。SAL/SQLの「今年度MQLからの引き上がり」判定に使用 ──
     const cvFlag=row[cvFlagCol];
-    const hasMql=cvFlag&&String(cvFlag).trim()!=='';
+    // 他事業部のフォーム・メルマガ由来のCV（例：MED実績内の「入力画面: UN_…」）はMQLに数えない
+    const hasMql=cvFlag&&String(cvFlag).trim()!==''&&!isOtherOrgCV(cvFlag,org);
     const mqlYM=hasMql?getDateYM(row[dateCol]):null;
     const mqlFY=fyOfYM(mqlYM);
 
@@ -1766,11 +1816,11 @@ function parseJissekiWb(wb,org){
     if(mqlYM && firstTime('cv',mqlYM,ek)){
       ens(mqlYM);
       monthly[mqlYM].cv++;
-      // 流入チャネル分類（H列。空白は不明=Unknown）
-      const ch=classifyChannel(row[chCol]);
+      // 流入チャネル分類（H列。空白は不明=Unknown）。メルマガCTA形式のCVフラグは流入チャネルに関係なくEmail
+      const ch=classifyMqlChannel(cvFlag,row[chCol]);
       monthly[mqlYM].mql_by_channel[ch]=(monthly[mqlYM].mql_by_channel[ch]||0)+1;
       // CV種別分類（3分類：問い合わせ/資料DL/WP）
-      const cvType=classifyCVType(String(cvFlag));
+      const cvType=classifyCVTypeHinted(String(cvFlag),ctaHints);
       if(cvType) monthly[mqlYM].cv_by_type[cvType]=(monthly[mqlYM].cv_by_type[cvType]||0)+1;
     }
 
@@ -2432,6 +2482,8 @@ const CV_TYPE_COLORS={
   wp_dl:'rgba(16,185,129,0.85)',      // WPDL = グリーン
   catalog:'rgba(139,92,246,0.85)',    // カタログ = パープル
   moushikomi:'rgba(56,189,248,0.85)', // 申込 = シアン
+  exhibition:'rgba(236,72,153,0.85)', // 展示会 = ピンク
+  event:'rgba(249,115,22,0.85)',      // イベント = オレンジ
   other:'rgba(148,163,184,0.85)'      // その他 = グレー
 };
 function renderCvTypeTrendChart(months,labels,series){
@@ -2848,46 +2900,91 @@ function cvaggInit(){
 async function cvaggAddFiles(files){
   const arr=Array.from(files).filter(f=>/\.xlsx?$/i.test(f.name));
   for(const f of arr){
-    if(cvaggFiles.some(x=>x.name===f.name)) continue;
+    // 同名ファイルは二重取込を防ぐためスキップ（黙って捨てず、理由を表示する）
+    if(cvaggFiles.some(x=>x.name===f.name)){cvxStatus('cvaggStatus','⚠️ 同じ名前のファイルは取込済みのためスキップしました：'+f.name+'（別の内容なら、ファイル名を変えて取り込んでください）','warn');continue;}
     try{
       const wb=await cvxReadFile(f);
-      const sName=wb.SheetNames[1]||wb.SheetNames[0];
-      const ws=wb.Sheets[sName];
-      let org=null; const mo=sName.match(/(UN|SCH|MED|IS)/); if(mo) org=mo[1];
-      let type=/メルマガ経由/.test(sName)?'mailmag':'initial';
-      // シート名で判別できない場合はヘッダーB列で判定
-      if(!org||true){
-        const hd=XLSX.utils.sheet_to_json(ws,{header:1,range:0,defval:''})[0]||[];
-        const b=String(hd[1]||'');
-        if(/CTA/.test(b)&&!/初回コンバージョン/.test(b)) type='mailmag';
-        else if(/初回コンバージョン/.test(b)) type='initial';
-      }
-      cvaggFiles.push({name:f.name,org,type,ws});
+      cvaggFiles.push({name:f.name,...cvaggDetectFile(wb,f.name)});
     }catch(err){cvxStatus('cvaggStatus','❌ '+f.name+'：'+err.message,'error');}
   }
   cvaggRenderFiles();
 }
+// HubSpotレポートの事業部・種別を判定。種別はデータの中身（B列見出し：CTA＝メルマガ経由／初回コンバージョン＝初回CV）で決め、
+// シート名・ファイル名と食い違う場合や判定できない場合は warn に理由を残して画面に表示する
+function cvaggDetectFile(wb,fileName){
+  const warn=[];
+  // データシート：「{事業部}｜CVレポート…」名のシート → HubSpot Export Summary 以外 → 2枚目 → 1枚目
+  const sName=wb.SheetNames.find(n=>/^(UN|SCH|MED|IS)\s*[｜|]/.test(n))
+    ||wb.SheetNames.find(n=>!/Export Summary/i.test(n))||wb.SheetNames[1]||wb.SheetNames[0];
+  const ws=wb.Sheets[sName];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  const hd=(rows[0]||[]).map(h=>String(h==null?'':h).trim());
+  const b=hd[1]||'';
+  // 種別：中身で判定
+  let type=null;
+  if(/初回コンバージョン/.test(b)) type='initial';
+  else if(/CTA/.test(b)) type='mailmag';
+  const nameType=/メルマガ経由/.test(sName)?'mailmag':(/CVレポート/.test(sName)?'initial':null);
+  if(!type){ type=nameType||'initial'; warn.push(`B列の見出し「${b||'空欄'}」から種別を判定できません。${type==='mailmag'?'シート名から「メルマガ経由」':'「初回CV」'}として扱います（違う場合は種別を切り替えてください）`); }
+  else if(nameType&&nameType!==type) warn.push(`シート名「${sName}」と中身（B列「${b}」）の種別が食い違っています。中身を優先しました`);
+  // 事業部：シート名の先頭 → ファイル名（例 "-med-cv-"）
+  const so=(sName.match(/^(UN|SCH|MED|IS)\s*[｜|]/)||[])[1]||null;
+  const fo=((fileName.match(/(?:^|[-_｜\s])(un|sch|med|is)(?=[-_｜\s.]|cv)/i)||[])[1]||'').toUpperCase()||null;
+  const org=so||fo;
+  if(so&&fo&&so!==fo) warn.push(`シート名の事業部（${so}）とファイル名の事業部（${fo}）が食い違っています。シート名を優先しました`);
+  if(!org) warn.push('事業部を判定できません。事業部を選んでください');
+  return {org,type,ws,sheetName:sName,rowCount:Math.max(rows.length-1,0),warn};
+}
 function cvaggRenderFiles(){
   const box=document.getElementById('cvaggFileList');
   if(!cvaggFiles.length){box.innerHTML='';return;}
-  const tagColor={initial:'#2563eb',mailmag:'#0891b2'};
-  box.innerHTML='<div style="font-size:12px;font-weight:600;margin-bottom:6px">取込ファイル（'+cvaggFiles.length+'）</div>'+
+  const TYPE_COLOR={initial:'#2563eb',mailmag:'#c2410c'};
+  const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const cnt=t=>cvaggFiles.filter(f=>f.type===t).length;
+  const noOrg=cvaggFiles.filter(f=>!f.org).length;
+  box.innerHTML=`<div style="font-size:12px;font-weight:600;margin-bottom:6px">取込ファイル（${cvaggFiles.length}件：初回CV ${cnt('initial')}／メルマガ経由 ${cnt('mailmag')}${noOrg?`／<span style="color:#dc2626">事業部未選択 ${noOrg}</span>`:''}）　<span style="font-weight:400;color:var(--muted)">※事業部・種別は自動判定。違う場合は選び直してください</span></div>`+
     cvaggFiles.map((f,i)=>{
-      const t=f.type==='mailmag'?'メルマガ経由':'初回CV';
-      const org=f.org||'?';
-      return `<span class="cv-file-chip"><span class="tag" style="background:${tagColor[f.type]}">${org}/${t}</span>${f.name}<span class="rm" onclick="cvaggRemove(${i})">✕</span></span>`;
+      const warn=(f.warn||[]).length?`<div style="color:#b45309;font-size:11px;margin-top:3px">⚠️ ${f.warn.map(esc).join('<br>⚠️ ')}</div>`:'';
+      const orgSel=`<select class="cv-file-sel" style="background:${f.org?'#1e3a5f':'#dc2626'}" onchange="cvaggSetFile(${i},'org',this.value)">${f.org?'':'<option value="" selected>事業部を選択</option>'}${CVX_ORGS.map(o=>`<option value="${o}"${o===f.org?' selected':''}>${o}</option>`).join('')}</select>`;
+      const typeSel=`<select class="cv-file-sel" style="background:${TYPE_COLOR[f.type]}" onchange="cvaggSetFile(${i},'type',this.value)"><option value="initial"${f.type==='initial'?' selected':''}>初回CV</option><option value="mailmag"${f.type==='mailmag'?' selected':''}>メルマガ経由</option></select>`;
+      return `<div class="cv-file-row" style="border-left:4px solid ${TYPE_COLOR[f.type]}">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${orgSel}${typeSel}
+          <span style="font-weight:600">シート「${esc(f.sheetName)}」</span><span style="color:var(--muted)">${f.rowCount}行</span>
+          <span class="rm" style="margin-left:auto" title="取り消す" onclick="cvaggRemove(${i})">✕</span>
+        </div>
+        <div style="color:var(--muted);font-size:11px;margin-top:2px">ファイル：${esc(f.name)}</div>${warn}
+      </div>`;
     }).join('');
 }
 function cvaggRemove(i){cvaggFiles.splice(i,1);cvaggRenderFiles();}
+// 事業部・種別の手動切替（自動判定の上書き）。切り替えたら判定の警告は手動確定の旨に置き換える
+function cvaggSetFile(i,key,val){
+  const f=cvaggFiles[i]; if(!f) return;
+  f[key]=val||null;
+  f.warn=(f.warn||[]).filter(w=>!(key==='org'?/事業部/:/種別/).test(w));
+  cvaggRenderFiles();
+}
 function cvaggClear(){cvaggFiles=[];cvaggResult=null;document.getElementById('cvaggFile').value='';cvaggRenderFiles();document.getElementById('cvaggResults').innerHTML='';document.getElementById('cvaggStatus').innerHTML='';document.getElementById('cvaggDlBtn').style.display='none';}
 
 function cvaggAnalyze(){
   if(!cvaggFiles.length){cvxStatus('cvaggStatus','⚠️ HubSpotレポートをアップロードしてください','warn');return;}
+  // 事業部が決まらないファイルがあれば、黙って除外せず選択を促して止める
+  const noOrgFiles=cvaggFiles.filter(f=>!f.org);
+  if(noOrgFiles.length){cvxStatus('cvaggStatus','⚠️ 事業部を判定できないファイルがあります。取込ファイル一覧で事業部を選んでから集計してください：'+noOrgFiles.map(f=>f.name).join('、'),'warn');return;}
   const start=document.getElementById('cvaggStart').value||null;
   const end=document.getElementById('cvaggEnd').value||null;
   const rowsByOrg={UN:[],SCH:[],MED:[],IS:[]};
   const eLabelByOrg={};  // 事業部→E列内容の見出し（着用人数/病床数/ご予算/生徒数）
   const stat={files:0,total:0,inPeriod:0,excluded:0,dropped:0,noOrg:0};
+  // 末尾に種別が無いメルマガCTAは、取り込んだ全レポート（期間外を含む）の同位置CTAの種別で補完
+  const hintVals=[];
+  cvaggFiles.forEach(f=>{
+    const rs=XLSX.utils.sheet_to_json(f.ws,{header:1,defval:'',raw:true});
+    const cc=cvxFindCol((rs[0]||[]).map(h=>h==null?'':String(h).trim()),['CTA']);
+    rs.slice(1).forEach(r=>{if(!r)return; hintVals.push(r[1]); if(cc>=0) hintVals.push(r[cc]);});
+  });
+  const ctaHints=buildCtaTypeHints(hintVals);
   cvaggFiles.forEach(f=>{
     if(!f.org){stat.noOrg++;return;}
     stat.files++;
@@ -2920,8 +3017,10 @@ function cvaggAnalyze(){
         const owner=cvxCtaOwner(ctaCol>=0?r[ctaCol]:'');
         if(owner&&owner!==f.org){stat.excluded++;return;}
       }
+      // 初回CV：他事業部のフォーム（例：MEDレポート内の「入力画面: UN_…」）由来のCVを除外
+      else if(isOtherOrgCV(typeStr,f.org)){stat.excluded++;return;}
       stat.inPeriod++;
-      const cat=classifyCVType(typeStr)||'other';
+      const cat=classifyCVTypeHinted(typeStr,ctaHints)||'other';
       rowsByOrg[f.org].push({
         ym, cat,
         dateVal:cvxDateVal(dateCol>=0?r[dateCol]:null),
@@ -2930,7 +3029,8 @@ function cvaggAnalyze(){
         name:nameCol>=0?r[nameCol]:'',
         email:emailCol>=0?r[emailCol]:'',
         colE:eContentCol>=0?(r[eContentCol]||''):'',
-        channel:(f.type==='initial'&&channelCol>=0)?(r[channelCol]||''):'',
+        // メルマガ経由レポートの行は流入チャネル=mail（実績に貼付後、メルマガ経由として数えるため）
+        channel:f.type==='mailmag'?'mail':(channelCol>=0?(r[channelCol]||''):''),
         cvType:typeStr||'',
         source:f.type==='mailmag'?'メルマガ経由':'初回CV'
       });
@@ -2954,7 +3054,7 @@ function cvaggAnalyze(){
   });
   cvaggResult={perOrg,detailByOrg,eLabel:eLabelByOrg,start,end,stat:{...stat,dupRemoved}};
   cvaggRenderResults();
-  cvxStatus('cvaggStatus',`✅ 集計完了（対象 ${stat.inPeriod} 件／CV対象外除外 ${stat.dropped} 件／メルマガ他事業除外 ${stat.excluded} 件／重複除去 ${dupRemoved} 件）`,'success');
+  cvxStatus('cvaggStatus',`✅ 集計完了（対象 ${stat.inPeriod} 件／CV対象外除外 ${stat.dropped} 件／他事業部のフォーム・メルマガ除外 ${stat.excluded} 件／重複除去 ${dupRemoved} 件）`,'success');
   document.getElementById('cvaggDlBtn').style.display='none';
 }
 
@@ -2983,6 +3083,14 @@ function cvaggRenderResults(){
   CVX_ORGS.forEach(o=>{const t=orgTots[o];html+=`<tr><td>${o}</td>${CVX_CAT_KEYS.map(k=>`<td>${t[k]}</td>`).join('')}<td><b>${sumCat(t)}</b></td></tr>`;});
   const gt={};CVX_CAT_KEYS.forEach(k=>gt[k]=CVX_ORGS.reduce((s,o)=>s+orgTots[o][k],0));
   html+=`<tr class="section-hdr"><td>合計</td>${CVX_CAT_KEYS.map(k=>`<td>${gt[k]}</td>`).join('')}<td><b>${grand}</b></td></tr>`;
+  html+='</tbody></table></div>';
+  // 経路別（初回CV／メルマガ経由）：メルマガ経由レポートが認識・集計されたかを確認できるようにする
+  const srcCnt=o=>{const c={'初回CV':0,'メルマガ経由':0};(detailByOrg[o]||[]).forEach(r=>c[r.source]=(c[r.source]||0)+1);return c;};
+  const srcTot={'初回CV':0,'メルマガ経由':0};
+  html+='<div class="sec-title" style="margin:14px 0 8px;font-size:14px">事業部別 経路別集計（重複除去後）</div>';
+  html+='<div class="input-tbl-wrap"><table class="data-table"><thead><tr><th>事業部</th><th>初回CV</th><th>メルマガ経由</th><th>合計</th></tr></thead><tbody>';
+  CVX_ORGS.forEach(o=>{const c=srcCnt(o);srcTot['初回CV']+=c['初回CV'];srcTot['メルマガ経由']+=c['メルマガ経由'];html+=`<tr><td>${o}</td><td>${c['初回CV']}</td><td>${c['メルマガ経由']}</td><td><b>${c['初回CV']+c['メルマガ経由']}</b></td></tr>`;});
+  html+=`<tr class="section-hdr"><td>合計</td><td>${srcTot['初回CV']}</td><td>${srcTot['メルマガ経由']}</td><td><b>${srcTot['初回CV']+srcTot['メルマガ経由']}</b></td></tr>`;
   html+='</tbody></table></div>';
   // 事業部別 月次
   CVX_ORGS.forEach(o=>{
@@ -3041,7 +3149,8 @@ async function cvcountLoad(input){
     // 事業部の自動判別（シート名 "{ORG}｜CVレポート" またはファイル名）
     cvcountDetectedOrg=null;
     for(const sn of cvcountWb.SheetNames){const m=sn.match(/^(UN|SCH|MED|IS)\s*[｜|]/);if(m){cvcountDetectedOrg=m[1];break;}}
-    if(!cvcountDetectedOrg){const m=f.name.match(/(UN|SCH|MED|IS)/i);if(m)cvcountDetectedOrg=m[1].toUpperCase();}
+    // ファイル名から判定（例「マーケティング本部｜SCH｜実績.xlsm」）。英単語の一部（list の is 等）を拾わないよう大文字・単語区切りで判定
+    if(!cvcountDetectedOrg){const m=f.name.match(/(?:^|[^A-Za-z])(UN|SCH|MED|IS)(?![A-Za-z])/);if(m)cvcountDetectedOrg=m[1];}
     const sel=document.getElementById('cvcountOrg');
     if(sel.value==='AUTO'&&cvcountDetectedOrg){/*keep AUTO but show*/}
     cvxStatus('cvcountStatus',`✅ 読込完了：${f.name}${cvcountDetectedOrg?'（事業部自動判別：'+cvcountDetectedOrg+'）':''}`,'success');
@@ -3090,16 +3199,21 @@ function cvcountAnalyze(){
   const salCol =cvxFindCol(hdr,['SAL']);
   const sqlCol =cvxFindCol(hdr,['SQL']);
   const jucyuCol=cvxFindCol(hdr,['受注']);
+  const chCol  =cvxFindCol(hdr,['流入チャネル','流入経路']);
   const monthly={}; const seen={}; let total=0,dup=0,skip=0;
-  function ens(ym){if(!monthly[ym]){monthly[ym]={cv:0,sal:0,sql:0,jucyu:0,cats:{}};CVX_CAT_KEYS.forEach(k=>monthly[ym].cats[k]=0);}}
+  function ens(ym){if(!monthly[ym]){monthly[ym]={cv:0,sal:0,sql:0,jucyu:0,cats:{},channels:{}};CVX_CAT_KEYS.forEach(k=>monthly[ym].cats[k]=0);}}
   // 日付順に安定させる
   const body=rows.slice(1).map((r,i)=>({r,i,dv:cvxDateVal(dateCol>=0?r[dateCol]:null)})).sort((a,b)=>a.dv-b.dv);
+  // 末尾に種別が無いメルマガCTAは、同じシート内の同位置CTAの種別で補完
+  const ctaHints=buildCtaTypeHints(body.map(({r})=>r&&cvCol>=0?r[cvCol]:null));
   body.forEach(({r})=>{
     if(!r) return;
     const cvFlag=cvCol>=0?r[cvCol]:'';
     if(cvFlag==null||String(cvFlag).trim()==='') {skip++;return;}
     // 汎用フォーム・展示会アンケート等はCV総数から完全除外（カウントしない）
     if(cvxIsExcluded(cvFlag)){skip++;return;}
+    // 他事業部のフォーム・メルマガ由来のCVは除外
+    if(isOtherOrgCV(cvFlag,org)){skip++;return;}
     const ym=cvxYM(dateCol>=0?r[dateCol]:null);
     if(!ym||!cvxInPeriod(ym,start,end)) return;
     const key=cvxEntityKey(compCol>=0?r[compCol]:'',mailCol>=0?r[mailCol]:'',nameCol>=0?r[nameCol]:'');
@@ -3108,7 +3222,8 @@ function cvcountAnalyze(){
     if(seen[sk]){dup++; }
     else{
       seen[sk]=1; ens(ym); monthly[ym].cv++;
-      const cat=classifyCVType(cvFlag)||'other'; monthly[ym].cats[cat]++;
+      const cat=classifyCVTypeHinted(cvFlag,ctaHints)||'other'; monthly[ym].cats[cat]++;
+      const ch=classifyMqlChannel(cvFlag,chCol>=0?r[chCol]:''); monthly[ym].channels[ch]=(monthly[ym].channels[ch]||0)+1;
     }
     // 参考：SAL/SQL/受注（表示のみ・反映しない）※列の日付が入っていればカウント
     if(salCol>=0){const s=cvxYM(r[salCol]);if(s&&cvxInPeriod(s,start,end)){ens(s);monthly[s].sal++;}}
@@ -3148,6 +3263,8 @@ function cvcountReflect(){
       d.cv=monthly[ym].cv;
       const ct={}; CVX_CAT_KEYS.forEach(k=>{if(monthly[ym].cats[k]) ct[k]=monthly[ym].cats[k];});
       d.cv_by_type=ct;
+      // チャネル内訳も同じ集計で置き換え、MQL合計と内訳（メルマガ経由／それ以外）を一致させる
+      d.mql_by_channel={...monthly[ym].channels};
     });
     saveData();
     cvxStatus('cvcountStatus',`✅ ${org} のMQLをダッシュボードに反映しました（${months.length}か月）。データ入力タブで確認・微調整できます。`,'success');
