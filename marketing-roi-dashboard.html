@@ -7,6 +7,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.0.0/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- 月次レポート出力で使用 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -201,6 +204,98 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
 .content-roi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:14px}
 .content-roi-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:14px}
 .content-roi-org{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* ─── 月次レポート出力 ─── */
+.rpt-card{margin-bottom:14px}
+.rpt-hero{background:linear-gradient(135deg,#ffffff 0%,#f0f7ff 100%)}
+.rpt-flow{display:flex;gap:10px;list-style:none;flex-wrap:wrap}
+.rpt-flow li{flex:1;min-width:200px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted)}
+.rpt-flow li b{display:block;color:var(--navy);font-size:13px;margin-bottom:2px}
+.rpt-h{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.rpt-row{display:grid;grid-template-columns:190px 1fr;gap:12px;align-items:start;margin-top:12px}
+.rpt-lbl{font-size:12px;font-weight:700;color:var(--text);padding-top:6px}
+.rpt-lbl .rpt-muted{display:block;font-weight:400}
+.rpt-muted{font-size:11px;color:var(--muted)}
+.rpt-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rpt-field{display:flex;flex-direction:column;gap:4px;font-size:11px;font-weight:600;color:var(--muted)}
+.rpt-field input{padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text)}
+.rpt-field input:focus,.rpt-ta:focus{outline:2px solid var(--blue);outline-offset:1px}
+.rpt-org-chks{display:flex;flex-wrap:wrap;gap:8px}
+.rpt-org-chk{display:flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:12px;background:#fff}
+.rpt-org-chk:has(input:checked){border-color:var(--blue);background:#eff6ff}
+.rpt-org-chk.rpt-disabled{opacity:.6;cursor:not-allowed}
+.rpt-fresh{font-size:10px;border-radius:10px;padding:1px 7px;margin-left:4px}
+.rpt-fresh.ok{background:#dcfce7;color:#15803d}.rpt-fresh.ng{background:#fee2e2;color:#b91c1c}
+.rpt-note{font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;margin-top:8px;width:100%}
+.rpt-warn-inline{color:#b45309;font-size:11px;margin-left:6px}
+.rpt-mode{font-size:12px;border-radius:8px;padding:10px 12px;margin:14px 0 8px}
+.rpt-mode.create{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a}
+.rpt-mode.reflect{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46}
+.rpt-mode.ng{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.rpt-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.rpt-tbl th{background:#f8fafc;color:var(--muted);font-size:11px;text-align:left;padding:7px 10px;border-bottom:2px solid var(--border);white-space:nowrap}
+.rpt-tbl td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.rpt-tbl .ok,.rpt-log-g .ok{color:#15803d}.rpt-tbl .ng{color:#b91c1c}.rpt-tbl .warn,.warn{color:#b45309}
+.rpt-org-hd{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px}
+.rpt-badge{background:var(--navy);color:#fff;border-radius:6px;padding:2px 10px;font-size:13px}
+.rpt-sec{border-top:1px dashed var(--border);padding-top:12px;margin-top:12px}
+.rpt-sec-t{font-size:13px;font-weight:700;margin-bottom:8px}
+.rpt-kv{font-size:12px;margin-top:8px;background:#f8fafc;border-radius:6px;padding:8px 10px}
+.rpt-auto-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;margin-top:10px}
+.rpt-auto-grid figure{margin:0;border:1px solid var(--border);border-radius:8px;padding:6px;background:#fff}
+.rpt-auto-grid img{width:100%;display:block;border-radius:4px}
+.rpt-auto-grid figcaption{font-size:11px;color:var(--muted);margin-top:4px}
+.rpt-paste-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.rpt-paste-lbl{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.rpt-paste{position:relative;min-height:130px;border:2px dashed #cbd5e1;border-radius:8px;background:#f8fafc;display:flex;align-items:center;justify-content:center;cursor:pointer;outline:none;caret-color:transparent;overflow:hidden}
+.rpt-paste:focus{border-color:var(--blue);background:#eff6ff}
+.rpt-paste.filled{border-style:solid;border-color:#86efac;background:#fff}
+.rpt-paste img{max-width:100%;max-height:220px;display:block}
+.rpt-paste-ph{font-size:12px;color:var(--muted);text-align:center;line-height:1.7;pointer-events:none}
+.rpt-paste-ph span{font-size:10px}
+.rpt-x{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;border:none;background:#fee2e2;color:#b91c1c;font-weight:700;cursor:pointer}
+.rpt-tbl-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.rpt-tblbox{border:1px solid var(--border);border-radius:8px;padding:10px;background:#fff}
+.rpt-tblbox-t{font-size:12px;font-weight:700;margin-bottom:6px}
+.rpt-ta{width:100%;min-height:64px;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:11px;font-family:Consolas,monospace;resize:vertical;margin-bottom:6px}
+.rpt-scroll{overflow-x:auto}
+.rpt-prev td{font-size:11px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rpt-prev select{font-size:11px;padding:2px 4px;margin-top:3px;max-width:160px}
+.rpt-warnbox{font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;margin-top:6px}
+.rpt-warnbox label{display:block;margin-top:4px;font-weight:600}
+.rpt-checks{display:flex;flex-direction:column;gap:6px;font-size:12px;margin-bottom:8px}
+.rpt-res{margin-top:12px;border:1px solid var(--border);border-radius:8px;padding:12px;background:#f8fafc;font-size:12px}
+.rpt-res.ok{background:#f0fdf4;border-color:#bbf7d0}.rpt-res.ng{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.rpt-res-t{font-weight:700;margin-bottom:6px;font-size:13px}
+.rpt-log-g{margin:8px 0}.rpt-log-g ul{margin:4px 0 0 18px}.rpt-log-g li{margin:2px 0}.rpt-log-g li.warn{color:#b45309}
+.rpt-busy{position:fixed;inset:0;background:rgba(255,255,255,.6);z-index:1100;align-items:center;justify-content:center}
+.rpt-busy-box{background:#fff;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.12);border-radius:10px;padding:16px 22px;display:flex;align-items:center;gap:12px;font-size:13px}
+.rpt-spin{width:20px;height:20px;border:3px solid #dbeafe;border-top-color:var(--blue);border-radius:50%;animation:rptspin 1s linear infinite}
+@keyframes rptspin{to{transform:rotate(360deg)}}
+button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:800px){.rpt-row{grid-template-columns:1fr}.rpt-paste-grid,.rpt-auto-grid{grid-template-columns:1fr}}
+.rpt-paste-grid.one{grid-template-columns:1fr}
+.rpt-auto-grid3{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:10px;margin-top:10px}
+.rpt-auto-grid3 figure{margin:0;border:1px solid var(--border);border-radius:8px;padding:6px;background:#fff}
+.rpt-auto-grid3 img{width:100%;display:block;border-radius:4px}
+.rpt-auto-grid3 figcaption{font-size:11px;color:var(--muted);margin-top:4px}
+.rpt-mk{display:inline-block;font-size:10px;border-radius:10px;padding:1px 8px;margin:1px 2px;font-weight:600}
+.rpt-mk.stale{background:#fee2e2;color:#b91c1c}.rpt-mk.partial{background:#fef3c7;color:#92400e}.rpt-mk.ok{background:#dbeafe;color:#1e40af}
+@media(max-width:1000px){.rpt-auto-grid3{grid-template-columns:1fr}}
+.rpt-auto-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.rpt-auto-grid2 figure{margin:0;border:1px solid var(--border);border-radius:8px;padding:6px;background:#fff}
+.rpt-auto-grid2 img{width:100%;display:block;border-radius:4px}
+.rpt-auto-grid2 figcaption{font-size:11px;color:var(--muted);margin-top:4px}
+.rpt-pair{display:grid;grid-template-columns:170px 1fr 1fr;gap:10px;align-items:stretch;margin-bottom:10px}
+.rpt-pair-l{font-size:12px;font-weight:700;padding-top:6px}
+.rpt-pair .rpt-paste{min-height:110px}
+.rpt-pair2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rpt-mini{margin:0;border:1px solid var(--border);border-radius:8px;padding:6px;background:#fff}
+.rpt-mini img{width:100%;display:block;border-radius:4px}
+.rpt-mini figcaption{font-size:11px;color:var(--muted);margin-top:4px}
+.rpt-mini.ph{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:110px;font-size:12px;color:var(--muted);background:#f8fafc;text-align:center}
+.rpt-mini.ph span{font-size:10px}
+@media(max-width:900px){.rpt-pair{grid-template-columns:1fr}.rpt-pair2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -242,6 +337,52 @@ input[type=file]{font-size:12px;padding:6px;border:1px dashed var(--border);bord
     <div class="view-tab" onclick="switchView('cvagg',this)">🧮 CV集計</div>
     <div class="view-tab" onclick="switchView('cvcount',this)">🔢 CVカウント</div>
     <div class="view-tab" onclick="switchView('targets',this)">🎯 目標設定</div>
+    <div class="view-tab" onclick="switchView('report',this)">📤 月次レポート出力</div>
+  </div>
+
+    <!-- ═══ 月次レポート出力 View ═══ -->
+  <div id="vw-report" style="display:none">
+    <div class="card card-pad rpt-card rpt-hero">
+      <div class="sec-title"><span class="sec-title-icon">📤</span>月次レポート出力 <span class="rpt-muted" style="font-weight:400">FLUED｜月次定例レポート（pptx）を、ダッシュボードとLookerのデータで更新します</span></div>
+      <ol class="rpt-flow"><li><b>① 基本設定</b>対象月・担当事業部・pptxを選ぶ</li><li><b>② 反映内容</b>自動作成の画像を確認し、Looker画像・表を貼る</li><li><b>③ 保存</b>最新版を読み直して上書き保存</li></ol>
+      <div class="rpt-muted" style="margin-top:8px">※画面上部の事業部タブ（マーケティング本部・4事業合計・UNなど）の選択は、この出力には影響しません。反映する事業部は、下の「① 基本設定」で選びます。</div>
+      <div class="rpt-note" id="rptFsaNote" style="display:none">このブラウザは上書き保存に対応していません（EdgeまたはChromeを使ってください）。保存時はダウンロードになります。</div>
+    </div>
+
+    <div class="card card-pad rpt-card">
+      <div class="rpt-h">① 基本設定</div>
+      <div class="rpt-inline">
+        <label class="rpt-field">対象月（振り返る月）<input type="month" id="rptYM"></label>
+        <div class="rpt-muted" id="rptYMNote" style="align-self:flex-end;padding-bottom:6px"></div>
+      </div>
+      <div class="rpt-row"><div class="rpt-lbl">反映する事業部<span class="rpt-muted">（自分の担当だけ選ぶ）</span></div><div id="rptOrgChecks" class="rpt-org-chks"></div></div>
+      <div class="rpt-row"><div class="rpt-lbl">レポートファイル</div>
+        <div><div class="rpt-inline"><button class="btn btn-primary" onclick="rptPick()">📂 pptxを選択</button><button class="btn btn-ghost" id="rptReopen" style="display:none" onclick="rptReopen()">前回のファイルを開く</button>
+          <input type="file" id="rptFileInput" accept=".pptx" style="display:none" onchange="rptLoadInput(this)"></div>
+          <div id="rptFileInfo" class="rpt-muted" style="margin-top:6px">未選択（FLUEDフォルダの「FLUED｜2026｜月次定例レポート.pptx」を選んでください）</div></div></div>
+      <div class="rpt-row"><div class="rpt-lbl">GA4データ（JSON）<span class="rpt-muted">Apps Scriptが作るファイル</span></div>
+        <div><div class="rpt-inline"><label class="btn btn-primary">📥 JSONを選択<input type="file" accept=".json,application/json" style="display:none" onchange="rptLoadGa4(this)"></label></div>
+          <div id="rptGa4Info" class="rpt-muted" style="margin-top:6px"></div></div></div>
+      <div id="rptAnalysis"></div>
+    </div>
+
+    <div id="rptOrgs"></div>
+
+    <div class="card card-pad rpt-card">
+      <div class="rpt-h">③ 保存</div>
+      <div class="rpt-checks">
+        <label><input type="checkbox" id="rptChk1"> PowerPointでこのファイルを閉じている</label>
+        <label><input type="checkbox" id="rptChk2"> OneDriveの同期が終わっている（エクスプローラーでファイルに緑のチェック）</label>
+      </div>
+      <div id="rptSaveInfo"></div>
+      <div class="rpt-inline" style="margin-top:10px">
+        <button class="btn btn-ghost" id="rptBtnDry" onclick="rptDryRun()">📝 変更内容を確認（保存しない）</button>
+        <button class="btn btn-success" id="rptBtnSave" onclick="rptSave()">💾 上書き保存</button>
+      </div>
+      <div class="rpt-muted" style="margin-top:8px">保存の直前に最新のファイルを読み直し、あなたが選んだ事業部だけを反映します。ほかの人が反映した事業部の内容は消えません。万一のときは、SharePointの「バージョン履歴」から元に戻せます。</div>
+      <div id="rptResult"></div>
+    </div>
+    <div id="rptBusy" class="rpt-busy" style="display:none"><div class="rpt-busy-box"><div class="rpt-spin"></div><span id="rptBusyMsg">処理中…</span></div></div>
   </div>
 
   <!-- ═══ Dashboard View ═══ -->
@@ -3295,6 +3436,1155 @@ function init(){
 }
 
 init();
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════
+//  月次レポート出力（pptx編集エンジン）
+//  ・ブラウザ内だけでpptx(zip)を読み書きする。外部送信なし。
+//  ・依存: JSZip
+// ═════════════════════════════════════════════════════════════
+const RPT_NS={
+  p:'http://schemas.openxmlformats.org/presentationml/2006/main',
+  a:'http://schemas.openxmlformats.org/drawingml/2006/main',
+  r:'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+  rel:'http://schemas.openxmlformats.org/package/2006/relationships',
+  ct:'http://schemas.openxmlformats.org/package/2006/content-types',
+  cp:'http://schemas.openxmlformats.org/officeDocument/2006/custom-properties',
+  vt:'http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes',
+  p14:'http://schemas.microsoft.com/office/powerpoint/2010/main',
+  p188:'http://schemas.microsoft.com/office/powerpoint/2018/8/main',
+  a16:'http://schemas.microsoft.com/office/drawing/2014/main'
+};
+const RPT_RT={
+  image:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+  hyperlink:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink',
+  slide:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide',
+  notesSlide:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide',
+  chart:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart',
+  customProps:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties',
+  comments2018:'http://schemas.microsoft.com/office/2018/10/relationships/comments',
+  commentsOld:'http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments'
+};
+const RPT_CT={
+  slide:'application/vnd.openxmlformats-officedocument.presentationml.slide+xml',
+  notes:'application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml',
+  custom:'application/vnd.openxmlformats-officedocument.custom-properties+xml'
+};
+const RPT_ORGS=['UN','SCH','MED','IS'];
+const RPT_COVER_RE=/(\d{1,2})月度月次定例レポート/;
+const RPT_STATUS_PROP='OCD_月次レポート反映状況';
+const RPT_MARKER_NAME='OCD_要更新';
+const RPT_MARKER_STYLE={
+  stale:{fill:'FEE2E2',line:'EF4444',text:'B91C1C',label:'データ・コメントとも前月のまま'},
+  partial:{fill:'FFF3B0',line:'F59E0B',text:'92400E',label:'データ一部未更新'},
+  ok:{fill:'DBEAFE',line:'3B82F6',text:'1E40AF',label:'コメントのみ前月のまま'}
+};
+function rptMarkerText(state,N,detail){
+  if(state==='ok')return `要更新：データは${N}月分に更新済み／コメントのみ前月のまま（修正後にこの付箋を削除）`;
+  if(state==='partial')return `要更新：データ一部未更新（${detail}）／コメントも前月のまま（修正後にこの付箋を削除）`;
+  return '要更新：データ・コメントとも前月のまま（修正後にこの付箋を削除）';
+}
+
+// ─── パス ───
+function rpDir(p){const i=p.lastIndexOf('/');return i<0?'':p.slice(0,i);}
+function rpBase(p){return p.slice(p.lastIndexOf('/')+1);}
+function rpNorm(p){const o=[];p.split('/').forEach(s=>{if(s===''||s==='.')return;if(s==='..')o.pop();else o.push(s);});return o.join('/');}
+function rpResolve(from,t){if(t.startsWith('/'))return rpNorm(t);const d=rpDir(from);return rpNorm((d?d+'/':'')+t);}
+function rpRel(from,to){const a=rpDir(from).split('/').filter(Boolean),b=to.split('/');let i=0;while(i<a.length&&i<b.length-1&&a[i]===b[i])i++;return '../'.repeat(a.length-i)+b.slice(i).join('/');}
+function rpRelsOf(p){return p===''?'_rels/.rels':rpDir(p)+'/_rels/'+rpBase(p)+'.rels';}
+
+// ─── XML ───
+function rxParse(s){
+  const d=new DOMParser().parseFromString(s,'application/xml');
+  if(d.getElementsByTagName('parsererror').length) throw new Error('XMLの解析に失敗しました');
+  return d;
+}
+function rxSer(d){
+  let s=new XMLSerializer().serializeToString(d);
+  if(!s.startsWith('<?xml')) s='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n'+s;
+  return s;
+}
+function rxChild(el,ns,ln){if(!el)return null;for(const c of el.children){if(c.namespaceURI===ns&&c.localName===ln)return c;}return null;}
+function rxAll(el,ns,ln){return el?[...el.getElementsByTagNameNS(ns,ln)]:[];}
+function rxFrag(doc,xml){
+  const w=rxParse(`<w xmlns:p="${RPT_NS.p}" xmlns:a="${RPT_NS.a}" xmlns:r="${RPT_NS.r}">${xml}</w>`);
+  return doc.importNode(w.documentElement.firstElementChild,true);
+}
+function rxEsc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function rpRand32(){return (crypto.getRandomValues(new Uint32Array(1))[0]>>>1)+1;}
+
+// ─── パッケージ ───
+class RptPkg{
+  constructor(zip){this.zip=zip;this.docs={};this.dirty=new Set();}
+  static async open(buf){return new RptPkg(await JSZip.loadAsync(buf));}
+  has(p){return (p in this.docs)||!!this.zip.file(p);}
+  async str(p){if(p in this.docs)return rxSer(this.docs[p]);const f=this.zip.file(p);return f?f.async('string'):null;}
+  async xml(p){if(!(p in this.docs)){const s=await this.str(p);if(s==null)return null;this.docs[p]=rxParse(s);}return this.docs[p];}
+  touch(p){this.dirty.add(p);}
+  put(p,doc){this.docs[p]=doc;this.dirty.add(p);}
+  putBin(p,data){this.zip.file(p,data);}
+  async bin(p){const f=this.zip.file(p);return f?f.async('uint8array'):null;}
+  names(prefix){return Object.keys(this.zip.files).filter(n=>n.startsWith(prefix)&&!this.zip.files[n].dir);}
+  uniqueName(dir,stem,ext){let n=1;const ex=new Set(this.names(dir+'/'));Object.keys(this.docs).forEach(k=>ex.add(k));
+    while(ex.has(`${dir}/${stem}${n}.${ext}`))n++;return `${dir}/${stem}${n}.${ext}`;}
+  async build(){
+    for(const p of this.dirty) this.zip.file(p,rxSer(this.docs[p]));
+    this.dirty.clear();
+    return this.zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6},
+      mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+  }
+}
+async function rpRels(pkg,part){
+  const rp=rpRelsOf(part);let d=await pkg.xml(rp);
+  if(!d){d=rxParse(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${RPT_NS.rel}"/>`);pkg.put(rp,d);}
+  return d;
+}
+function rpRelList(d){return rxAll(d.documentElement,RPT_NS.rel,'Relationship').map(e=>({el:e,id:e.getAttribute('Id'),type:e.getAttribute('Type'),target:e.getAttribute('Target'),external:e.getAttribute('TargetMode')==='External'}));}
+function rpRelAdd(d,type,target,external){
+  const ids=new Set(rpRelList(d).map(r=>r.id));let n=1;while(ids.has('rId'+n))n++;
+  const e=d.createElementNS(RPT_NS.rel,'Relationship');
+  e.setAttribute('Id','rId'+n);e.setAttribute('Type',type);e.setAttribute('Target',target);
+  if(external)e.setAttribute('TargetMode','External');
+  d.documentElement.appendChild(e);return 'rId'+n;
+}
+async function rpCtOverride(pkg,part,ctype){
+  const d=await pkg.xml('[Content_Types].xml');
+  if(rxAll(d.documentElement,RPT_NS.ct,'Override').some(o=>o.getAttribute('PartName')==='/'+part))return;
+  const e=d.createElementNS(RPT_NS.ct,'Override');e.setAttribute('PartName','/'+part);e.setAttribute('ContentType',ctype);
+  d.documentElement.appendChild(e);pkg.touch('[Content_Types].xml');
+}
+async function rpCtOverrideOf(pkg,part){
+  const d=await pkg.xml('[Content_Types].xml');
+  const o=rxAll(d.documentElement,RPT_NS.ct,'Override').find(o=>o.getAttribute('PartName')==='/'+part);
+  return o?o.getAttribute('ContentType'):null;
+}
+
+// ─── テキスト ───
+function rpParaTs(p){return rxAll(p,RPT_NS.a,'t');}
+function rpParaText(p){return rpParaTs(p).map(t=>t.textContent).join('');}
+function rpSplice(ts,start,end,rep){
+  let pos=0,placed=false;
+  for(const t of ts){
+    const s=t.textContent,a=pos,b=pos+s.length;pos=b;
+    if(b<=start||a>=end)continue;
+    const ls=Math.max(start,a)-a,le=Math.min(end,b)-a;
+    if(!placed){t.textContent=s.slice(0,ls)+rep+s.slice(le);placed=true;}
+    else t.textContent=s.slice(0,ls)+s.slice(le);
+  }
+}
+// 段落内で正規表現置換（ランをまたいでもOK・書式は先頭ランを維持）
+function rpParaReplace(p,re,fn){
+  const ts=rpParaTs(p);if(!ts.length)return false;
+  const full=ts.map(t=>t.textContent).join('');
+  const g=new RegExp(re.source,re.flags.includes('g')?re.flags:re.flags+'g');
+  const ms=[...full.matchAll(g)];let changed=false;
+  for(let k=ms.length-1;k>=0;k--){
+    const m=ms[k];const rep=typeof fn==='function'?fn(...m):fn;
+    if(rep===m[0])continue;rpSplice(ts,m.index,m.index+m[0].length,rep);changed=true;
+  }
+  return changed;
+}
+function rpSetParaText(p,text){
+  const ts=rpParaTs(p);
+  if(ts.length){
+    ts[0].textContent=text;
+    ts.slice(1).forEach(t=>{const r=t.parentNode;if(r&&r.localName==='r')r.parentNode.removeChild(r);else t.textContent='';});
+    return;
+  }
+  const doc=p.ownerDocument;const end=rxChild(p,RPT_NS.a,'endParaRPr');
+  const r=doc.createElementNS(RPT_NS.a,'a:r');
+  const rPr=doc.createElementNS(RPT_NS.a,'a:rPr');
+  if(end){for(const at of end.attributes)rPr.setAttribute(at.name,at.value);for(const c of end.children)rPr.appendChild(c.cloneNode(true));}
+  const t=doc.createElementNS(RPT_NS.a,'a:t');t.textContent=text;
+  r.appendChild(rPr);r.appendChild(t);p.insertBefore(r,end||null);
+}
+
+// ─── 図形 ───
+function rpShapes(doc){
+  const tree=doc.getElementsByTagNameNS(RPT_NS.p,'spTree')[0];const out=[];
+  for(const el of tree.children){
+    const ln=el.localName;if(!['sp','pic','graphicFrame','grpSp','cxnSp'].includes(ln))continue;
+    const cNvPr=el.getElementsByTagNameNS(RPT_NS.p,'cNvPr')[0];
+    let xfrm=null;
+    if(ln==='graphicFrame')xfrm=rxChild(el,RPT_NS.p,'xfrm');
+    else{const sp=rxChild(el,RPT_NS.p,ln==='grpSp'?'grpSpPr':'spPr');xfrm=rxChild(sp,RPT_NS.a,'xfrm');}
+    const off=rxChild(xfrm,RPT_NS.a,'off'),ext=rxChild(xfrm,RPT_NS.a,'ext');
+    const tx=ln==='sp'?rxChild(el,RPT_NS.p,'txBody'):null;
+    const paras=tx?rxAll(tx,RPT_NS.a,'p'):[];
+    out.push({el,kind:ln,name:cNvPr?cNvPr.getAttribute('name')||'':'',descr:cNvPr?cNvPr.getAttribute('descr')||'':'',cNvPr,
+      x:+(off&&off.getAttribute('x')||0),y:+(off&&off.getAttribute('y')||0),
+      cx:+(ext&&ext.getAttribute('cx')||0),cy:+(ext&&ext.getAttribute('cy')||0),off,ext,
+      paras,texts:paras.map(rpParaText),tbl:ln==='graphicFrame'?el.getElementsByTagNameNS(RPT_NS.a,'tbl')[0]||null:null});
+  }
+  return out;
+}
+function rpMaxShapeId(doc){return Math.max(0,...rxAll(doc.documentElement,RPT_NS.p,'cNvPr').map(e=>+e.getAttribute('id')||0));}
+
+// ─── スライド一覧・分類 ───
+async function rpSlides(pkg){
+  const pres=await pkg.xml('ppt/presentation.xml');
+  const rels={};rpRelList(await rpRels(pkg,'ppt/presentation.xml')).forEach(r=>rels[r.id]=r);
+  const lst=pres.getElementsByTagNameNS(RPT_NS.p,'sldIdLst')[0];
+  const out=[];
+  for(const e of rxAll(lst,RPT_NS.p,'sldId')){
+    const rid=e.getAttributeNS(RPT_NS.r,'id');
+    out.push({el:e,id:+e.getAttribute('id'),rid,path:rpResolve('ppt/presentation.xml',rels[rid].target)});
+  }
+  return out;
+}
+async function rpLoadSlide(pkg,s){
+  s.doc=await pkg.xml(s.path);
+  s.shapes=rpShapes(s.doc);
+  s.paraTexts=rxAll(s.doc.documentElement,RPT_NS.a,'p').map(rpParaText);
+  s.text=s.paraTexts.join('\n');
+  rpClassify(s);return s;
+}
+function rpClassify(s){
+  s.org=null;
+  const title=s.shapes.find(sh=>sh.kind==='sp'&&/^\s*(UN|SCH|MED|IS)\s*｜/.test(sh.texts[0]||''));
+  const m=title?title.texts[0].match(/^\s*(UN|SCH|MED|IS)\s*｜/):null;
+  if(m)s.org=m[1];
+  s.title=title?title.texts[0].trim():'';
+  const t=s.text;
+  if(RPT_COVER_RE.test(t))s.kind='cover';
+  else if(/振り返り月次レポート/.test(t))s.kind='divider';
+  else if(t.includes('【全事業部共通】KPI進捗'))s.kind='kpi';
+  else if(!s.org)s.kind='other';
+  else if(t.includes('エグゼクティブサマリー'))s.kind='exec';
+  else if(t.includes('アクセス当月実績'))s.kind=s.shapes.some(sh=>sh.kind==='sp'&&(sh.texts[0]||'').trim()==='セッション'&&sh.texts.length>=2)?'access':'access_spot';
+  else if(t.includes('CV当月実績'))s.kind='cv';
+  else if(/施策評価｜コラム/.test(t))s.kind='column';
+  else if(/施策評価｜実績事例/.test(t))s.kind='case';
+  else s.kind='other';
+}
+async function rptAnalyze(pkg){
+  const slides=await rpSlides(pkg);
+  for(const s of slides)await rpLoadSlide(pkg,s);
+  const covers=slides.map((s,i)=>s.kind==='cover'?i:-1).filter(i=>i>=0);
+  if(!covers.length)throw new Error('「◯月度月次定例レポート」の表紙スライドが見つかりません。');
+  const start=covers[0],end=covers.length>1?covers[1]:slides.length;
+  const block=slides.slice(start,end);
+  const month=+block[0].text.match(RPT_COVER_RE)[1];
+  // 先頭ブロックが「何月の振り返り」かを中身のデータで判定（表紙の表記がずれていても正しく動くように）
+  let dataMonth=null;
+  for(const s of block){const m=s.text.match(/※MQL：\s*(\d{1,2})\/\d{1,2}CVまで/);if(m){dataMonth=+m[1];break;}}
+  if(dataMonth==null){for(const s of block){const m=s.text.match(/(\d{1,2})月振り返り月次レポート/);if(m){dataMonth=+m[1];break;}}}
+  if(dataMonth==null)dataMonth=month===1?12:month-1;
+  const pres=await pkg.xml('ppt/presentation.xml');
+  const sz=pres.getElementsByTagNameNS(RPT_NS.p,'sldSz')[0];
+  const status=await rptStatusRead(pkg);
+  const markers={};RPT_ORGS.forEach(o=>markers[o]={stale:0,partial:0,ok:0,total:0});let markersCommon=0;
+  block.forEach(s=>{s.shapes.filter(sh=>sh.name===RPT_MARKER_NAME).forEach(sh=>{
+    const st=(sh.descr.match(/OCD_marker:(\w+)/)||[0,'stale'])[1];
+    if(s.org){markers[s.org][st]=(markers[s.org][st]||0)+1;markers[s.org].total++;}else markersCommon++;});});
+  return {slides,block,blockStart:start,month,dataMonth,sldCx:+sz.getAttribute('cx'),sldCy:+sz.getAttribute('cy'),status,markers,markersCommon};
+}
+// 事業部ごとの差し替え対象を特定
+function rptTargets(an,org){
+  const B=an.block,res={};
+  const kpi=B.find(s=>s.kind==='kpi');
+  if(kpi){
+    const lbl=kpi.shapes.find(sh=>sh.kind==='sp'&&(sh.texts.join('').trim()===org));
+    const pics=kpi.shapes.filter(sh=>sh.kind==='pic');
+    if(lbl&&pics.length){
+      const cand=pics.filter(p=>p.y>=lbl.y-50000).sort((a,b)=>(Math.abs(a.x-lbl.x)+(a.y-lbl.y))-(Math.abs(b.x-lbl.x)+(b.y-lbl.y)));
+      if(cand.length)res.kpi={slide:kpi,pic:cand[0]};
+    }
+  }
+  const mine=B.filter(s=>s.org===org);
+  const bigPic=s=>s.shapes.filter(sh=>sh.kind==='pic'&&sh.y<an.sldCy).sort((a,b)=>b.cx*b.cy-a.cx*a.cy)[0];
+  const ex=mine.find(s=>s.kind==='exec');
+  if(ex)res.exec={slide:ex,pic:bigPic(ex),rates:ex.shapes.filter(sh=>sh.kind==='sp'&&/^当月まで達成率/.test((sh.texts[0]||'').trim())).sort((a,b)=>a.x-b.x)};
+  const ac=mine.find(s=>s.kind==='access');
+  if(ac){
+    const pics=ac.shapes.filter(sh=>sh.kind==='pic'&&sh.y<an.sldCy).sort((a,b)=>b.cx*b.cy-a.cx*a.cy).slice(0,2).sort((a,b)=>a.y-b.y);
+    res.access={slide:ac,top:pics[0]||null,bottom:pics[1]||null,
+      sess:ac.shapes.find(sh=>sh.kind==='sp'&&(sh.texts[0]||'').trim()==='セッション'&&sh.texts.length>=2),
+      mql:ac.shapes.find(sh=>sh.kind==='sp'&&(sh.texts[0]||'').trim()==='MQL'&&sh.texts.length>=2)};
+  }
+  const cv=mine.find(s=>s.kind==='cv');
+  if(cv)res.cv={slide:cv,pic:bigPic(cv),counts:cv.shapes.filter(sh=>sh.kind==='sp'&&sh.texts.length>=2&&rptCvLabelKey((sh.texts[0]||'').trim())&&/^[\s\d０-９,，]*$/.test(sh.texts[1]||''))};
+  const sp=RPT_SPOT_ENABLED?mine.find(s=>s.kind==='access_spot'):null; // スポット分析（P6）は2026-09-29以降不要
+  if(sp){
+    const pics=sp.shapes.filter(sh=>sh.kind==='pic'&&sh.y<an.sldCy).sort((a,b)=>b.cx*b.cy-a.cx*a.cy).slice(0,2).sort((a,b)=>a.y-b.y);
+    const lbls=sp.shapes.filter(sh=>sh.kind==='sp'&&sh.texts.length===1&&/^\s*\d{1,2}月\s*$/.test(sh.texts[0])).sort((a,b)=>a.y-b.y);
+    if(pics.length===2)res.spot={slide:sp,top:pics[0],bottom:pics[1],labels:lbls};
+  }
+  for(const key of ['column','case']){
+    const s=mine.find(x=>x.kind===key);if(!s)continue;
+    const p=s.shapes.find(sh=>sh.kind==='pic'&&sh.name==='OCD_表画像');
+    const t=p||s.shapes.find(sh=>sh.tbl);
+    const hd=s.shapes.find(sh=>sh.kind==='sp'&&/公開(コラム|事例)のKPI実績|上位10位/.test(sh.texts[0]||''));
+    if(t)res[key]={slide:s,frame:t,isPic:!!p,heading:hd||null,links:rptSlideLinks(s).filter(u=>/datastudio|lookerstudio/.test(u))};
+  }
+  res.links=ac?rptSlideLinks(ac).filter(u=>/datastudio|lookerstudio/.test(u)):[];
+  res.spotLinks=sp?rptSlideLinks(sp).filter(u=>/datastudio|lookerstudio|analytics\.google/.test(u)):[];
+  return res;
+}
+function rptSlideLinks(s){return s._links||[];}
+// スポット分析（P6）：2026-09-29に不要となったため、新規作成時は複製せず、差し替えもしない
+const RPT_SPOT_ENABLED=false;
+async function rptLoadLinks(pkg,an){
+  for(const s of an.block){s._links=rpRelList(await rpRels(pkg,s.path)).filter(r=>r.type===RPT_RT.hyperlink&&r.external).map(r=>r.target);}
+}
+function rptCvLabelKey(l){
+  if(/問合|問い合/.test(l))return 'inquiry';
+  if(/会社案内|サービス資料|資料/.test(l))return 'service_dl';
+  if(/カタログ/.test(l))return 'catalog';
+  if(/^WP|ホワイトペーパー/.test(l))return 'wp_dl';
+  if(/申込|申し込/.test(l))return 'moushikomi';
+  if(/展示会/.test(l))return 'exhibition';
+  if(/イベント|研究会/.test(l))return 'event';
+  return null;
+}
+
+// ─── ブロック複製 ───
+async function rpCopyPartTree(pkg,srcPath,newStemInfo){
+  // 汎用：パーツとそのrels内の内部パーツを新しい名前で複製（チャート用）
+  const dir=rpDir(srcPath),base=rpBase(srcPath),m=base.match(/^(.*?)(\d*)\.([^.]+)$/);
+  const dst=pkg.uniqueName(dir,m[1],m[3]);
+  const isXml=/\.xml$/i.test(base);
+  if(isXml)pkg.put(dst,rxParse(await pkg.str(srcPath)));else pkg.putBin(dst,await pkg.bin(srcPath));
+  const ct=await rpCtOverrideOf(pkg,srcPath);if(ct)await rpCtOverride(pkg,dst,ct);
+  if(pkg.has(rpRelsOf(srcPath))){
+    const src=rpRelList(await rpRels(pkg,srcPath));
+    const nd=rxParse(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${RPT_NS.rel}"/>`);
+    for(const r of src){
+      let target=r.target;
+      if(!r.external){const abs=rpResolve(srcPath,r.target);if(pkg.has(abs)){const c=await rpCopyPartTree(pkg,abs);target=rpRel(dst,c);}}
+      const e=nd.createElementNS(RPT_NS.rel,'Relationship');e.setAttribute('Id',r.id);e.setAttribute('Type',r.type);e.setAttribute('Target',target);
+      if(r.external)e.setAttribute('TargetMode','External');nd.documentElement.appendChild(e);
+    }
+    pkg.put(rpRelsOf(dst),nd);
+  }
+  return dst;
+}
+async function rpCopyNotes(pkg,notesPath,newSlidePath){
+  const dst=pkg.uniqueName('ppt/notesSlides','notesSlide','xml');
+  pkg.put(dst,rxParse(await pkg.str(notesPath)));
+  await rpCtOverride(pkg,dst,RPT_CT.notes);
+  const src=rpRelList(await rpRels(pkg,notesPath));
+  const nd=rxParse(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${RPT_NS.rel}"/>`);
+  for(const r of src){
+    let target=r.target;
+    if(!r.external){const abs=rpResolve(notesPath,r.target);target=r.type===RPT_RT.slide?rpRel(dst,newSlidePath):rpRel(dst,abs);}
+    const e=nd.createElementNS(RPT_NS.rel,'Relationship');e.setAttribute('Id',r.id);e.setAttribute('Type',r.type);e.setAttribute('Target',target);
+    if(r.external)e.setAttribute('TargetMode','External');nd.documentElement.appendChild(e);
+  }
+  pkg.put(rpRelsOf(dst),nd);return dst;
+}
+async function rptDuplicateBlock(pkg,an){
+  const block=RPT_SPOT_ENABLED?an.block:an.block.filter(s=>s.kind!=='access_spot'); // スポット分析（P6）は複製しない
+  const pres=await pkg.xml('ppt/presentation.xml');const presRels=await rpRels(pkg,'ppt/presentation.xml');
+  const lst=pres.getElementsByTagNameNS(RPT_NS.p,'sldIdLst')[0];
+  let maxId=Math.max(255,...an.slides.map(s=>s.id));
+  const mapPath={};
+  block.forEach(s=>{mapPath[s.path]=pkg.uniqueName('ppt/slides','slide','xml');pkg.docs[mapPath[s.path]]=null;});
+  const created=[];
+  for(const s of block){
+    const np=mapPath[s.path];
+    const doc=rxParse(await pkg.str(s.path));
+    // レビューコメントは複製しない
+    rxAll(doc.documentElement,RPT_NS.p188,'commentRel').forEach(e=>{const ext=e.parentNode,l=ext.parentNode;l.removeChild(ext);if(!l.children.length)l.parentNode.removeChild(l);});
+    rxAll(doc.documentElement,RPT_NS.p14,'creationId').forEach(e=>e.setAttribute('val',String(rpRand32())));
+    pkg.put(np,doc);
+    const src=rpRelList(await rpRels(pkg,s.path));
+    const nd=rxParse(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${RPT_NS.rel}"/>`);
+    for(const r of src){
+      if(r.type===RPT_RT.comments2018||r.type===RPT_RT.commentsOld)continue;
+      let target=r.target;
+      if(!r.external){
+        const abs=rpResolve(s.path,r.target);
+        if(r.type===RPT_RT.slide){if(mapPath[abs])target=rpRel(np,mapPath[abs]);}
+        else if(r.type===RPT_RT.notesSlide){target=rpRel(np,await rpCopyNotes(pkg,abs,np));}
+        else if(r.type===RPT_RT.chart){target=rpRel(np,await rpCopyPartTree(pkg,abs));}
+        else target=rpRel(np,abs);
+      }
+      const e=nd.createElementNS(RPT_NS.rel,'Relationship');e.setAttribute('Id',r.id);e.setAttribute('Type',r.type);e.setAttribute('Target',target);
+      if(r.external)e.setAttribute('TargetMode','External');nd.documentElement.appendChild(e);
+    }
+    pkg.put(rpRelsOf(np),nd);
+    await rpCtOverride(pkg,np,RPT_CT.slide);
+    const rid=rpRelAdd(presRels,RPT_RT.slide,'slides/'+rpBase(np));
+    const e=pres.createElementNS(RPT_NS.p,'p:sldId');e.setAttribute('id',String(++maxId));e.setAttributeNS(RPT_NS.r,'r:id',rid);
+    lst.insertBefore(e,block[0].el);
+    created.push(np);
+  }
+  pkg.touch('ppt/presentation.xml');pkg.touch(rpRelsOf('ppt/presentation.xml'));
+  return created;
+}
+
+// ─── 付箋（要更新） ───
+// state: stale=データ・コメントとも前月のまま / partial=データ一部未更新 / ok=コメントのみ前月のまま
+function rptSetMarker(doc,sldCx,sldCy,state,N,detail,createIfMissing){
+  const st=RPT_MARKER_STYLE[state];const text=rptMarkerText(state,N,detail);
+  const tree=doc.getElementsByTagNameNS(RPT_NS.p,'spTree')[0];
+  let sp=[...tree.children].find(el=>{const c=el.getElementsByTagNameNS(RPT_NS.p,'cNvPr')[0];return c&&c.getAttribute('name')===RPT_MARKER_NAME;});
+  if(!sp&&!createIfMissing)return false;
+  const cx=6300000,cy=300000,x=76200,y=sldCy-cy-60000;
+  const id=sp?sp.getElementsByTagNameNS(RPT_NS.p,'cNvPr')[0].getAttribute('id'):rpMaxShapeId(doc)+1;
+  const nsp=rxFrag(doc,`<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="${RPT_MARKER_NAME}" descr="OCD_marker:${state}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr><p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="${st.fill}"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="${st.line}"/></a:solidFill></a:ln></p:spPr><p:txBody><a:bodyPr wrap="square" lIns="72000" tIns="18000" rIns="72000" bIns="18000" anchor="ctr"><a:noAutofit/></a:bodyPr><a:lstStyle/><a:p><a:pPr algn="l"/><a:r><a:rPr lang="ja-JP" altLang="en-US" sz="1000" b="1"><a:solidFill><a:srgbClr val="${st.text}"/></a:solidFill></a:rPr><a:t>${rxEsc(text)}</a:t></a:r></a:p></p:txBody></p:sp>`);
+  if(sp)tree.replaceChild(nsp,sp);else tree.appendChild(nsp);
+  return true;
+}
+
+// ─── 画像差し替え ───
+async function rptReplacePic(pkg,slide,shape,png,tag,box){
+  pkg._media=pkg._media||new Map();
+  let media=pkg._media.get(png);
+  if(!media){media=pkg.uniqueName('ppt/media','ocd_'+tag+'_','png');pkg.putBin(media,png.bytes);pkg._media.set(png,media);}
+  const rels=await rpRels(pkg,slide.path);
+  const rid=rpRelAdd(rels,RPT_RT.image,rpRel(slide.path,media));pkg.touch(rpRelsOf(slide.path));
+  const blip=shape.el.getElementsByTagNameNS(RPT_NS.a,'blip')[0];
+  const old=blip.getAttributeNS(RPT_NS.r,'embed');
+  blip.setAttributeNS(RPT_NS.r,'r:embed',rid);
+  [...blip.children].forEach(c=>{if(c.localName==='extLst')blip.removeChild(c);});
+  const bf=blip.parentNode;const src=rxChild(bf,RPT_NS.a,'srcRect');if(src)bf.removeChild(src);
+  // 元の枠内に縦横比を保って収める（左上基準）
+  const B=box||{x:shape.x,y:shape.y,cx:shape.cx,cy:shape.cy};
+  const sc=Math.min(B.cx/png.w,B.cy/png.h);
+  const ncx=Math.round(png.w*sc),ncy=Math.round(png.h*sc);
+  shape.off.setAttribute('x',B.x);shape.off.setAttribute('y',B.y);
+  shape.ext.setAttribute('cx',ncx);shape.ext.setAttribute('cy',ncy);
+  pkg.touch(slide.path);
+  if(old&&!new RegExp('="'+old+'"').test(rxSer(slide.doc))){
+    const r=rpRelList(rels).find(r=>r.id===old);if(r)r.el.parentNode.removeChild(r.el);
+  }
+}
+
+// ─── 表を画像に差し替え（コラム・実績事例） ───
+// 画像を置ける範囲＝表の左上から、下にある見出し・文章の手前まで（重なり防止）
+function rptTableBox(slide,frame){
+  const m=(frame.descr||'').match(/OCD_box:(-?\d+),(-?\d+),(\d+),(\d+)/);
+  if(m)return {x:+m[1],y:+m[2],cx:+m[3],cy:+m[4]};
+  const below=slide.shapes.filter(sh=>sh!==frame&&sh.y>frame.y+100000&&sh.x<frame.x+frame.cx&&sh.x+sh.cx>frame.x&&sh.name!==RPT_MARKER_NAME);
+  const limit=below.length?Math.min(...below.map(sh=>sh.y)):frame.y+frame.cy*3;
+  return {x:frame.x,y:frame.y,cx:frame.cx,cy:Math.max(frame.cy,limit-frame.y-60000)};
+}
+async function rptSetTableImage(pkg,slide,T,png,tag,sldCy,N,lbl){
+  const doc=slide.doc,f=T.frame;
+  const m=(f.descr||'').match(/OCD_box:(-?\d+),(-?\d+),(\d+),(\d+)/);
+  const X=m?+m[1]:f.x,Y=m?+m[2]:f.y;let W=m?+m[3]:f.cx;
+  let H=Math.round(W*png.h/png.w);const maxH=Math.round((sldCy-Y)*0.72);
+  if(H>maxH){H=maxH;W=Math.round(H*png.w/png.h);}
+  // 表が縦に大きくなった分、下にある見出し・文章をずらす（重なり防止）
+  const oldBottom=f.y+f.cy,delta=(Y+H)-oldBottom;
+  if(Math.abs(delta)>9525){
+    const lower=slide.shapes.filter(sh=>sh!==f&&sh.name!==RPT_MARKER_NAME&&sh.off&&sh.y>=f.y+19050&&sh.y<sldCy);
+    const newBottom=Y+H,limit=sldCy-190500; // 下端から約20px手前まで
+    const lowerBottom=lower.length?Math.max(...lower.map(sh=>Math.min(sh.y+sh.cy,sldCy))):oldBottom;
+    const need=lowerBottom-oldBottom,avail=limit-newBottom;
+    const factor=1; // 14ptのまま下へずらす（縮小・圧縮しない。はみ出す分はコメントの文章量で調整）
+    lower.forEach(sh=>{
+      const rel=Math.max(0,sh.y-oldBottom); // 表の範囲内にあった図形は表のすぐ下へ
+      const ny=factor<1?Math.round(newBottom+38100+rel*factor):(sh.y<oldBottom?newBottom+38100:sh.y+delta);
+      sh.off.setAttribute('y',String(ny));sh.y=ny;
+      if(factor<1&&sh.ext){
+        const ncy=Math.round(sh.cy*factor);sh.ext.setAttribute('cy',String(ncy));sh.cy=ncy;
+        // （文字サイズは下で14ptに統一するため、ここでは枠の高さだけ詰める）
+      }
+    });
+    // 表の下の見出し・文章は14pt（他ページと同じ）に統一
+    lower.forEach(sh=>{const tx=sh.kind==='sp'?rxChild(sh.el,RPT_NS.p,'txBody'):null;if(!tx)return;
+      rxAll(tx,RPT_NS.a,'rPr').concat(rxAll(tx,RPT_NS.a,'endParaRPr'),rxAll(tx,RPT_NS.a,'defRPr')).forEach(rp=>rp.setAttribute('sz','1400'));
+      const bp=rxChild(tx,RPT_NS.a,'bodyPr');if(bp)[...bp.children].forEach(c=>{if(c.localName==='normAutofit')bp.removeChild(c);});});
+    slide._shrink=factor;
+  }
+  const box={x:X,y:Y,cx:W,cy:H};
+  if(T.isPic){await rptReplacePic(pkg,slide,f,png,tag,box);f.cNvPr.setAttribute('descr',`OCD_box:${X},${Y},${W},${H}`);}
+  else{
+    pkg._media=pkg._media||new Map();
+    let media=pkg._media.get(png);
+    if(!media){media=pkg.uniqueName('ppt/media','ocd_'+tag+'_','png');pkg.putBin(media,png.bytes);pkg._media.set(png,media);}
+    const rels=await rpRels(pkg,slide.path);const rid=rpRelAdd(rels,RPT_RT.image,rpRel(slide.path,media));pkg.touch(rpRelsOf(slide.path));
+    const id=rpMaxShapeId(doc)+1;
+    const pic=rxFrag(doc,`<p:pic><p:nvPicPr><p:cNvPr id="${id}" name="OCD_表画像" descr="OCD_box:${X},${Y},${W},${H}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rid}"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${X}" y="${Y}"/><a:ext cx="${W}" cy="${H}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom><a:ln w="6350"><a:solidFill><a:srgbClr val="E2E8F0"/></a:solidFill></a:ln></p:spPr></p:pic>`);
+    f.el.parentNode.replaceChild(pic,f.el);
+  }
+  // 表の見出しを「上位10位」に
+  if(T.heading){rpSetParaText(T.heading.paras[0],`${N}月｜${lbl}パフォーマンス上位10位（表示回数順）`);}
+  pkg.touch(slide.path);
+  return {delta,factor:slide._shrink||1};
+}
+
+// ─── 反映状況（docProps/custom.xml） ───
+async function rptStatusRead(pkg){
+  const d=await pkg.xml('docProps/custom.xml');if(!d)return {};
+  const prop=rxAll(d.documentElement,RPT_NS.cp,'property').find(e=>e.getAttribute('name')===RPT_STATUS_PROP);
+  if(!prop)return {};
+  try{return JSON.parse(prop.textContent||'{}');}catch(e){return {};}
+}
+async function rptStatusWrite(pkg,obj){
+  let d=await pkg.xml('docProps/custom.xml');
+  if(!d){
+    d=rxParse(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="${RPT_NS.cp}" xmlns:vt="${RPT_NS.vt}"/>`);
+    pkg.put('docProps/custom.xml',d);await rpCtOverride(pkg,'docProps/custom.xml',RPT_CT.custom);
+    const root=await rpRels(pkg,'');
+    if(!rpRelList(root).some(r=>r.type===RPT_RT.customProps)){rpRelAdd(root,RPT_RT.customProps,'docProps/custom.xml');pkg.touch('_rels/.rels');}
+  }
+  const props=rxAll(d.documentElement,RPT_NS.cp,'property');
+  let prop=props.find(e=>e.getAttribute('name')===RPT_STATUS_PROP);
+  if(!prop){
+    prop=d.createElementNS(RPT_NS.cp,'property');
+    prop.setAttribute('fmtid','{D5CDD505-2E9C-101B-9397-08002B2CF9AE}');
+    prop.setAttribute('pid',String(Math.max(1,...props.map(p=>+p.getAttribute('pid')||0))+1));
+    prop.setAttribute('name',RPT_STATUS_PROP);
+    prop.appendChild(d.createElementNS(RPT_NS.vt,'vt:lpwstr'));
+    d.documentElement.appendChild(prop);
+  }
+  rxChild(prop,RPT_NS.vt,'lpwstr').textContent=JSON.stringify(obj);
+  pkg.touch('docProps/custom.xml');
+}
+
+// ─── 共通の月・日付置換（新規作成時） ───
+function rptLastDay(ym){const[y,m]=ym.split('-').map(Number);return new Date(y,m,0).getDate();}
+function rptNextMonthNum(ym){const m=+ym.slice(5);return m===12?1:m+1;}
+function rptHikiageText(ym,val){const n=+ym.slice(5);return val&&val.trim()?val.trim():`${n}/●●`;}
+function rptReplaceCommon(s,ym,hikiageByOrg,reflect){
+  const N=+ym.slice(5),K=rptNextMonthNum(ym),L=rptLastDay(ym);let n=0;
+  const ps=rxAll(s.doc.documentElement,RPT_NS.a,'p');
+  for(const p of ps){
+    let c=false;
+    c=rpParaReplace(p,RPT_COVER_RE,`${K}月度月次定例レポート`)||c; // 表紙＝レポートを更新する月（対象月の翌月）
+    c=rpParaReplace(p,/(\d{1,2})月振り返り月次レポート/,`${N}月振り返り月次レポート`)||c; // 振り返り＝対象月（例：対象月9月→「9月振り返り」）
+    if(s.kind==='divider'&&/^\s*\d{1,2}月\s*$/.test(rpParaText(p)))c=rpParaReplace(p,/\d{1,2}月/,`${N}月`)||c; // 中表紙の大きい月＝対象月（振り返る月。例：10月更新→「9月」）※2026-09-29変更
+    c=rpParaReplace(p,/(※セッション数は)\d{1,2}\/\d{1,2}(計測時の値)/,(m,a,b)=>`${a}${K}/1${b}`)||c;
+    c=rpParaReplace(p,/\d{1,2}\/\d{1,2}(以降に計測)/,(m,a)=>`${K}/4${a}`)||c;
+    c=rpParaReplace(p,/(※MQL：)\s*\d{1,2}\/\d{1,2}(CVまで)/,(m,a,b)=>`${a}${N}/${L}${b}`)||c;
+    if(s.org&&(!reflect||(hikiageByOrg[s.org]||'').trim()))c=rpParaReplace(p,/(引き?[あ上]がり情報：)\s*\d{1,2}\/[\d●]{1,2}(まで)/,(m,a,b)=>`${a}${rptHikiageText(ym,hikiageByOrg[s.org])}${b}`)||c;
+    if(c)n++;
+  }
+  if(n)s.dirtyText=true;
+  return n;
+}
+
+// ─── 計画の適用（本体） ───
+// plan={ym,orgs,perOrg:{UN:{kpi,cv,sesscv,rateMql,rateSql,mqlMonth,session,cvCounts,lookerTop,spotCur,colImg,caseImg,hikiage}}}
+async function rptApply(pkg,plan){
+  const log=[];const L=(org,msg,lvl)=>log.push({org:org||'共通',msg,lvl:lvl||'ok'});
+  let an=await rptAnalyze(pkg);await rptLoadLinks(pkg,an);
+  const N=+plan.ym.slice(5);const prevN=N===1?12:N-1;let mode;
+  const K=N===12?1:N+1;
+  if(an.dataMonth===N)mode='reflect';
+  else if(an.dataMonth===prevN)mode='create';
+  else throw new Error(`pptxの先頭は「${an.month}月度」（${an.dataMonth}月の振り返り）です。対象月（${N}月の振り返り）またはその前月ではないため処理を中止しました。`);
+  if(mode==='create'){
+    const old=an;
+    const oldSpot={};RPT_ORGS.forEach(o=>{const T=rptTargets(old,o);if(T.spot)oldSpot[o]=T.spot;});
+    const created=await rptDuplicateBlock(pkg,an);
+    const skipped=an.block.length-created.length;
+    L(null,`${an.month}月度のページ（${created.length}枚）を複製して、先頭に「${K}月度」（${N}月振り返り）を追加しました`+(skipped?`（スポット分析${skipped}枚は複製しません）`:''));
+    an=await rptAnalyze(pkg);await rptLoadLinks(pkg,an);
+    const hk={};RPT_ORGS.forEach(o=>hk[o]=plan.orgs.includes(o)?(plan.perOrg[o]||{}).hikiage:'');
+    let cnt=0,mk=0;
+    for(const s of an.block){
+      cnt+=rptReplaceCommon(s,plan.ym,hk);
+      if(!['cover','divider','kpi'].includes(s.kind)){rptSetMarker(s.doc,an.sldCx,an.sldCy,'stale',N,'',true);mk++;}
+      pkg.touch(s.path);
+    }
+    L(null,`月・日付の表記を置き換えました（${cnt}か所）`);
+    L(null,`前月のコピーのページ${mk}枚に「要更新」の付箋を付けました`);
+    an=await rptAnalyze(pkg);await rptLoadLinks(pkg,an);
+    // P6（スポット分析）：前月レポートの「当月」画像を、今月の「前月」枠へ引き継ぐ
+    for(const o of RPT_ORGS){
+      const os=oldSpot[o],T=rptTargets(an,o);if(!os||!T.spot)continue;
+      const ob=os.bottom.el.getElementsByTagNameNS(RPT_NS.a,'blip')[0].getAttributeNS(RPT_NS.r,'embed');
+      const orel=rpRelList(await rpRels(pkg,os.slide.path)).find(r=>r.id===ob);
+      if(orel){
+        const media=rpResolve(os.slide.path,orel.target);
+        const rels=await rpRels(pkg,T.spot.slide.path);const rid=rpRelAdd(rels,RPT_RT.image,rpRel(T.spot.slide.path,media));pkg.touch(rpRelsOf(T.spot.slide.path));
+        const blip=T.spot.top.el.getElementsByTagNameNS(RPT_NS.a,'blip')[0];const was=blip.getAttributeNS(RPT_NS.r,'embed');
+        blip.setAttributeNS(RPT_NS.r,'r:embed',rid);
+        const bf=blip.parentNode;const src=rxChild(bf,RPT_NS.a,'srcRect');if(src)bf.removeChild(src);
+        const ocx=os.bottom.cx,ocy=os.bottom.cy;const sc=Math.min(T.spot.top.cx/ocx,T.spot.top.cy/ocy);
+        T.spot.top.ext.setAttribute('cx',Math.round(ocx*sc));T.spot.top.ext.setAttribute('cy',Math.round(ocy*sc));
+        if(was&&!new RegExp('="'+was+'"').test(rxSer(T.spot.slide.doc))){const r=rpRelList(rels).find(r=>r.id===was);if(r)r.el.parentNode.removeChild(r.el);}
+      }
+      const lb=T.spot.labels;
+      if(lb.length>=2){rpSetParaText(lb[0].paras[0],`${prevN}月`);rpSetParaText(lb[lb.length-1].paras[0],`${N}月`);}
+      T.spot.slide.spotShifted=true;pkg.touch(T.spot.slide.path);
+      L(o,`スポット分析（P6相当）：前月の「${prevN}月」画像を上段に引き継ぎました`);
+    }
+  }
+  if(mode==='reflect'){
+    const hk={};plan.orgs.forEach(o=>hk[o]=(plan.perOrg[o]||{}).hikiage||'');let cnt=0;
+    for(const s of an.block){if(['cover','divider'].includes(s.kind)||(s.org&&plan.orgs.includes(s.org))){const n=rptReplaceCommon(s,plan.ym,hk,true);if(n){cnt+=n;pkg.touch(s.path);}}}
+    if(cnt)L(null,`月・日付の表記のずれを直しました（${cnt}か所）`);
+  }
+  const status=an.status||{};const st=status[plan.ym]||{};
+  for(const org of plan.orgs){
+    const d=plan.perOrg[org]||{};const T=rptTargets(an,org);
+    const tag=plan.ym.replace('-','')+'_'+org;
+    const miss={};const upd=s=>{if(s){miss[s.path]=miss[s.path]||{slide:s,list:[]};}};
+    const need=(s,name)=>{if(s){upd(s);miss[s.path].list.push(name);}};
+    // KPI進捗・エグゼクティブサマリー
+    if(d.kpi){
+      if(T.kpi){await rptReplacePic(pkg,T.kpi.slide,T.kpi.pic,d.kpi,tag+'_kpi');L(org,'KPI進捗（全事業部共通ページ）の画像を差し替えました');}
+      else L(org,'KPI進捗ページの枠が見つかりませんでした','warn');
+      if(T.exec&&T.exec.pic){await rptReplacePic(pkg,T.exec.slide,T.exec.pic,d.kpi,tag+'_exec');upd(T.exec.slide);L(org,'エグゼクティブサマリーの画像を差し替えました');}
+      else L(org,'エグゼクティブサマリーの画像枠が見つかりませんでした','warn');
+    }
+    if(T.exec&&T.exec.rates.length&&d.rateMql!=null){
+      const vals=[d.rateMql,d.rateSql];
+      T.exec.rates.slice(0,2).forEach((sh,i)=>{if(vals[i]!=null)rpParaReplace(sh.paras[0],/(当月まで達成率：).*$/,(m,a)=>a+vals[i]);});
+      pkg.touch(T.exec.slide.path);L(org,`当月まで達成率を更新しました（MQL ${d.rateMql}／SQL ${d.rateSql}）`);
+    }
+    // P5 アクセス推移
+    if(T.access){
+      const a=T.access;upd(a.slide);
+      if(d.lookerTop&&a.top){await rptReplacePic(pkg,a.slide,a.top,d.lookerTop,tag+'_ch');L(org,`チャネル別セッション数推移を差し替えました（${d.lookerTopSrc||'貼り付け画像'}）`);}
+      else need(a.slide,'チャネル別セッション数推移');
+      if(d.sesscv&&a.bottom){await rptReplacePic(pkg,a.slide,a.bottom,d.sesscv,tag+'_sm');L(org,`セッション数・MQL数推移を差し替えました（${d.sesscvSrc||'ダッシュボード'}）`);}
+      if(d.session!=null&&a.sess){rpSetParaText(a.sess.paras[1],d.session);pkg.touch(a.slide.path);L(org,`月間セッション数（${d.sessionSrc||'GA4'}）：${d.session}`);}
+      if(d.mqlMonth!=null&&a.mql){rpSetParaText(a.mql.paras[1],String(d.mqlMonth));pkg.touch(a.slide.path);L(org,`月間MQL数：${d.mqlMonth}`);}
+    }
+    // P6 スポット分析
+    if(T.spot){
+      upd(T.spot.slide);
+      if(d.spotPrev){await rptReplacePic(pkg,T.spot.slide,T.spot.top,d.spotPrev,tag+'_spotprev');L(org,`スポット分析（P6相当）：上段の「${prevN}月」を差し替えました（GA4から自動作成）`);}
+      else need(T.spot.slide,`上段の${prevN}月の表`);
+      if(d.spotCur){await rptReplacePic(pkg,T.spot.slide,T.spot.bottom,d.spotCur,tag+'_spot');L(org,`スポット分析（P6相当）：下段の「${N}月」を差し替えました（${d.spotSrc||'貼り付け画像'}）`);}
+      else need(T.spot.slide,`下段の${N}月の表`);
+      if(mode==='reflect'&&!T.spot.slide.spotShifted){/* 反映のみの場合、上段は作成時に引き継ぎ済み */}
+    }
+    // P7 CV推移
+    if(T.cv){
+      upd(T.cv.slide);
+      if(d.cv&&T.cv.pic){await rptReplacePic(pkg,T.cv.slide,T.cv.pic,d.cv,tag+'_cv');L(org,'CV種別推移のグラフを差し替えました');}
+      if(d.cvCounts){
+        const done=[];
+        T.cv.counts.forEach(sh=>{const k=rptCvLabelKey(sh.texts[0].trim());if(k&&d.cvCounts[k]!=null){rpSetParaText(sh.paras[1],String(d.cvCounts[k]));done.push(sh.texts[0].trim()+' '+d.cvCounts[k]);}});
+        if(done.length){pkg.touch(T.cv.slide.path);L(org,'月間CV件数：'+done.join('／'));}
+      }
+      if(d.hikiage&&d.hikiage.trim()){
+        if(mode==='reflect'){rxAll(T.cv.slide.doc.documentElement,RPT_NS.a,'p').forEach(p=>rpParaReplace(p,/(引き?[あ上]がり情報：)\s*\d{1,2}\/[\d●]{1,2}(まで)/,(m,a,b)=>a+d.hikiage.trim()+b));pkg.touch(T.cv.slide.path);}
+        L(org,`引き上がり情報の基準日：${d.hikiage.trim()}`);
+      }else{
+        const t=T.cv.slide.doc?rxAll(T.cv.slide.doc.documentElement,RPT_NS.a,'t').map(x=>x.textContent).join(''):'';
+        if(t.includes('●●')||mode==='create'){need(T.cv.slide,'引き上がり情報の基準日');L(org,`引き上がり情報の基準日が未入力のため「${N}/●●」のままです`,'warn');}
+      }
+    }
+    // P8/P9 コラム・実績事例（画像）
+    for(const [key,img,lbl] of [['column',d.colImg,'コラム'],['case',d.caseImg,'事例']]){
+      const X=T[key];if(!X)continue;upd(X.slide);
+      if(img){const r=await rptSetTableImage(pkg,X.slide,X,img,tag+'_'+key,an.sldCy,N,lbl);L(org,`${lbl}の表を「上位10位」の画像にしました`+(r.delta>9525?'（表が大きくなった分、下の見出し・文章を下にずらし、文字は14ptに統一）':''));}
+      else need(X.slide,`${lbl}の上位10位の表`);
+    }
+    // 付箋の状態を更新
+    for(const {slide,list} of Object.values(miss)){
+      const state=list.length?'partial':'ok';
+      rptSetMarker(slide.doc,an.sldCx,an.sldCy,state,N,list.join('・'),false);pkg.touch(slide.path);
+    }
+    st[org]={at:rptNowStr()};
+  }
+  status[plan.ym]=st;
+  await rptStatusWrite(pkg,status);
+  const app=await pkg.xml('docProps/app.xml');
+  if(app){const e=app.getElementsByTagName('Slides')[0];if(e){e.textContent=String((await rpSlides(pkg)).length);pkg.touch('docProps/app.xml');}}
+  return {mode,log,month:N};
+}
+function rptNowStr(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}/${z(d.getMonth()+1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`;}
+
+// ═════════════════════════════════════════════════════════════
+//  月次レポート出力（画面）
+// ═════════════════════════════════════════════════════════════
+const RPT_LS_KEY='ocd_rpt_prefs_v1';
+const RPT_ORG_NAME={UN:'企業ユニフォーム',SCH:'スクール',MED:'メディカル',IS:'インサイトセールス'};
+const rptS={ym:null,orgs:[],handle:null,file:null,buf:null,lastModified:0,an:null,
+  auto:{},looker:{},inited:false,busy:false,lastDry:null};
+
+function rptPrefs(){try{return JSON.parse(localStorage.getItem(RPT_LS_KEY)||'{}');}catch(e){return {};}}
+function rptSavePrefs(){try{localStorage.setItem(RPT_LS_KEY,JSON.stringify({orgs:rptS.orgs}));}catch(e){}}
+function rptEl(id){return document.getElementById(id);}
+function rptH(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function rptDefaultYM(){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function rptMonthNum(ym){return +ym.slice(5);}
+function rptPrevYM(ym){return prevYM(ym,1);}
+function rptFyStart(ym){return `${fyOfYm(ym)}-03`;}
+function rptHasActual(org,ym){
+  const d=getRawData(org,ym);
+  const t=Object.values(d.cv_by_type||{}).reduce((a,b)=>a+(b||0),0);
+  return (d.cv||0)+(d.sal||0)+(d.sql||0)+(d.jucyu||0)+t>0;
+}
+function rptFmtPct(v){if(v==null||!isFinite(v))return '—';let s=v.toFixed(1);if(s.endsWith('.0'))s=s.slice(0,-2);return s+'％';}
+
+// ─── 初期化 ───
+function rptInit(){
+  if(!rptS.inited){
+    const pf=rptPrefs();
+    rptS.ym=rptDefaultYM();rptS.orgs=Array.isArray(pf.orgs)?pf.orgs:[];
+    rptEl('rptYM').value=rptS.ym;
+    rptEl('rptYM').addEventListener('change',()=>{rptS.ym=rptEl('rptYM').value||rptDefaultYM();rptS.auto={};rptRenderAll();});
+    rptS.inited=true;
+    rptIdbGet('lastGa4').then(v=>{if(v&&v.txt&&!rptS.ga4){try{rptSetGa4(JSON.parse(v.txt),v.name+'（前回読み込み分）');}catch(e){}}}).catch(()=>{});
+    rptIdbGet('lastHandle').then(h=>{if(h){rptS.savedHandle=h;rptEl('rptReopen').style.display='';rptEl('rptReopen').textContent='前回のファイルを開く（'+h.name+'）';}}).catch(()=>{});
+    if(!window.showOpenFilePicker)rptEl('rptFsaNote').style.display='';
+  }
+  rptRenderAll();
+}
+function rptRenderYMNote(){const el=rptEl('rptYMNote');if(!el)return;const N=rptMonthNum(rptS.ym),K=N===12?1:N+1;
+  el.innerHTML=`表紙：<b>${K}月度月次定例レポート</b>／中表紙：<b>${N}月</b>・<b>${N}月振り返り月次レポート</b>（初期値はツールを開いた月の前月）`;}
+function rptRenderAll(){rptRenderYMNote();rptRenderOrgChecks();rptRenderGa4Info();rptRenderAnalysis();rptRenderOrgPanels();rptRenderSaveArea();}
+
+function rptRenderOrgChecks(){
+  const ym=rptS.ym;
+  rptEl('rptOrgChecks').innerHTML=RPT_ORGS.map(o=>{
+    const ok=rptHasActual(o,ym);const on=rptS.orgs.includes(o)&&ok;
+    return `<label class="rpt-org-chk ${ok?'':'rpt-disabled'}"><input type="checkbox" ${on?'checked':''} ${ok?'':'disabled'} onchange="rptToggleOrg('${o}',this.checked)"><b>${o}</b><span class="rpt-muted">${RPT_ORG_NAME[o]}</span>
+      <span class="rpt-fresh ${ok?'ok':'ng'}">${ok?`✓ ${rptMonthNum(ym)}月の実績あり`:`⚠ ${rptMonthNum(ym)}月の実績なし`}</span></label>`;
+  }).join('')+
+  (RPT_ORGS.some(o=>!rptHasActual(o,ym))?`<div class="rpt-note">「${rptMonthNum(ym)}月の実績なし」の事業部は選べません。先に「🚀 BOXファイル取込」などでHubSpot実績を取り込んでください。</div>`:'');
+}
+function rptToggleOrg(o,on){
+  rptS.orgs=RPT_ORGS.filter(x=>x===o?on:rptS.orgs.includes(x));rptSavePrefs();rptRenderOrgPanels();rptRenderAnalysis();rptRenderSaveArea();
+}
+function rptActiveOrgs(){return rptS.orgs.filter(o=>rptHasActual(o,rptS.ym));}
+
+// ─── ファイル選択 ───
+async function rptPick(){
+  if(window.showOpenFilePicker){
+    try{
+      const [h]=await showOpenFilePicker({id:'ocd-monthly-report',multiple:false,
+        types:[{description:'PowerPoint',accept:{'application/vnd.openxmlformats-officedocument.presentationml.presentation':['.pptx']}}]});
+      await rptLoadHandle(h);
+    }catch(e){if(e&&e.name!=='AbortError')rptErr('ファイルを開けませんでした：'+e.message);}
+  }else rptEl('rptFileInput').click();
+}
+async function rptReopen(){
+  const h=rptS.savedHandle;if(!h)return;
+  try{
+    if((await h.queryPermission({mode:'read'}))!=='granted'){const p=await h.requestPermission({mode:'read'});if(p!=='granted')return;}
+    await rptLoadHandle(h);
+  }catch(e){rptErr('前回のファイルを開けませんでした。「pptxを選択」から選び直してください。（'+e.message+'）');}
+}
+async function rptLoadHandle(h){
+  rptS.handle=h;rptIdbSet('lastHandle',h).catch(()=>{});
+  await rptLoadFile(await h.getFile());
+}
+async function rptLoadInput(inp){if(inp.files[0]){rptS.handle=null;await rptLoadFile(inp.files[0]);}inp.value='';}
+async function rptLoadFile(f){
+  rptBusy(true,'pptxを読み込んでいます…');
+  try{
+    const buf=await f.arrayBuffer();
+    const pkg=await RptPkg.open(buf);const an=await rptAnalyze(pkg);await rptLoadLinks(pkg,an);
+    Object.assign(rptS,{file:f,buf,lastModified:f.lastModified,an,lastDry:null});
+    rptEl('rptFileInfo').innerHTML=`<b>${rptH(f.name)}</b>　<span class="rpt-muted">更新：${new Date(f.lastModified).toLocaleString('ja-JP')}／${(f.size/1048576).toFixed(1)}MB／${an.slides.length}枚</span>`+(rptS.handle?'':'<span class="rpt-warn-inline">（上書き保存はできません。保存時はダウンロードになります）</span>');
+    rptRenderAll();
+  }catch(e){rptErr('pptxの読み込みに失敗しました：'+e.message);}
+  finally{rptBusy(false);}
+}
+function rptMode(){
+  const an=rptS.an;if(!an)return null;const N=rptMonthNum(rptS.ym),P=rptMonthNum(rptPrevYM(rptS.ym));
+  if(an.dataMonth===N)return 'reflect';if(an.dataMonth===P)return 'create';return 'mismatch';
+}
+
+// ─── 分析結果・反映状況 ───
+function rptRenderAnalysis(){
+  const el=rptEl('rptAnalysis');const an=rptS.an;
+  if(!an){el.innerHTML='';return;}
+  const N=rptMonthNum(rptS.ym),K=N===12?1:N+1,mode=rptMode();
+  let head='';
+  if(mode==='create')head=`<div class="rpt-mode create">🆕 先頭は「${an.month}月度」（${an.dataMonth}月の振り返り・${an.block.length}枚）です。保存時に<b>このブロックを複製して「${K}月度」（${N}月振り返り）を先頭に追加</b>し（スポット分析のページは複製しません）、選択した事業部を反映します。<br>⚠ ほかの担当者がすでに${K}月度を作成・保存している場合は、OneDriveの同期が終わるまでこの表示のままになります。先に作業した人がいる場合は、同期（緑のチェック）を待ってからファイルを選び直してください。</div>`;
+  else if(mode==='reflect')head=`<div class="rpt-mode reflect">🔁 ${N}月振り返りのブロック（表紙「${an.month}月度」・${an.block.length}枚）はすでに作成済みです。<b>このブロックに、選択した事業部だけを反映</b>します。${an.month!==K?`表紙・中表紙の月の表記は「${K}月度」「${N}月」「${N}月振り返り」に直します。`:''}ほかの事業部のページには触れません。</div>`;
+  else head=`<div class="rpt-mode ng">⚠ pptxの先頭は「${an.month}月度」（${an.dataMonth}月の振り返り）です。対象月（${N}月の振り返り）またはその前月のブロックではないため、このままでは保存できません。対象月を確認してください。</div>`;
+  const st=(an.status||{})[rptS.ym]||{};
+  const mk=o=>{const m=an.markers[o];if(mode!=='reflect'||!m)return '<span class="rpt-muted">—</span>';if(!m.total)return '<span class="ok">なし</span>';
+    return [m.stale?`<span class="rpt-mk stale">データ・コメント前月 ${m.stale}</span>`:'',m.partial?`<span class="rpt-mk partial">データ一部未更新 ${m.partial}</span>`:'',m.ok?`<span class="rpt-mk ok">コメントのみ ${m.ok}</span>`:''].join(' ');};
+  const rows=RPT_ORGS.map(o=>{const s=st[o];
+    return `<tr><td><b>${o}</b></td><td>${rptHasActual(o,rptS.ym)?'<span class="ok">✓ あり</span>':'<span class="ng">なし</span>'}</td>
+      <td>${s?`<span class="ok">✅ 反映済み</span> <span class="rpt-muted">${rptH(s.at||'')}</span>`:'<span class="rpt-muted">⬜ 未反映</span>'}</td><td>${mk(o)}</td></tr>`;}).join('');
+  el.innerHTML=head+`<table class="rpt-tbl"><thead><tr><th>事業部</th><th>ダッシュボードの${N}月実績</th><th>${N}月度の反映状況（pptx）</th><th>「要更新」付箋の残り（枚）</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ─── 事業部パネル ───
+function rptRenderOrgPanels(){
+  const box=rptEl('rptOrgs');const orgs=rptActiveOrgs();
+  if(!rptS.an||!orgs.length){box.innerHTML=rptS.an?'<div class="card card-pad rpt-card rpt-muted">反映する事業部を選んでください。</div>':'';return;}
+  box.innerHTML=orgs.map(o=>rptOrgPanelHtml(o)).join('');
+  orgs.forEach(o=>{rptRenderAuto(o);RPT_PASTE_KEYS.forEach(k=>rptRenderPaste(o,k));rptBindPaste(o);});
+}
+const RPT_PASTE_KEYS=['top','bottom'];
+function rptTargetsOf(o){return rptS.an?rptTargets(rptS.an,o):{};}
+function rptLinkBtns(links,label){return (links||[]).map((u,i)=>`<a class="btn btn-ghost btn-sm" href="${rptH(u)}" target="_blank" rel="noopener">🔗 ${label}${links.length>1?' '+(i+1):''}</a>`).join('');}
+function rptPasteBox(o,k,label){return `<div><div class="rpt-paste-lbl">${label}</div><div class="rpt-paste" id="rptPaste_${o}_${k}" contenteditable="true" data-org="${o}" data-k="${k}"></div></div>`;}
+function rptOrgPanelHtml(o){
+  const T=rptTargetsOf(o);const N=rptMonthNum(rptS.ym),P=rptMonthNum(rptPrevYM(rptS.ym));const lk=rptLk(o);
+  const v=rptAutoValues(o,rptS.ym);
+  const sec=(t,sub,body)=>`<div class="rpt-sec"><div class="rpt-sec-t">${t} <span class="rpt-muted">${sub||''}</span></div>${body}</div>`;
+  let h=`<div class="card card-pad rpt-card rpt-org">
+    <div class="rpt-org-hd"><span class="rpt-badge">${o}</span>${RPT_ORG_NAME[o]}<span class="rpt-muted">　${N}月分</span></div>`;
+  h+=sec('A. ダッシュボードから自動反映','（KPI進捗・エグゼクティブサマリー・セッション・CV推移・CV種別推移・各数値）',
+    `<div class="rpt-inline"><button class="btn btn-primary btn-sm" onclick="rptGenAuto('${o}')">🖼 画像を作成して確認</button><span class="rpt-muted">保存時にも自動で作成されます</span></div><div id="rptAuto_${o}"></div>`);
+  const aimg=(key,cap)=>{const a=rptS.auto[o];const im=a&&a.ym===rptS.ym?a[key]:null;return im?`<figure class="rpt-mini"><img src="${im.url}"><figcaption>${cap}</figcaption></figure>`:`<div class="rpt-mini ph">${cap}<br><span>「🖼 画像を作成して確認」で表示</span></div>`;};
+  h+=sec('B. アクセス推移（P5相当）：画像2つ',`（${rptH(T.access?T.access.slide.title:'ページが見つかりません')}）`,
+    T.access?`<div class="rpt-muted" style="margin-bottom:6px">上下2つの画像は、どちらも自動で入ります（上：GA4データ（JSON）／下：ダッシュボード「セッション・CV推移」）。キャプチャを使いたい画像だけ、右の欄に貼り付けると差し替わります。</div>
+      <div class="rpt-inline" style="margin-bottom:6px">${rptLinkBtns(T.links,'Lookerを開く')}</div>
+      <div class="rpt-pair"><div class="rpt-pair-l">上：チャネル別セッション数推移</div>${aimg('chImg','自動（GA4・直近13か月）')}${rptPasteBox(o,'top','（任意）キャプチャで差し替え')}</div>
+      <div class="rpt-pair"><div class="rpt-pair-l">下：セッション数・MQL数推移</div>${aimg('sesscv','自動（ダッシュボード・直近13か月）')}${rptPasteBox(o,'bottom','（任意）キャプチャで差し替え')}</div>
+      <div class="rpt-muted">月間セッション数はGA4データ（${N}月：<b>${v.session==null?'未読み込み':N_(v.session)}</b>）、MQLはダッシュボード（<b>${v.mqlMonth}</b>）を自動で入れます。</div>`:'<div class="warn">アクセス推移ページが見つかりません</div>');
+  if(T.spot)h+=sec('C. スポット分析（P6相当）：GA4データから自動',`（${rptH(T.spot.slide.title)}）`,
+    `<div class="rpt-muted" style="margin-bottom:6px">上の表＝${P}月（前月）、下の表＝${N}月（当月）のアクセス実績（ランディングページ×ユーザーの最初の参照元／メディア、上位8件＋合計）を、JSONから自動で作成します。貼り付けは不要です。</div>
+     <div class="rpt-pair2">${aimg('spotPrevImg',`上：${P}月（前月）`)}${aimg('spotImg',`下：${N}月（当月）`)}</div>`);
+  h+=sec('D. 引き上がり情報の基準日','（CV推移ページ「引きあがり情報：◯/◯まで」）',
+    `<div class="rpt-inline"><label class="rpt-field">基準日<input type="text" id="rptHk_${o}" value="${rptH(lk.hikiage||'')}" placeholder="例：${N}/19" oninput="rptLk('${o}').hikiage=this.value.trim()"></label>
+      <span class="rpt-muted">「※MQL：${N}/${rptLastDay(rptS.ym)}CVまで」は自動で入ります。</span></div>`);
+  h+=sec('E. コラム・実績事例の上位10位（表示回数順）：GA4データから自動','（貼り付けは不要。表が大きくなる分は、下の見出し・文章を下にずらし、入りきらない分は文字を縮小します）',
+    `<div class="rpt-pair2">${T.column?aimg('colImg',`コラム 上位10位（${N}月）`):'<div class="warn">コラムのページが見つかりません</div>'}${T.case?aimg('caseImg',`実績事例 上位10位（${N}月）`):'<div class="warn">実績事例のページが見つかりません</div>'}</div>`);
+  return h+'</div>';
+}
+function N_(v){return Number(v||0).toLocaleString('ja-JP');}
+function rptLk(o){return rptS.looker[o]||(rptS.looker[o]={});}
+
+function rptPngFromCanvas(canvas){
+  return new Promise((res,rej)=>canvas.toBlob(async b=>{if(!b)return rej(new Error('画像化に失敗'));res({bytes:new Uint8Array(await b.arrayBuffer()),w:canvas.width,h:canvas.height,url:URL.createObjectURL(b)});},'image/png'));
+}
+async function rptCaptureKpi(org,ym){
+  if(typeof html2canvas==='undefined')throw new Error('画像化ライブラリ（html2canvas）を読み込めませんでした。ネット接続を確認して、ページを再読み込みしてください。');
+  const sv={org:currentOrg,rs:rangeStart,re:rangeEnd};
+  currentOrg=org;rangeStart=rptFyStart(ym);rangeEnd=ym;
+  let wrap;
+  try{
+    renderDashboard(); // 事業部表示に切り替えて描画（見出しなども事業部用に戻る）
+    wrap=document.createElement('div');
+    wrap.style.cssText='position:absolute;left:-30000px;top:0;width:1400px;padding:12px;background:#eef2f7';
+    const k=rptEl('kpiGrid').cloneNode(true);k.style.gridTemplateColumns='repeat(6,1fr)';
+    const c=rptEl('card-cvprog').cloneNode(true);c.style.display='';c.style.marginBottom='0';
+    [k,c].forEach(n=>{n.removeAttribute('id');n.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));});
+    wrap.appendChild(k);wrap.appendChild(c);document.body.appendChild(wrap);
+    const canvas=await html2canvas(wrap,{scale:2,backgroundColor:'#eef2f7',logging:false,useCORS:true});
+    return await rptPngFromCanvas(canvas);
+  }finally{
+    if(wrap)wrap.remove();
+    currentOrg=sv.org;rangeStart=sv.rs;rangeEnd=sv.re;
+    try{renderAll();}catch(e){}
+  }
+}
+async function rptCvChart(org,ym,wPx,hPx){
+  const months=[];for(let i=12;i>=0;i--)months.push(prevYM(ym,i));
+  const series=months.map(m=>getData(org,m));
+  const keys=CV_TYPE_KEYS.filter(k=>series.some(d=>((d.cv_by_type||{})[k]||0)>=1));
+  const wrap=document.createElement('div');wrap.style.cssText=`position:absolute;left:-30000px;top:0;width:${wPx}px;height:${hPx}px`;
+  const cv=document.createElement('canvas');cv.width=wPx;cv.height=hPx;cv.style.width=wPx+'px';cv.style.height=hPx+'px';
+  wrap.appendChild(cv);document.body.appendChild(wrap);
+  const bg={id:'rptBg',beforeDraw:c=>{const x=c.ctx;x.save();x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.restore();}};
+  const totals={id:'rptTotals',afterDatasetsDraw:c=>{const x=c.ctx;const meta=c.getDatasetMeta(c.data.datasets.length-1);if(!meta)return;
+    x.save();x.font='bold 12px sans-serif';x.fillStyle='#334155';x.textAlign='center';
+    c.data.labels.forEach((l,i)=>{const tot=c.data.datasets.reduce((s,d)=>s+(d.data[i]||0),0);if(!tot)return;
+      let top=Infinity;c.data.datasets.forEach((d,di)=>{const el=c.getDatasetMeta(di).data[i];if(el&&d.data[i])top=Math.min(top,el.y);});
+      if(isFinite(top))x.fillText(String(tot),c.getDatasetMeta(0).data[i].x,top-5);});x.restore();}};
+  const ch=new Chart(cv.getContext('2d'),{type:'bar',
+    data:{labels:months.map(shortYmLabel),datasets:keys.map(k=>({label:CV_TYPE_LABELS[k],data:series.map(d=>(d.cv_by_type||{})[k]||0),backgroundColor:CV_TYPE_COLORS[k],stack:'cv',borderWidth:0}))},
+    options:{responsive:false,animation:false,devicePixelRatio:2.5,layout:{padding:{top:6,right:10}},
+      plugins:{legend:{position:'top',labels:{font:{size:12},boxWidth:14}},tooltip:{enabled:false},
+        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,anchor:'center',align:'center',font:{size:11,weight:'bold'},color:'#fff',formatter:v=>v>0?v:''}},
+      scales:{y:{stacked:true,beginAtZero:true,grace:'8%',ticks:{font:{size:12}},grid:{color:'#eef2f7'},title:{display:true,text:'CV件数',font:{size:12}}},
+              x:{stacked:true,ticks:{font:{size:12}},grid:{display:false}}}},
+    plugins:[bg,totals]});
+  try{return await rptPngFromCanvas(ch.canvas);}finally{ch.destroy();wrap.remove();}
+}
+// P5下段：ダッシュボード「セッション・CV推移」と同じ内容のグラフ（直近13か月）
+async function rptSessCvChart(org,ym,wPx,hPx){
+  const months=[];for(let i=12;i>=0;i--)months.push(prevYM(ym,i));
+  const series=months.map(m=>getData(org,m));
+  const BLUE='rgba(37,99,235,0.9)',BLUE_L='rgba(37,99,235,0.10)',GREEN='rgba(16,185,129,0.95)',GRAY='rgba(148,163,184,0.9)';
+  const wrap=document.createElement('div');wrap.style.cssText=`position:absolute;left:-30000px;top:0;width:${wPx}px;height:${hPx}px`;
+  const cv=document.createElement('canvas');cv.width=wPx;cv.height=hPx;cv.style.width=wPx+'px';cv.style.height=hPx+'px';
+  wrap.appendChild(cv);document.body.appendChild(wrap);
+  const bg={id:'rptBg2',beforeDraw:c=>{const x=c.ctx;x.save();x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.restore();}};
+  const ch=new Chart(cv.getContext('2d'),{type:'line',
+    data:{labels:months.map(shortYmLabel),datasets:[
+      {label:'セッション',data:series.map(d=>d.sessions||0),borderColor:BLUE,backgroundColor:BLUE_L,tension:.3,fill:true,yAxisID:'yS',pointRadius:3},
+      {label:'MQL実績',data:series.map(d=>d.cv||0),borderColor:GREEN,tension:.3,fill:false,yAxisID:'yC',pointRadius:3},
+      {label:'MQL目標',data:months.map(m=>getTarget(org,m,'mql')||null),borderColor:GRAY,borderDash:[5,4],tension:.3,fill:false,yAxisID:'yC',pointRadius:2}]},
+    options:{responsive:false,animation:false,devicePixelRatio:2.5,layout:{padding:{top:18,right:6}},
+      plugins:{legend:{position:'top',labels:{font:{size:12},boxWidth:14}},tooltip:{enabled:false},
+        datalabels:{display:ctx=>ctx.dataset.label!=='MQL目標',align:'top',anchor:'end',clamp:true,font:{size:10},color:ctx=>ctx.dataset.label==='セッション'?'#1e40af':'#047857',
+          formatter:v=>v>0?Number(v).toLocaleString('ja-JP'):''}},
+      scales:{yS:{position:'left',beginAtZero:true,grace:'12%',ticks:{font:{size:11}},grid:{color:'#eef2f7'},title:{display:true,text:'セッション',font:{size:11}}},
+              yC:{position:'right',beginAtZero:true,grace:'15%',ticks:{font:{size:11}},grid:{drawOnChartArea:false},title:{display:true,text:'MQL',font:{size:11}}},
+              x:{ticks:{font:{size:11}},grid:{display:false}}}},
+    plugins:[bg]});
+  try{return await rptPngFromCanvas(ch.canvas);}finally{ch.destroy();wrap.remove();}
+}
+function rptAutoValues(org,ym){
+  const fyMs=getMonthsInRange(rptFyStart(ym),ym);
+  const agg=getAgg(org,fyMs);
+  const tM=getTargetSum(org,fyMs,'mql'),tS=getTargetSum(org,fyMs,'sql');
+  const d=getRawData(org,ym);
+  return {rateMql:tM>0?rptFmtPct(agg.cv/tM*100):null,rateSql:tS>0?rptFmtPct(agg.sql/tS*100):null,
+    mqlDetail:`${agg.cv} / ${tM}`,sqlDetail:`${agg.sql} / ${tS}`,
+    session:rptGa4Sessions(org,ym),
+    mqlMonth:d.cv||0,cvCounts:Object.assign({inquiry:0,service_dl:0,wp_dl:0,catalog:0,moushikomi:0,exhibition:0,event:0},d.cv_by_type||{})};
+}
+async function rptGenAuto(org,silent){
+  const ym=rptS.ym;const T=rptTargetsOf(org);
+  if(!silent)rptBusy(true,`${org}の画像を作成しています…`);
+  try{
+    const v=rptAutoValues(org,ym);
+    const kpi=await rptCaptureKpi(org,ym);
+    const px=sh=>[Math.round(sh.cx/9525),Math.round(sh.cy/9525)];
+    let cv=null,sesscv=null;
+    if(T.cv&&T.cv.pic){const [w,h]=px(T.cv.pic);cv=await rptCvChart(org,ym,w,h);}
+    if(T.access&&T.access.bottom){const [w,h]=px(T.access.bottom);sesscv=await rptSessCvChart(org,ym,w,h);}
+    let chImg=null,spotImg=null,spotPrevImg=null,colImg=null,caseImg=null;
+    if(rptS.ga4){
+      if(T.access&&T.access.top){const [w,h]=px(T.access.top);chImg=await rptChannelChart(org,ym,w,h);}
+      if(T.spot){spotPrevImg=await rptLandingTableImg(org,prevYM(ym,1),Math.round(T.spot.top.cx/9525));spotImg=await rptLandingTableImg(org,ym,Math.round(T.spot.bottom.cx/9525));}
+      if(T.column){colImg=await rptTopTableImg(org,ym,'column',Math.round((T.column.frame.cx)/9525));}
+      if(T.case){caseImg=await rptTopTableImg(org,ym,'case',Math.round((T.case.frame.cx)/9525));}
+    }
+    rptS.auto[org]=Object.assign({kpi,cv,sesscv,chImg,spotImg,spotPrevImg,colImg,caseImg,ym},v);
+    rptRenderAuto(org);rptRenderOrgPanels();
+  }catch(e){rptErr(org+'の画像作成に失敗しました：'+e.message);throw e;}
+  finally{if(!silent)rptBusy(false);}
+}
+function rptRenderAuto(org){
+  const el=rptEl('rptAuto_'+org);if(!el)return;const a=rptS.auto[org];
+  const T=rptTargetsOf(org);const N=rptMonthNum(rptS.ym);
+  const v=a&&a.ym===rptS.ym?a:rptAutoValues(org,rptS.ym);
+  const cnt=(T.cv?T.cv.counts:[]).map(sh=>{const k=rptCvLabelKey(sh.texts[0].trim());return `${rptH(sh.texts[0].trim())} <b>${v.cvCounts[k]||0}</b>`;}).join('／');
+  const kv=`<div class="rpt-kv">当月まで達成率：MQL <b>${v.rateMql||'—'}</b>（${v.mqlDetail}）／SQL <b>${v.rateSql||'—'}</b>（${v.sqlDetail}）<br>
+    ${N}月　セッション（GA4） <b>${v.session==null?'<span class="warn">GA4データ未読み込み</span>':N_(v.session)}</b>　MQL <b>${v.mqlMonth}</b>　CV：${cnt||'—'}</div>
+    ${v.session==null?`<div class="rpt-note">GA4データ（JSON）が読み込まれていないため、セッション数・チャネル別推移・上位10位の表は作成されません（前月のまま、または貼り付けた画像を使います）。</div>`:''}`;
+  if(!a||a.ym!==rptS.ym){el.innerHTML=kv;return;}
+  const fig=(img,cap)=>img?`<figure><img src="${img.url}"><figcaption>${cap}</figcaption></figure>`:'';
+  el.innerHTML=`<div class="rpt-auto-grid3">
+     ${fig(a.kpi,`KPI進捗・エグゼクティブサマリー（${rptFyStart(rptS.ym).replace('-','/')}〜${rptS.ym.replace('-','/')}）`)}
+     ${fig(a.sesscv,'P5下段：セッション・CV推移（直近13か月）')}
+     ${fig(a.cv,'CV種別 積み上げ推移（直近13か月）')}
+   </div>
+   `+kv;
+}
+
+// ─── 画像の貼り付け（Looker・GA4） ───
+function rptBindPaste(o){
+  RPT_PASTE_KEYS.forEach(k=>{
+    const el=rptEl(`rptPaste_${o}_${k}`);if(!el)return;
+    el.addEventListener('paste',e=>{e.preventDefault();const it=[...(e.clipboardData||{}).items||[]].find(i=>i.type.startsWith('image/'));
+      if(it)rptSetLookerImg(o,k,it.getAsFile());else toast('画像がクリップボードにありません。Win＋Shift＋Sで切り取ってから貼り付けてください');});
+    el.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey))e.preventDefault();});
+    el.addEventListener('drop',e=>{e.preventDefault();const f=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));if(f)rptSetLookerImg(o,k,f);});
+    el.addEventListener('dragover',e=>e.preventDefault());
+  });
+}
+async function rptSetLookerImg(o,k,file){
+  try{
+    const bmp=await createImageBitmap(file);
+    const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;c.getContext('2d').drawImage(bmp,0,0);
+    rptLk(o)[k]=await rptPngFromCanvas(c);rptRenderPaste(o,k);
+  }catch(e){rptErr('画像を読み込めませんでした：'+e.message);}
+}
+function rptRenderPaste(o,k){
+  const el=rptEl(`rptPaste_${o}_${k}`);if(!el)return;const im=rptLk(o)[k];
+  el.innerHTML=im?`<img src="${im.url}"><button class="rpt-x" contenteditable="false" onclick="rptLk('${o}')['${k}']=null;rptRenderPaste('${o}','${k}')">×</button>`
+    :`<div class="rpt-paste-ph" contenteditable="false">ここをクリックして Ctrl＋V で貼り付け<br><span>（画像ファイルのドラッグ＆ドロップも可）</span><br><span>空のままなら前月の内容を残します</span></div>`;
+  el.classList.toggle('filled',!!im);
+}
+
+// ─── GA4データ（Apps Scriptが作るJSON） ───
+const RPT_SITE={UN:'uniform.onward-cd.co.jp',SCH:'school.onward-cd.co.jp',MED:'medical.onward-cd.co.jp',IS:'solution.onward-cd.co.jp'};
+function rptGa4Site(org){return rptS.ga4&&rptS.ga4.ga4?rptS.ga4.ga4[RPT_SITE[org]]:null;}
+function rptYmSlash(ym){return ym.replace('-','/');}
+function rptGa4Month(org,ym){const s=rptGa4Site(org);return s&&s.report&&s.report.months?s.report.months.find(m=>m.ym===rptYmSlash(ym))||null:null;}
+function rptGa4Sessions(org,ym){const mo=rptGa4Month(org,ym);if(mo&&mo.landingTotal&&mo.landingTotal.sessions)return mo.landingTotal.sessions; // 月単位の合計（GA4画面・従来レポートと一致）
+  const s=rptGa4Site(org);if(!s||!s.daily)return null;let t=0,n=0;s.daily.forEach(d=>{if(d.date.slice(0,7)===ym){t+=d.sessions;n++;}});return n?t:null;}
+async function rptLoadGa4(inp){
+  const f=inp.files[0];inp.value='';if(!f)return;
+  try{const txt=await f.text();rptSetGa4(JSON.parse(txt),f.name);rptIdbSet('lastGa4',{name:f.name,txt}).catch(()=>{});}
+  catch(e){rptErr('JSONを読み込めませんでした：'+e.message);}
+}
+function rptSetGa4(obj,name){
+  if(!obj||!obj.ga4)throw new Error('GA4データ（ga4）が含まれていないJSONです');
+  rptS.ga4=obj;rptS.ga4Name=name;rptS.auto={};rptRenderGa4Info();rptRenderOrgPanels();
+}
+function rptGa4Warn(){
+  const g=rptS.ga4;if(!g)return null;const gen=new Date(g.generated);const ym=rptS.ym;
+  const [y,m]=ym.split('-').map(Number);const next=new Date(y,m,1);const safe=new Date(y,m,4);
+  if(gen<next)return `このJSONは${gen.toLocaleString('ja-JP')}に作成されたもので、${m}月末までのデータが入っていません。月初以降に作成されたJSONを読み込んでください。`;
+  if(gen<safe)return `GA4の数値は反映までに最大72時間かかるため、${m+1>12?1:m+1}/4以降に作成したJSONと差が出る場合があります（運用ルールどおり月初計測ならこのままでOK）。`;
+  return null;
+}
+function rptRenderGa4Info(){
+  const el=rptEl('rptGa4Info');if(!el)return;const g=rptS.ga4;
+  if(!g){el.innerHTML='未読み込み（Googleドライブの「dsp_dashboard_auto.json」を選んでください）';return;}
+  const ym=rptS.ym;
+  const rows=RPT_ORGS.map(o=>{const s=rptGa4Site(o);const mo=rptGa4Month(o,ym);const ss=rptGa4Sessions(o,ym);
+    return `<b>${o}</b> ${s?`セッション ${ss==null?'—':N_(ss)}`:'<span class="ng">データなし</span>'}${s?(s.report?(mo?' ／ ページ・ランディング ✓':' ／ <span class="warn">当月のページ別データなし</span>'):' ／ <span class="warn">月次レポート用データなし（コード.gsの追加が必要）</span>'):''}`;}).join('　');
+  const w=rptGa4Warn();
+  el.innerHTML=`<b>${rptH(rptS.ga4Name||'')}</b>　<span class="rpt-muted">作成：${new Date(g.generated).toLocaleString('ja-JP')}</span><div class="rpt-muted" style="margin-top:4px">${rows}</div>${w?`<div class="rpt-note">${rptH(w)}</div>`:''}`;
+}
+function rptFmtDur(sec){sec=Math.floor((sec||0)+1e-9);  // Looker/GA4と同じく秒未満は切り捨て
+const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60,z=n=>String(n).padStart(2,'0');return `${z(h)}:${z(m)}:${z(s)}`;}
+function rptFmtDurJa(sec){sec=Math.floor((sec||0)+1e-9);const m=Math.floor(sec/60),s=sec%60;return m?`${m} 分 ${String(s).padStart(2,'0')} 秒`:`${s} 秒`;}
+function rptFmtPct2(v){if(!isFinite(v))return '—';return (Math.round(v*10000)/100).toString()+'%';}
+
+// P5上：チャネル別セッション数推移（直近13か月・積み上げ）
+const RPT_CH_ORDER=['Organic Search','Direct','Paid Search','Email','Referral','Display','Unassigned','Paid Other','AI Assistant'];
+const RPT_CH_COLOR={'Organic Search':'#4285F4','Direct':'#F4A142','Paid Search':'#A57CE8','Email':'#3CBFD0','Referral':'#B5D66F','Display':'#5A5FC9','Unassigned':'#C9CED8','Paid Other':'#1D6E78','AI Assistant':'#E0B97A','その他':'#94A3B8'};
+async function rptChannelChart(org,ym,wPx,hPx){
+  const s=rptGa4Site(org);if(!s||!s.report)return null;
+  const months=[];for(let i=12;i>=0;i--)months.push(prevYM(ym,i));
+  const map={};s.report.channelMonthly.forEach(r=>{const k=r.ym.replace('/','-');const ch=RPT_CH_ORDER.includes(r.ch)?r.ch:'その他';(map[k]=map[k]||{})[ch]=((map[k]||{})[ch]||0)+r.sessions;});
+  const chs=[...RPT_CH_ORDER,'その他'].filter(c=>months.some(m=>(map[m]||{})[c]>0));
+  const wrap=document.createElement('div');wrap.style.cssText=`position:absolute;left:-30000px;top:0;width:${wPx}px;height:${hPx}px`;
+  const cv=document.createElement('canvas');cv.width=wPx;cv.height=hPx;cv.style.width=wPx+'px';cv.style.height=hPx+'px';wrap.appendChild(cv);document.body.appendChild(wrap);
+  const bg={id:'rptBg3',beforeDraw:c=>{const x=c.ctx;x.save();x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.restore();}};
+  const ch=new Chart(cv.getContext('2d'),{type:'bar',
+    data:{labels:months.map(m=>{const[y,mm]=m.split('-');return `${y}年${+mm}月`;}),datasets:chs.map(c=>({label:c,data:months.map(m=>(map[m]||{})[c]||0),backgroundColor:RPT_CH_COLOR[c],stack:'s',borderWidth:0}))},
+    options:{responsive:false,animation:false,devicePixelRatio:2.5,layout:{padding:{top:4,right:6}},
+      plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12,padding:8}},tooltip:{enabled:false},datalabels:{display:false}},
+      scales:{y:{stacked:true,beginAtZero:true,ticks:{font:{size:10},callback:v=>Number(v).toLocaleString('ja-JP')},grid:{color:'#eef2f7'}},x:{stacked:true,ticks:{font:{size:9},maxRotation:0,autoSkip:false},grid:{display:false}}}},
+    plugins:[bg]});
+  try{return await rptPngFromCanvas(ch.canvas);}finally{ch.destroy();wrap.remove();}
+}
+// HTMLの表を画像にする共通処理
+async function rptHtmlToPng(html,wPx){
+  if(typeof html2canvas==='undefined')throw new Error('画像化ライブラリ（html2canvas）を読み込めませんでした。');
+  const wrap=document.createElement('div');wrap.style.cssText=`position:absolute;left:-30000px;top:0;width:${wPx}px;background:#fff`;
+  wrap.innerHTML=html;document.body.appendChild(wrap);
+  try{return await rptPngFromCanvas(await html2canvas(wrap,{scale:2,backgroundColor:'#ffffff',logging:false}));}finally{wrap.remove();}
+}
+function rptHeat(v,max,rgb){const a=max>0?0.10+0.60*(v/max):0.10;return `background:rgba(${rgb},${a.toFixed(3)})`;}
+const RPT_TBL_CSS=`<style>.rt{width:100%;border-collapse:collapse;font-family:'Meiryo','Hiragino Kaku Gothic ProN',Arial,sans-serif;font-size:12px;color:#1e293b;table-layout:fixed}
+.rt th{background:#e8f0fe;font-weight:700;font-size:11px;padding:3px 6px;text-align:right;line-height:1.25;border-bottom:1px solid #c7d2fe;vertical-align:bottom}
+.rt th.l,.rt td.l{text-align:left}.rt td{padding:2px 6px;line-height:1.25;text-align:right;border-bottom:1px solid #eef2f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt td.n{color:#64748b;text-align:right;width:28px}.rt tr.tot td{font-weight:700;background:#f8fafc}</style>`;
+// P8/P9：上位10位（表示回数順）
+function rptTopPages(org,ym,kind){
+  const mo=rptGa4Month(org,ym);if(!mo||!mo.pages)return null;
+  const re=kind==='column'?/column/i:/case/i;
+  return mo.pages.filter(p=>re.test(p.path)).sort((a,b)=>b.views-a.views).slice(0,10);
+}
+async function rptTopTableImg(org,ym,kind,wPx){
+  const rows=rptTopPages(org,ym,kind);if(!rows||!rows.length)return null;
+  const mx=k=>Math.max(...rows.map(r=>r[k]||0));const rate=r=>r.users>0?r.scrollUsers/r.users:0;const eng=r=>r.sessions>0?r.engagementSec/r.sessions:0; // Lookerの「平均エンゲージメント時間」＝エンゲージメント時間÷セッション
+  const mRate=Math.max(...rows.map(rate)),mEng=Math.max(...rows.map(eng));
+  const html=RPT_TBL_CSS+`<table class="rt"><colgroup><col style="width:28px"><col style="width:22%"><col style="width:24%"><col><col><col><col><col><col></colgroup>
+    <tr><th></th><th class="l">ページパスとスクリーン クラス</th><th class="l">ページ タイトル</th><th>表示回数</th><th>セッション</th><th>セッションあたりの<br>ページビュー数</th><th>90%読了数<br>（ユーザー）</th><th>90%読了率</th><th>平均エンゲージ<br>メント時間</th></tr>
+    ${rows.map((r,i)=>`<tr><td class="n">${i+1}.</td><td class="l">${rptH(r.path)}</td><td class="l">${rptH(r.title)}</td>
+      <td style="${rptHeat(r.views,mx('views'),'66,133,244')}">${N_(r.views)}</td><td style="${rptHeat(r.sessions,mx('sessions'),'244,161,66')}">${N_(r.sessions)}</td>
+      <td style="${rptHeat(r.viewsPerSession,mx('viewsPerSession'),'165,124,232')}">${(Math.round(r.viewsPerSession*100)/100)}</td>
+      <td style="${rptHeat(r.scrollUsers,mx('scrollUsers'),'140,180,60')}">${N_(r.scrollUsers)}</td><td style="${rptHeat(rate(r),mRate,'60,190,208')}">${rptFmtPct2(rate(r))}</td>
+      <td style="${rptHeat(eng(r),mEng,'230,190,60')}">${rptFmtDur(eng(r))}</td></tr>`).join('')}</table>`;
+  return rptHtmlToPng(html,wPx);
+}
+// P6下段：ランディングページ × 参照元/メディア（当月）
+async function rptLandingTableImg(org,ym,wPx){
+  const mo=rptGa4Month(org,ym);if(!mo||!mo.landing||!mo.landing.length)return null;
+  const tot=mo.landingTotal||{sessions:mo.landing.reduce((s,r)=>s+r.sessions,0),activeUsers:0,newUsers:0,engagementSec:0};
+  const rows=mo.landing.slice(0,8);const pc=(v,t)=>t>0?` <span style="color:#64748b;font-size:11px">(${(v/t*100).toFixed(2)}%)</span>`:'';
+  const eps=r=>r.sessions>0?r.engagementSec/r.sessions:0;
+  const html=RPT_TBL_CSS+`<table class="rt"><colgroup><col style="width:26%"><col style="width:20%"><col><col><col><col></colgroup>
+    <tr><th class="l">ランディング ページ</th><th class="l">ユーザーの最初の参照元 / メディア</th><th>セッション</th><th>アクティブ ユーザー</th><th>新規ユーザー数</th><th>セッションあたりの<br>平均エンゲージメント時間</th></tr>
+    <tr class="tot"><td class="l">合計</td><td></td><td>${N_(tot.sessions)}</td><td>${N_(tot.activeUsers)}</td><td>${N_(tot.newUsers)}</td><td>${rptFmtDurJa(tot.sessions>0?tot.engagementSec/tot.sessions:0)}</td></tr>
+    ${rows.map(r=>`<tr><td class="l">${rptH(r.page)}</td><td class="l">${rptH(r.sourceMedium)}</td><td>${N_(r.sessions)}${pc(r.sessions,tot.sessions)}</td><td>${N_(r.activeUsers)}${pc(r.activeUsers,tot.activeUsers)}</td><td>${N_(r.newUsers)}${pc(r.newUsers,tot.newUsers)}</td><td>${rptFmtDurJa(eps(r))}</td></tr>`).join('')}</table>`;
+  return rptHtmlToPng(html,wPx);
+}
+// ─── ③ 保存 ───
+function rptRenderSaveArea(){
+  const el=rptEl('rptSaveInfo');if(!el)return;
+  const orgs=rptActiveOrgs(),mode=rptMode();
+  let msg='';
+  if(!rptS.an)msg='先にpptxを選択してください。';
+  else if(mode==='mismatch')msg='対象月とpptxの先頭の月が合わないため保存できません。';
+  else if(!orgs.length&&mode==='reflect')msg='反映する事業部を選んでください。';
+  el.innerHTML=msg?`<div class="rpt-note">${msg}</div>`:`<div class="rpt-muted">保存すると：${mode==='create'?`<b>${rptMonthNum(rptS.ym)===12?1:rptMonthNum(rptS.ym)+1}月度（${rptMonthNum(rptS.ym)}月振り返り）のブロックを新規作成</b>し、`:''}${orgs.length?`<b>${orgs.join('・')}</b>を反映します。`:'事業部の反映はしません。'}　保存先：<b>${rptH(rptS.file?rptS.file.name:'')}</b></div>`;
+  rptEl('rptBtnSave').disabled=!!msg;rptEl('rptBtnDry').disabled=!!msg;
+}
+function rptLogHtml(res){
+  const grp={};res.log.forEach(l=>{(grp[l.org]=grp[l.org]||[]).push(l);});
+  return Object.entries(grp).map(([g,ls])=>`<div class="rpt-log-g"><b>${rptH(g)}</b><ul>${ls.map(l=>`<li class="${l.lvl}">${l.lvl==='warn'?'⚠ ':'✓ '}${rptH(l.msg)}</li>`).join('')}</ul></div>`).join('');
+}
+async function rptBuildPlan(){
+  const orgs=rptActiveOrgs();const plan={ym:rptS.ym,orgs,perOrg:{}};
+  for(const o of orgs){
+    if(!rptS.auto[o]||rptS.auto[o].ym!==rptS.ym)await rptGenAuto(o,true);
+    const a=rptS.auto[o],lk=rptLk(o);
+    plan.perOrg[o]={kpi:a.kpi,cv:a.cv,rateMql:a.rateMql,rateSql:a.rateSql,mqlMonth:a.mqlMonth,cvCounts:a.cvCounts,
+      session:a.session==null?null:N_(a.session),sessionSrc:'GA4',
+      lookerTop:lk.top||a.chImg||null,lookerTopSrc:lk.top?'貼り付け画像':'GA4から自動作成',
+      sesscv:lk.bottom||a.sesscv,sesscvSrc:lk.bottom?'貼り付け画像':'ダッシュボード「セッション・CV推移」',
+      spotPrev:a.spotPrevImg||null,spotCur:a.spotImg||null,spotSrc:'GA4から自動作成',
+      colImg:a.colImg||null,caseImg:a.caseImg||null,hikiage:lk.hikiage||''};
+  }
+  return plan;
+}
+async function rptDryRun(){
+  if(!rptS.buf)return;
+  rptBusy(true,'変更内容を確認しています…');
+  try{
+    const plan=await rptBuildPlan();
+    const pkg=await RptPkg.open(rptS.buf.slice(0));
+    const res=await rptApply(pkg,plan);
+    const blob=await pkg.build();
+    rptS.lastDry={blob,name:rptS.file.name};
+    rptEl('rptResult').innerHTML=`<div class="rpt-res"><div class="rpt-res-t">📝 変更内容の確認（まだ保存していません）</div>${rptLogHtml(res)}
+      <button class="btn btn-ghost btn-sm" onclick="rptDownload(rptS.lastDry.blob,'確認用_'+rptS.lastDry.name)">⬇ 確認用にダウンロード</button></div>`;
+  }catch(e){rptErr(e.message);}finally{rptBusy(false);}
+}
+function rptDownload(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);}
+async function rptSave(){
+  if(!rptS.an)return;
+  if(!rptEl('rptChk1').checked||!rptEl('rptChk2').checked){rptErr('保存前のチェック（PowerPointを閉じる／OneDriveの同期完了）を確認してください。');return;}
+  const st=((rptS.an.status||{})[rptS.ym])||{};
+  const again=rptActiveOrgs().filter(o=>st[o]);
+  const nm=rptS.file.name;
+  const msg=`次のファイルを上書き保存します。\n\n　${nm}\n\n閲覧者が開いているレポートも、この内容に更新されます。`+
+    (again.length?`\n\n※${again.join('・')}はすでに${rptMonthNum(rptS.ym)}月分が反映済みです（${again.map(o=>st[o].at).join('／')}）。もう一度反映して上書きします。`:'');
+  if(!await rptConfirm(msg))return;
+  rptBusy(true,'保存の準備をしています…');
+  try{
+    const plan=await rptBuildPlan();
+    const h=rptS.handle;
+    if(!h){ // 上書きできない環境：ダウンロード
+      const pkg=await RptPkg.open(rptS.buf.slice(0));const res=await rptApply(pkg,plan);const blob=await pkg.build();
+      rptDownload(blob,nm);
+      rptEl('rptResult').innerHTML=`<div class="rpt-res"><div class="rpt-res-t">⬇ ダウンロードしました（上書き保存はしていません）</div><div class="rpt-note">ダウンロードしたファイルで、元のファイルを置き換えてください。</div>${rptLogHtml(res)}</div>`;
+      return;
+    }
+    rptBusy(true,'書き込みの許可を確認しています…');
+    if((await h.queryPermission({mode:'readwrite'}))!=='granted'&&(await h.requestPermission({mode:'readwrite'}))!=='granted')throw new Error('ファイルへの書き込みが許可されませんでした。');
+    // 対策1：保存の直前に最新のファイルを読み直す
+    rptBusy(true,'最新のファイルを読み直しています…');
+    const f1=await h.getFile();
+    if(f1.lastModified!==rptS.lastModified){
+      rptBusy(false);
+      const ok=await rptConfirm(`このツールで読み込んだ後に、ファイルが更新されています（${new Date(f1.lastModified).toLocaleString('ja-JP')}）。\nほかの人の更新を残したまま、最新版に選択中の事業部（${plan.orgs.join('・')||'なし'}）だけを反映します。続けますか？`);
+      if(!ok){await rptLoadFile(f1);return;}
+      rptBusy(true,'反映しています…');
+    }
+    const pkg=await RptPkg.open(await f1.arrayBuffer());
+    rptBusy(true,'反映しています…');
+    const res=await rptApply(pkg,plan);
+    const blob=await pkg.build();
+    // 対策3：書き込み直前にもう一度確認
+    const f2=await h.getFile();
+    if(f2.lastModified!==f1.lastModified)throw new Error('保存の途中で、ほかの人がファイルを更新しました。上書きを中止しました。少し待ってから、もう一度「上書き保存」を押してください。');
+    rptBusy(true,'上書き保存しています…');
+    const w=await h.createWritable();await w.write(blob);await w.close();
+    const f3=await h.getFile();const chk=await rptAnalyze(await RptPkg.open(await f3.arrayBuffer()));
+    rptEl('rptResult').innerHTML=`<div class="rpt-res ok"><div class="rpt-res-t">✅ 上書き保存しました（${new Date(f3.lastModified).toLocaleString('ja-JP')}）</div>
+      <div class="rpt-muted">先頭：${chk.month}月度（${chk.dataMonth}月振り返り・${chk.block.length}枚）／全${chk.slides.length}枚。PowerPointで開いて、付箋の付いたページを確認してください（青＝コメントのみ／黄＝データ一部未更新／赤＝データ・コメントとも前月のまま）。</div>${rptLogHtml(res)}</div>`;
+    await rptLoadFile(f3);
+  }catch(e){rptErr(e.message);}
+  finally{rptBusy(false);}
+}
+
+function rptBusy(on,msg){rptS.busy=on;const b=rptEl('rptBusy');if(!b)return;b.style.display=on?'flex':'none';if(msg)rptEl('rptBusyMsg').textContent=msg;}
+function rptErr(msg){const el=rptEl('rptResult');if(el)el.innerHTML=`<div class="rpt-res ng"><div class="rpt-res-t">⚠ ${rptH(msg).replace(/\n/g,'<br>')}</div></div>`;toast('エラー：'+String(msg).slice(0,60));}
+function rptConfirm(msg){return new Promise(res=>{
+  const ov=document.createElement('div');ov.className='modal-overlay show';ov.style.zIndex='1200';
+  ov.innerHTML=`<div class="modal modal-sm"><h3>確認</h3><div class="modal-desc" style="white-space:pre-wrap;color:var(--text)">${rptH(msg)}</div><div class="modal-actions"><button class="btn btn-ghost">キャンセル</button><button class="btn btn-primary">続ける</button></div></div>`;
+  const [c,o]=ov.querySelectorAll('button');c.onclick=()=>{ov.remove();res(false);};o.onclick=()=>{ov.remove();res(true);};
+  document.body.appendChild(ov);});}
+// IndexedDB（前回のファイルを覚えておく）
+function rptIdb(){return new Promise((res,rej)=>{const r=indexedDB.open('ocd_rpt',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function rptIdbGet(k){const db=await rptIdb();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+async function rptIdbSet(k,v){const db=await rptIdb();return new Promise((res,rej)=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+
+// タブ切替に組み込む
+(function(){const _sv=switchView;switchView=function(v,el){_sv(v,el);if(v==='report')rptInit();};})();
+
 </script>
 </body>
 </html>
