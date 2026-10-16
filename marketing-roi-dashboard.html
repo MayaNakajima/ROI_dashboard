@@ -1909,21 +1909,10 @@ function parseJissekiWb(wb,org){
   const compCol =findColBy('企業名','会社名','貴社名','御社名','社名','医療機関名','団体名','学校名','法人名','組織名','店舗名','園名');
   const emailCol=findColBy('メールアドレス','Ｅメール','E-mail','e-mail','Email','email','メール');
   const nameCol =findColBy('お名前','氏名','ご担当者','担当者','名前');
-  function norm(v){return v==null?'':String(v).trim().toLowerCase().replace(/[\s　]+/g,'');}
-  let _uid=0;
-  // 行の同一エンティティ識別キー
+  // 行の同一エンティティ識別キー。CVカウントと同じ cvxEntityKey を使う
+  // （法人格の表記ゆれ「株式会社/(株)」等を同一視し、企業名「個人」「なし」等はメールアドレスで突合）
   function entityKey(row){
-    const comp = compCol>=0 ? String(row[compCol]==null?'':row[compCol]).trim() : '';
-    const name = nameCol>=0 ? String(row[nameCol]==null?'':row[nameCol]).trim() : '';
-    const email= emailCol>=0 ? norm(row[emailCol]) : '';
-    const compN=norm(comp);
-    // 企業名があり氏名と異なる（＝法人名とみなせる）→ 企業名で突合
-    if(compN && compN!==norm(name)) return 'C:'+compN;
-    // 企業名欄が個人名/空欄 → メールアドレスで突合
-    if(email) return 'E:'+email;
-    if(compN) return 'C:'+compN;
-    if(norm(name)) return 'N:'+norm(name);
-    return 'U:'+(_uid++); // 識別できない行は常に別件扱い（誤集約を防止）
+    return cvxEntityKey(compCol>=0?row[compCol]:'',emailCol>=0?row[emailCol]:'',nameCol>=0?row[nameCol]:'');
   }
   // ステージ×月ごとに、同一エンティティは1件のみ計上（初出の行のみカウント）
   const seen={cv:{},sal:{},sql:{},teian:{},jucyu:{},shicchu:{},jitai:{}};
